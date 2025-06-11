@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import './App.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import PurchaseRequest from './views/PurchaseRequest';
+import Admin from './views/Admin';
 
 function App() {
-  const [count, setCount] = useState(0);
   const [users, setUsers] = useState<string[]>([]);
 
   useEffect(() => {
@@ -16,15 +16,21 @@ function App() {
 
   return (
     <>
+      <Router>
+        <Routes>
+          <Route path="/" element={<PurchaseRequest />} />
+          <Route path="/purchaseRequest" element={<PurchaseRequest />} />
+          <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </Router>
       <h2>Users from API:</h2>
       <ul>
         {users.map((user) => (
           <li key={user}>{user}</li>
         ))}
       </ul>
-    
     </>
-  )
+  );
 }
 
-export default App
+export default App;
