@@ -1,0 +1,249 @@
+import { useState } from 'react';
+
+interface PurchaseItem {
+  item: string;
+  quantity: number;
+  link: string;
+  file: File | null;
+}
+
+const PurchaseRequestForm = () => {
+  const [items, setItems] = useState<PurchaseItem[]>([
+    { item: '', quantity: 1, link: '', file: null },
+  ]);
+  const [storeName, setStoreName] = useState('');
+  const [dateNeeded, setDateNeeded] = useState('');
+  const [shipping, setShipping] = useState('');
+  const [professorName, setProfessorName] = useState('');
+  const [purpose, setPurpose] = useState('');
+  const [workdayCode, setWorkdayCode] = useState('');
+
+  const handleItemChange = (
+    index: number,
+    field: keyof PurchaseItem,
+    value: any
+  ) => {
+    const updatedItems = [...items];
+    const updatedItem = { ...updatedItems[index] };
+
+    if (field === 'file') {
+      updatedItem[field] = value.target.files[0];
+    } else {
+      updatedItem[field] = value;
+    }
+
+    updatedItems[index] = updatedItem;
+    setItems(updatedItems);
+  };
+
+  const addItem = () => {
+    setItems([...items, { item: '', quantity: 1, link: '', file: null }]);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Here you would handle the actual form submission (e.g., API call)
+    console.log({
+      items,
+      storeName,
+      dateNeeded,
+      shipping,
+      professorName,
+      workdayCode,
+    });
+  };
+
+  const deleteItem = (indexToDelete: number) => {
+    const updatedItems = items.filter((_, i) => i !== indexToDelete);
+    setItems(updatedItems);
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="max-w-3xl mx-auto mt-4 mb-8 p-6 bg-white shadow-md rounded-md space-y-6"
+    >
+      <h2 className="text-2xl text-byuNavy font-semibold mb-4">Items</h2>
+
+      {items.map((item, index) => (
+        <div
+          key={index}
+          className="border border-gray-300 p-4 rounded-md space-y-4 text-byuNavy"
+        >
+          <div>
+            <label className="block font-medium">Item Name</label>
+            <input
+              type="text"
+              value={item.item}
+              onChange={(e) => handleItemChange(index, 'item', e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded p-2"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium">Quantity</label>
+            <input
+              type="number"
+              min="1"
+              value={item.quantity}
+              onChange={(e) =>
+                handleItemChange(index, 'quantity', Number(e.target.value))
+              }
+              required
+              className="w-full border border-gray-300 rounded p-2"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium">Link</label>
+            <input
+              type="url"
+              value={item.link}
+              onChange={(e) => handleItemChange(index, 'link', e.target.value)}
+              className="w-full border border-gray-300 rounded p-2"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium">File Upload</label>
+            <input
+              type="file"
+              onChange={(e) => handleItemChange(index, 'file', e)}
+              className="block mt-1"
+            />
+          </div>
+
+          {index > 0 && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => deleteItem(index)}
+                className="text-[#E61744] hover:text-[#A3082A]"
+                title="Delete item"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-5 h-5"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={addItem}
+        className="flex items-center text-byuNavy hover:text-[#001f3f] font-medium space-x-1 hover:underline"
+      >
+        <span className="text-lg">+</span>
+        <span>Add Another Item</span>
+      </button>
+
+      <h2 className="text-2xl text-byuNavy font-semibold mb-4">
+        Order Details
+      </h2>
+
+      <div className="text-byuNavy space-y-8">
+        <div>
+          <label className="block font-medium">Store Name</label>
+          <input
+            type="text"
+            value={storeName}
+            onChange={(e) => setStoreName(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium">Date Needed</label>
+          <input
+            type="date"
+            value={dateNeeded}
+            onChange={(e) => setDateNeeded(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded p-2"
+          />
+        </div>
+
+        <div>
+          <span className="block font-medium mb-1">Shipping Preference</span>
+          <div className="space-y-1">
+            {['Overnight', 'Regular', 'Any'].map((option) => (
+              <label key={option} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="shipping"
+                  value={option}
+                  checked={shipping === option}
+                  onChange={(e) => setShipping(e.target.value)}
+                />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block font-medium">Professor Name</label>
+          <input
+            type="text"
+            value={professorName}
+            onChange={(e) => setProfessorName(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium">Purpose</label>
+          <input
+            type="text"
+            value={purpose}
+            onChange={(e) => setPurpose(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium">Workday Code</label>
+          <input
+            type="text"
+            value={workdayCode}
+            onChange={(e) => setWorkdayCode(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded p-2"
+          />
+        </div>
+
+        <div className="flex justify-center">
+          <button
+            type="submit"
+            className="px-6 py-2 bg-byuRoyal text-white font-semibold rounded hover:bg-[#003a9a]"
+          >
+            Submit Request
+          </button>
+        </div>
+      </div>
+    </form>
+  );
+};
+
+export default PurchaseRequestForm;

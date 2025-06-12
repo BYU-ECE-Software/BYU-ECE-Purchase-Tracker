@@ -23,12 +23,12 @@ function App() {
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </Router>
-      <h2>Users from API:</h2>
+      {/*<h2>Users from API:</h2>
       <ul>
         {users.map((user) => (
           <li key={user}>{user}</li>
         ))}
-      </ul>
+      </ul>*/}
     </>
   );
 }

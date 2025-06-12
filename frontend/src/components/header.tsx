@@ -1,9 +1,10 @@
 import BYULogo from '../assets/BYU_monogram_white.svg';
 import { Link } from 'react-router-dom';
+import '../css/header.css';
 
 const HeaderBar = () => {
   return (
-    <div className="w-full">
+    <div className="w-full sticky top-0 z-50">
       {/* Top navy bar */}
       <header className="w-screen bg-byuNavy text-white py-4 px-6 shadow-md">
         <div className="flex items-center">
@@ -21,13 +22,17 @@ const HeaderBar = () => {
 
       {/* White nav bar */}
       <nav className="w-full bg-white text-byuNavy shadow">
-        <div className="flex space-x-10 px-20 py-4 text-base font-medium">
-          <Link to="/purchaseRequest" className="hover_underline">
-            Purchase Request Form
-          </Link>
-          <Link to="/admin" className="hover_underline">
-            Admin Dashboard
-          </Link>
+        <div className="flex px-32 text-base font-medium">
+          <div className="px-3 py-4 hover:bg-[#FAFAFA] rounded-md nav-link-hover">
+            <Link to="/purchaseRequest" className="block h-full w-full">
+              Purchase Request Form
+            </Link>
+          </div>
+          <div className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md nav-link-hover">
+            <Link to="/admin" className="block h-full w-full">
+              Admin Dashboard
+            </Link>
+          </div>
         </div>
       </nav>
     </div>

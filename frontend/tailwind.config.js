@@ -1,10 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
-        byuNavy: "#002E5D",
+        byuNavy: '#002E5D',
+        byuRoyal: '#0047BA',
       },
       fontFamily: {
         sans: ['"IBM Plex Sans"', 'Helvetica', 'Arial', 'sans-serif'],
@@ -13,5 +14,3 @@ export default {
   },
   plugins: [],
 };
-
-
