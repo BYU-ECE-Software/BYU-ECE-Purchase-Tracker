@@ -1,9 +1,7 @@
-const express = require('express')
-const app = express()
+import app from "./app.js";
 
-//just something basic to make sure it's working
-app.get("/api", (req, res) => {
-    res.json({"users": ["userOne", "userTwo", "userThree"]})
-})
+const PORT = process.env.PORT || 4000;
 
-app.listen(5000, () => {console.log("Server started on port 5000")})
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

@@ -40,22 +40,49 @@ const PurchaseRequestForm = () => {
     setItems([...items, { item: '', quantity: 1, link: '', file: null }]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Here you would handle the actual form submission (e.g., API call)
-    console.log({
-      items,
-      storeName,
-      dateNeeded,
-      shipping,
-      professorName,
-      workdayCode,
-    });
-  };
-
   const deleteItem = (indexToDelete: number) => {
     const updatedItems = items.filter((_, i) => i !== indexToDelete);
     setItems(updatedItems);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch('http://localhost:4000/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          store: storeName,
+          needByDate: dateNeeded,
+          shippingPreference: shipping,
+          professor: professorName,
+          purpose,
+          workdayCode,
+          userId: 2, // TEMPORARY: Replace this with real logic later
+          items: items.map((i) => ({
+            name: i.item,
+            quantity: i.quantity,
+            status: 'Requested', // default status
+            link: i.link,
+            file: i.file ? i.file.name : null, // this won't upload the file yet
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Something went wrong with the submission.');
+      }
+
+      const data = await response.json();
+      console.log('Order created:', data);
+      alert('Request submitted successfully!');
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      alert('Error submitting request.');
+    }
   };
 
   return (

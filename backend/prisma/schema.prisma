@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -39,9 +38,9 @@ model Order {
   professor          String
   purpose            String
   workdayCode        String
-  subtotal           Float
-  tax                Float
-  total              Float
+  subtotal           Float?
+  tax                Float?
+  total              Float?
   userId             Int
   user               User   @relation(fields: [userId], references: [id])
 }
