@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createOrder } from '../api/purchaseTrackerapi';
 
 interface PurchaseItem {
   item: string;
@@ -49,35 +50,24 @@ const PurchaseRequestForm = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:4000/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          store: storeName,
-          needByDate: dateNeeded,
-          shippingPreference: shipping,
-          professor: professorName,
-          purpose,
-          workdayCode,
-          userId: 2, // TEMPORARY: Replace this with real logic later
-          items: items.map((i) => ({
-            name: i.item,
-            quantity: i.quantity,
-            status: 'Requested', // default status
-            link: i.link,
-            file: i.file ? i.file.name : null, // this won't upload the file yet
-          })),
-        }),
+      const newOrder = await createOrder({
+        store: storeName,
+        needByDate: dateNeeded,
+        shippingPreference: shipping,
+        professor: professorName,
+        purpose,
+        workdayCode,
+        userId: 2, // TEMPORARY: Replace this with real logic later
+        items: items.map((i) => ({
+          name: i.item,
+          quantity: i.quantity,
+          status: 'Requested',
+          link: i.link,
+          file: i.file ? i.file.name : null, // Note: still doesn't upload file yet
+        })),
       });
 
-      if (!response.ok) {
-        throw new Error('Something went wrong with the submission.');
-      }
-
-      const data = await response.json();
-      console.log('Order created:', data);
+      console.log('Order created:', newOrder);
       alert('Request submitted successfully!');
     } catch (error) {
       console.error('Error submitting request:', error);
