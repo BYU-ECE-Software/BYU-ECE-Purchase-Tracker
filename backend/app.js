@@ -7,7 +7,11 @@ const app = express();
 
 app.use(cors());
 app.use(express.json()); // Middleware to parse JSON request bodies
-app.use("/api/orders", orderRoutes); // Route mount point
+
+// Order route mount point
+app.use("/api/orders", orderRoutes);
+
+// Line Memo Options route mount point
 app.use("/api/lineMemoOptions", lineMemoRoutes);
 
 export default app;

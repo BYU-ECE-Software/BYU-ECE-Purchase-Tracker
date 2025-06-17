@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Item } from '../types/order';
 
+// Props expected by the EditOrderModal component
 interface EditOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -13,8 +14,10 @@ interface EditOrderModalProps {
   onSave: () => void;
 }
 
+// Dropdown options for item status
 const statusOptions = ['Requested', 'Ordered', 'Arrived', 'Cancelled'];
 
+//Functional EditOrderModal Component
 const EditOrderModal: React.FC<EditOrderModalProps> = ({
   isOpen,
   onClose,
@@ -26,16 +29,20 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   onFieldChange,
   onSave,
 }) => {
+  // Toggles display of individual item status dropdowns
   const [showItems, setShowItems] = React.useState(false);
 
+  // Do not render anything if modal is not open
   if (!isOpen) return null;
 
+  //Modal Display
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg w-[90%] max-w-2xl">
         <h2 className="text-xl text-byuNavy font-bold mb-4">Edit Order</h2>
 
         <div className="mb-4">
+          {/* Option for user to see each individual item within an order and update it's status */}
           <button
             onClick={() => setShowItems(!showItems)}
             className=" font-medium text-byuNavy hover:underline focus:outline-none"
@@ -67,6 +74,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
           )}
         </div>
 
+        {/* Fields that will need to be edited after a purchase request has been initially made as it moves through the workflow */}
         <div className="mt-4 space-y-3">
           <input
             type="number"
@@ -93,6 +101,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
           />
         </div>
 
+        {/* Save and cancel buttons */}
         <div className="mt-6 flex justify-end space-x-3">
           <button
             onClick={onClose}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createOrder, fetchLineMemoOptions } from '../api/purchaseTrackerApi';
 import type { LineMemoOption } from '../types/lineMemoOption';
 
+// Type for an individual item being purchased
 interface PurchaseItem {
   item: string;
   quantity: number;
@@ -10,9 +11,12 @@ interface PurchaseItem {
 }
 
 const PurchaseRequestForm = () => {
+  // Track the list of items the user wants to purchase
   const [items, setItems] = useState<PurchaseItem[]>([
     { item: '', quantity: 1, link: '', file: null },
   ]);
+
+  // Form fields for order-level info
   const [storeName, setStoreName] = useState('');
   const [dateNeeded, setDateNeeded] = useState('');
   const [shipping, setShipping] = useState('');
@@ -20,8 +24,11 @@ const PurchaseRequestForm = () => {
   const [purpose, setPurpose] = useState('');
   const [workdayCode, setWorkdayCode] = useState('');
   const [selectedLineMemoId, setSelectedLineMemoId] = useState('');
+
+  // Dropdown options for line memo selection
   const [lineMemoOptions, setLineMemoOptions] = useState<LineMemoOption[]>([]);
 
+  // Load available line memo options from API mount
   useEffect(() => {
     const loadOptions = async () => {
       try {
@@ -35,6 +42,7 @@ const PurchaseRequestForm = () => {
     loadOptions();
   }, []);
 
+  // Handle changes to any item field (including file)
   const handleItemChange = (
     index: number,
     field: keyof PurchaseItem,
@@ -53,15 +61,18 @@ const PurchaseRequestForm = () => {
     setItems(updatedItems);
   };
 
+  // Add a new item row
   const addItem = () => {
     setItems([...items, { item: '', quantity: 1, link: '', file: null }]);
   };
 
+  // Delete an item row by index
   const deleteItem = (indexToDelete: number) => {
     const updatedItems = items.filter((_, i) => i !== indexToDelete);
     setItems(updatedItems);
   };
 
+  // Submit form to backend
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -92,6 +103,7 @@ const PurchaseRequestForm = () => {
     }
   };
 
+  // Purchase Request Form Rendering
   return (
     <form
       onSubmit={handleSubmit}
@@ -101,6 +113,7 @@ const PurchaseRequestForm = () => {
         Order Details
       </h2>
 
+      {/* Order details */}
       <div className="text-byuNavy space-y-8">
         <div>
           <label className="block font-medium">Store Name</label>
@@ -142,6 +155,7 @@ const PurchaseRequestForm = () => {
           </div>
         </div>
 
+        {/* Item Details */}
         <h2 className="text-2xl text-byuNavy font-semibold mb-4">Items</h2>
 
         {items.map((item, index) => (
@@ -197,6 +211,7 @@ const PurchaseRequestForm = () => {
               />
             </div>
 
+            {/* Delete Item button which appears if there are multiple items displayed */}
             {index > 0 && (
               <div className="text-right">
                 <button
@@ -229,6 +244,7 @@ const PurchaseRequestForm = () => {
           </div>
         ))}
 
+        {/* Button for user to add another item to their order */}
         <button
           type="button"
           onClick={addItem}
@@ -238,6 +254,7 @@ const PurchaseRequestForm = () => {
           <span>Add Another Item</span>
         </button>
 
+        {/* Purchasing/Workday Details */}
         <h2 className="text-2xl text-byuNavy font-semibold mb-4">
           Purchasing Details
         </h2>

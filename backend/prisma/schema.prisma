@@ -7,6 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// =====================
+//      MODEL: User
+// =====================
+
 model User {
   id     Int    @id @default(autoincrement())
   firstName   String
@@ -16,6 +20,10 @@ model User {
   role   String
   orders Order[]
 }
+
+// =====================
+//      MODEL: Item
+// =====================
 
 model Item {
   id       Int    @id @default(autoincrement())
@@ -27,6 +35,10 @@ model Item {
   orderId  Int
   order    Order  @relation(fields: [orderId], references: [id])
 }
+
+// =====================
+//      MODEL: Order
+// =====================
 
 model Order {
   id                 Int     @id @default(autoincrement())
@@ -46,6 +58,10 @@ model Order {
   lineMemoOptionId   Int
   lineMemoOption     LineMemoOption @relation(fields: [lineMemoOptionId], references: [id])
 }
+
+// ==========================
+//   MODEL: LineMemoOption
+// ==========================
 
 model LineMemoOption {
   id          Int @id

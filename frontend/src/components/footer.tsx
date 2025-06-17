@@ -1,12 +1,13 @@
 import { FaFacebook, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
+// Footer bar to be used on every page
 const FooterBar = () => {
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className="bg-[#002E5D] text-white py-8 px-6">
       <div className="grid items-start grid-cols-1 md:grid-cols-3 gap-4 px-4 md:px-32">
-        {/* Middle Section: Helpful Links */}
+        {/* Left Section: Helpful Links */}
         <div className="text-center">
           <h2 className="text-xl font-bold">Helpful Links</h2>
           <ul className="mt-2 space-y-2 text-sm">
@@ -53,7 +54,7 @@ const FooterBar = () => {
           </ul>
         </div>
 
-        {/* Left Section: University Info */}
+        {/* Middle Section: University Info */}
         <div className="text-center">
           <h1 className="text-xl font-bold">Brigham Young University</h1>
           <p className="mt-2 text-sm text-white">

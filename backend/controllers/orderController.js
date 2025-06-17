@@ -28,6 +28,7 @@ export const createOrder = async (req, res) => {
         workdayCode,
         user: { connect: { id: userId } },
         lineMemoOption: { connect: { id: lineMemoOptionId } },
+        // Create each item in the order
         items: {
           create: items.map((item) => ({
             name: item.name,
@@ -61,7 +62,7 @@ export const getAllOrders = async (req, res) => {
     const orders = await prisma.order.findMany({
       include: {
         items: true,
-        user: true, // optional: remove if you don't need it
+        user: true,
       },
       orderBy: {
         requestDate: "desc",

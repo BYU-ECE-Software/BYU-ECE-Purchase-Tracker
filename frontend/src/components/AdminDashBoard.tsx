@@ -1,24 +1,32 @@
 import { useEffect, useState } from 'react';
 import type { Order, Item } from '../types/order';
-import { fetchOrders } from '../api/purchaseTrackerapi';
+import { fetchOrders } from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
 
+// Admin dashboard component for viewing and editing orders
+
 const AdminDashboard = () => {
+  // State to hold all orders
   const [orders, setOrders] = useState<Order[]>([]);
+  // State to track which orders are expanded to show item details
   const [expandedOrderIds, setExpandedOrderIds] = useState<number[]>([]);
+  // Modal state and data for the selected order
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  // States for editing fields in the modal
   const [editedItems, setEditedItems] = useState<Item[]>([]);
   const [subtotal, setSubtotal] = useState<number | null>(null);
   const [tax, setTax] = useState<number | null>(null);
   const [total, setTotal] = useState<number | null>(null);
 
+  // Reference API call to fetch all orders for the dashboard
   useEffect(() => {
     fetchOrders()
       .then(setOrders)
       .catch((err) => console.error('Error fetching orders:', err));
   }, []);
 
+  // Toggle whether an order row is expanded to show item details
   const toggleExpand = (orderId: number) => {
     setExpandedOrderIds((prev) =>
       prev.includes(orderId)
@@ -27,6 +35,7 @@ const AdminDashboard = () => {
     );
   };
 
+  // Derives the overall status of an order based on item statuses
   const getOrderStatus = (items: Item[]) => {
     if (items.every((item) => item.status === 'Arrived')) {
       return 'Completed';
@@ -44,6 +53,7 @@ const AdminDashboard = () => {
     return 'Requested';
   };
 
+  // Returns Tailwind button styling for the order status button based on status
   const getStatusButtonStyle = (status: string) => {
     switch (status) {
       case 'Completed':
@@ -57,6 +67,7 @@ const AdminDashboard = () => {
     }
   };
 
+  // Opens modal and loads selected order data into state
   const openEditModal = (order: Order) => {
     setSelectedOrder(order);
     setEditedItems(order.items.map((item) => ({ ...item })));
@@ -66,17 +77,20 @@ const AdminDashboard = () => {
     setIsModalOpen(true);
   };
 
+  // Closes modal and resets related state
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedOrder(null);
   };
 
+  // Updates status of a specific item in modal
   const handleItemStatusChange = (index: number, newStatus: string) => {
     const updatedItems = [...editedItems];
     updatedItems[index].status = newStatus;
     setEditedItems(updatedItems);
   };
 
+  // Updates subtotal, tax, or total based on field name
   const handleFieldChange = (
     field: 'subtotal' | 'tax' | 'total',
     value: number
@@ -86,6 +100,7 @@ const AdminDashboard = () => {
     if (field === 'total') setTotal(value);
   };
 
+  // Placeholder for future PUT logic to update order and item data
   const handleSave = () => {
     console.log('Save not yet implemented');
     console.log({ editedItems, subtotal, tax, total });
@@ -95,8 +110,11 @@ const AdminDashboard = () => {
   return (
     <div className="p-6">
       <h2 className="text-xl font-bold mb-4">Orders</h2>
+
+      {/* Table to display all order requests and their progress in the workflow */}
       <table className="w-full table-auto border-collapse border">
         <thead className="bg-gray-100">
+          {/* Table headers */}
           <tr>
             <th className="border px-4 py-2">Status</th>
             <th className="border px-4 py-2">Order Placed</th>
@@ -113,6 +131,7 @@ const AdminDashboard = () => {
           </tr>
         </thead>
         <tbody>
+          {/* Map through all orders and display them in the table */}
           {orders.map((order) => {
             const isExpanded = expandedOrderIds.includes(order.id);
             const status = getOrderStatus(order.items);
@@ -120,6 +139,7 @@ const AdminDashboard = () => {
               <>
                 <tr key={order.id} className="bg-white hover:bg-gray-50">
                   <td className="border px-4 py-2 text-center">
+                    {/* Button that displays the status of an order and can be clicked to open the modal to edit info on the order */}
                     <button
                       onClick={() => openEditModal(order)}
                       className={`px-3 py-1 rounded font-medium ${getStatusButtonStyle(status)}`}
@@ -146,6 +166,7 @@ const AdminDashboard = () => {
                   <td className="border px-4 py-2">{order.purpose}</td>
                   <td className="border px-4 py-2">{order.total}</td>
                   <td className="border px-4 py-2 text-center">
+                    {/* When clicked, this will expand the table and show every item within the corresponding order */}
                     <button
                       onClick={() => toggleExpand(order.id)}
                       className="text-byuRoyal hover:underline"
@@ -154,6 +175,7 @@ const AdminDashboard = () => {
                     </button>
                   </td>
                 </tr>
+                {/* sub table that displays if user wants to see individual item information for an order */}
                 {isExpanded && (
                   <tr key={`items-${order.id}`}>
                     <td colSpan={7} className="border-t px-4 py-2 bg-gray-50">
@@ -206,6 +228,8 @@ const AdminDashboard = () => {
           })}
         </tbody>
       </table>
+
+      {/* Instance of the Modal Component that is used to edit info for an order */}
       <EditOrderModal
         isOpen={isModalOpen}
         onClose={closeModal}

@@ -2,6 +2,7 @@ import BYULogo from '../assets/BYU_monogram_white.svg';
 import { Link } from 'react-router-dom';
 import '../css/header.css';
 
+// Header Bar to be used on every page
 const HeaderBar = () => {
   return (
     <div className="w-full sticky top-0 z-50">
@@ -20,7 +21,7 @@ const HeaderBar = () => {
         </div>
       </header>
 
-      {/* White nav bar */}
+      {/* White nav bar with links to every page */}
       <nav className="w-full bg-white text-byuNavy shadow">
         <div className="flex px-32 text-base font-medium">
           <Link

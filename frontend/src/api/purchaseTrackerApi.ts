@@ -1,14 +1,19 @@
+//contains all api calls used throughout the frontend
+
 import type { LineMemoOption } from '../types/lineMemoOption';
 import type { Order } from '../types/order';
 
+//base api url used in every call
 const BASE_API_URL = 'http://localhost:4000/api';
 
+// API Call to Fetch all Orders
 export const fetchOrders = async (): Promise<Order[]> => {
   const res = await fetch(`${BASE_API_URL}/orders`);
   if (!res.ok) throw new Error('Failed to fetch orders');
   return await res.json();
 };
 
+// API Call to Create a new Order
 export const createOrder = async (
   orderData: Partial<Order>
 ): Promise<Order> => {
@@ -23,6 +28,7 @@ export const createOrder = async (
   return await res.json();
 };
 
+// API Call to Fetch all Line Memo Options
 export const fetchLineMemoOptions = async (): Promise<LineMemoOption[]> => {
   const res = await fetch(`${BASE_API_URL}/lineMemoOptions`);
   if (!res.ok) throw new Error('Failed to fetch line memo options');
