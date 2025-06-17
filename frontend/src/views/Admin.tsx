@@ -7,7 +7,7 @@ function Admin() {
   return (
     <>
       <HeaderBar />
-      <PageTitle title="ADMIN DASHBOARD" />
+      <PageTitle title="ORDERS" />
       <AdminDashboard />
       <FooterBar />
     </>

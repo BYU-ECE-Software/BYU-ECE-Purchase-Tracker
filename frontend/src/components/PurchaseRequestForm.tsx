@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { createOrder } from '../api/purchaseTrackerapi';
+import { useState, useEffect } from 'react';
+import { createOrder, fetchLineMemoOptions } from '../api/purchaseTrackerApi';
+import type { LineMemoOption } from '../types/lineMemoOption';
 
 interface PurchaseItem {
   item: string;
@@ -18,6 +19,21 @@ const PurchaseRequestForm = () => {
   const [professorName, setProfessorName] = useState('');
   const [purpose, setPurpose] = useState('');
   const [workdayCode, setWorkdayCode] = useState('');
+  const [selectedLineMemoId, setSelectedLineMemoId] = useState('');
+  const [lineMemoOptions, setLineMemoOptions] = useState<LineMemoOption[]>([]);
+
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        const options = await fetchLineMemoOptions();
+        setLineMemoOptions(options);
+      } catch (err) {
+        console.error('Failed to load line memo options:', err);
+      }
+    };
+
+    loadOptions();
+  }, []);
 
   const handleItemChange = (
     index: number,
@@ -58,6 +74,7 @@ const PurchaseRequestForm = () => {
         purpose,
         workdayCode,
         userId: 2, // TEMPORARY: Replace this with real logic later
+        lineMemoOptionId: Number(selectedLineMemoId),
         items: items.map((i) => ({
           name: i.item,
           quantity: i.quantity,
@@ -80,98 +97,6 @@ const PurchaseRequestForm = () => {
       onSubmit={handleSubmit}
       className="max-w-3xl mx-auto mt-4 mb-8 p-6 bg-white shadow-md rounded-md space-y-6"
     >
-      <h2 className="text-2xl text-byuNavy font-semibold mb-4">Items</h2>
-
-      {items.map((item, index) => (
-        <div
-          key={index}
-          className="border border-gray-300 p-4 rounded-md space-y-4 text-byuNavy"
-        >
-          <div>
-            <label className="block font-medium">Item Name</label>
-            <input
-              type="text"
-              value={item.item}
-              onChange={(e) => handleItemChange(index, 'item', e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded p-2"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium">Quantity</label>
-            <input
-              type="number"
-              min="1"
-              value={item.quantity}
-              onChange={(e) =>
-                handleItemChange(index, 'quantity', Number(e.target.value))
-              }
-              required
-              className="w-full border border-gray-300 rounded p-2"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium">Link</label>
-            <input
-              type="url"
-              value={item.link}
-              onChange={(e) => handleItemChange(index, 'link', e.target.value)}
-              className="w-full border border-gray-300 rounded p-2"
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium">File Upload</label>
-            <input
-              type="file"
-              onChange={(e) => handleItemChange(index, 'file', e)}
-              className="block mt-1"
-            />
-          </div>
-
-          {index > 0 && (
-            <div className="text-right">
-              <button
-                type="button"
-                onClick={() => deleteItem(index)}
-                className="text-[#E61744] hover:text-[#A3082A]"
-                title="Delete item"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-5 h-5"
-                >
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                  <path d="M10 11v6" />
-                  <path d="M14 11v6" />
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                </svg>
-              </button>
-            </div>
-          )}
-        </div>
-      ))}
-
-      <button
-        type="button"
-        onClick={addItem}
-        className="flex items-center text-byuNavy hover:text-[#001f3f] font-medium space-x-1 hover:underline"
-      >
-        <span className="text-lg">+</span>
-        <span>Add Another Item</span>
-      </button>
-
       <h2 className="text-2xl text-byuNavy font-semibold mb-4">
         Order Details
       </h2>
@@ -217,6 +142,106 @@ const PurchaseRequestForm = () => {
           </div>
         </div>
 
+        <h2 className="text-2xl text-byuNavy font-semibold mb-4">Items</h2>
+
+        {items.map((item, index) => (
+          <div
+            key={index}
+            className="border border-gray-300 p-4 rounded-md space-y-4 text-byuNavy"
+          >
+            <div>
+              <label className="block font-medium">Item Name</label>
+              <input
+                type="text"
+                value={item.item}
+                onChange={(e) =>
+                  handleItemChange(index, 'item', e.target.value)
+                }
+                required
+                className="w-full border border-gray-300 rounded p-2"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium">Quantity</label>
+              <input
+                type="number"
+                min="1"
+                value={item.quantity}
+                onChange={(e) =>
+                  handleItemChange(index, 'quantity', Number(e.target.value))
+                }
+                required
+                className="w-full border border-gray-300 rounded p-2"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium">Link</label>
+              <input
+                type="url"
+                value={item.link}
+                onChange={(e) =>
+                  handleItemChange(index, 'link', e.target.value)
+                }
+                className="w-full border border-gray-300 rounded p-2"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium">File Upload</label>
+              <input
+                type="file"
+                onChange={(e) => handleItemChange(index, 'file', e)}
+                className="block mt-1"
+              />
+            </div>
+
+            {index > 0 && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => deleteItem(index)}
+                  className="text-[#E61744] hover:text-[#A3082A]"
+                  title="Delete item"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-5 h-5"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={addItem}
+          className="flex items-center text-byuNavy hover:text-[#001f3f] font-medium space-x-1 hover:underline"
+        >
+          <span className="text-lg">+</span>
+          <span>Add Another Item</span>
+        </button>
+
+        <h2 className="text-2xl text-byuNavy font-semibold mb-4">
+          Purchasing Details
+        </h2>
+
         <div>
           <label className="block font-medium">Professor Name</label>
           <input
@@ -248,6 +273,25 @@ const PurchaseRequestForm = () => {
             required
             className="w-full border border-gray-300 rounded p-2"
           />
+        </div>
+
+        <div>
+          <label className="block font-medium">Line Memo Options</label>
+          <select
+            value={selectedLineMemoId}
+            onChange={(e) => setSelectedLineMemoId(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded p-2 text-byuNavy"
+          >
+            <option value="" disabled hidden>
+              Select an option
+            </option>
+            {lineMemoOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.description}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex justify-center">

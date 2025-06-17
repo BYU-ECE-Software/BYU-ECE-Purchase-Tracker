@@ -26,6 +26,8 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   onFieldChange,
   onSave,
 }) => {
+  const [showItems, setShowItems] = React.useState(false);
+
   if (!isOpen) return null;
 
   return (
@@ -33,22 +35,37 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
       <div className="bg-white p-6 rounded-lg w-[90%] max-w-2xl">
         <h2 className="text-xl text-byuNavy font-bold mb-4">Edit Order</h2>
 
-        {items.map((item, idx) => (
-          <div key={item.id} className="mb-3">
-            <span className="block text-byuNavy font-medium">{item.name}</span>
-            <select
-              value={item.status}
-              onChange={(e) => onItemStatusChange(idx, e.target.value)}
-              className="border p-2 rounded w-full text-byuNavy"
-            >
-              {statusOptions.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
+        <div className="mb-4">
+          <button
+            onClick={() => setShowItems(!showItems)}
+            className=" font-medium text-byuNavy hover:underline focus:outline-none"
+          >
+            {showItems ? 'Hide Items ▲' : 'Change Item Status ▼'}
+          </button>
+
+          {showItems && (
+            <div className="mt-2 space-y-3">
+              {items.map((item, idx) => (
+                <div key={item.id}>
+                  <label className="block text-byuNavy text-sm font-medium">
+                    {item.name}
+                  </label>
+                  <select
+                    value={item.status}
+                    onChange={(e) => onItemStatusChange(idx, e.target.value)}
+                    className="border p-2 rounded w-full text-byuNavy"
+                  >
+                    {statusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               ))}
-            </select>
-          </div>
-        ))}
+            </div>
+          )}
+        </div>
 
         <div className="mt-4 space-y-3">
           <input
@@ -58,21 +75,21 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             onChange={(e) =>
               onFieldChange('subtotal', parseFloat(e.target.value))
             }
-            className="border p-2 rounded w-full"
+            className="border p-2 rounded w-full text-byuNavy"
           />
           <input
             type="number"
             placeholder="Tax"
             value={tax ?? ''}
             onChange={(e) => onFieldChange('tax', parseFloat(e.target.value))}
-            className="border p-2 rounded w-full"
+            className="border p-2 rounded w-full text-byuNavy"
           />
           <input
             type="number"
             placeholder="Total"
             value={total ?? ''}
             onChange={(e) => onFieldChange('total', parseFloat(e.target.value))}
-            className="border p-2 rounded w-full"
+            className="border p-2 rounded w-full text-byuNavy"
           />
         </div>
 

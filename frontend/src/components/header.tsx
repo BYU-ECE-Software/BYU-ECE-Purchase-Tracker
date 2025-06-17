@@ -23,16 +23,18 @@ const HeaderBar = () => {
       {/* White nav bar */}
       <nav className="w-full bg-white text-byuNavy shadow">
         <div className="flex px-32 text-base font-medium">
-          <div className="px-3 py-4 hover:bg-[#FAFAFA] rounded-md nav-link-hover">
-            <Link to="/purchaseRequest" className="block h-full w-full">
-              Purchase Request Form
-            </Link>
-          </div>
-          <div className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md nav-link-hover">
-            <Link to="/admin" className="block h-full w-full">
-              Admin Dashboard
-            </Link>
-          </div>
+          <Link
+            to="/purchaseRequest"
+            className="px-3 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
+          >
+            Purchase Request Form
+          </Link>
+          <Link
+            to="/admin"
+            className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
+          >
+            Orders
+          </Link>
         </div>
       </nav>
     </div>

@@ -13,6 +13,7 @@ export const createOrder = async (req, res) => {
       purpose,
       workdayCode,
       userId,
+      lineMemoOptionId,
     } = req.body;
 
     // Create the order
@@ -26,6 +27,7 @@ export const createOrder = async (req, res) => {
         purpose,
         workdayCode,
         user: { connect: { id: userId } },
+        lineMemoOption: { connect: { id: lineMemoOptionId } },
         items: {
           create: items.map((item) => ({
             name: item.name,

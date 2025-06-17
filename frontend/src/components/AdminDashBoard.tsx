@@ -109,7 +109,7 @@ const AdminDashboard = () => {
             <th className="border px-4 py-2">Workday Code</th>
             <th className="border px-4 py-2">Purpose</th>
             <th className="border px-4 py-2">Total</th>
-            <th className="border px-4 py-2">Expand</th>
+            <th className="border px-4 py-2">Items</th>
           </tr>
         </thead>
         <tbody>
