@@ -63,6 +63,7 @@ export const getAllOrders = async (req, res) => {
       include: {
         items: true,
         user: true,
+        lineMemoOption: true,
       },
       orderBy: {
         requestDate: "desc",

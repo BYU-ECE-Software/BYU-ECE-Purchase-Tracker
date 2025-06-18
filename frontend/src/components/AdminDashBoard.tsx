@@ -125,6 +125,7 @@ const AdminDashboard = () => {
             <th className="border px-4 py-2">Student Email</th>
             <th className="border px-4 py-2">Professor</th>
             <th className="border px-4 py-2">Workday Code</th>
+            <th className="border px-4 py-2">Line Memo Option</th>
             <th className="border px-4 py-2">Purpose</th>
             <th className="border px-4 py-2">Total</th>
             <th className="border px-4 py-2">Items</th>
@@ -163,6 +164,10 @@ const AdminDashboard = () => {
                   <td className="border px-4 py-2">{order.user.email}</td>
                   <td className="border px-4 py-2">{order.professor}</td>
                   <td className="border px-4 py-2">{order.workdayCode}</td>
+                  <td className="border px-4 py-2">
+                    {order.lineMemoOptionId} -{' '}
+                    {order.lineMemoOption.description}
+                  </td>
                   <td className="border px-4 py-2">{order.purpose}</td>
                   <td className="border px-4 py-2">{order.total}</td>
                   <td className="border px-4 py-2 text-center">

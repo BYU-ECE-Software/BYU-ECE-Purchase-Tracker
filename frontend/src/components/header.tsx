@@ -13,7 +13,7 @@ const HeaderBar = () => {
             href="https://www.byu.edu"
             target="_blank"
             rel="noopener noreferrer"
-            className="mr-4"
+            className="mr-4 border-r-[1px] border-byuRoyal"
           >
             <img src={BYULogo} alt="Logo" className="h-10 w-auto" />
           </a>
@@ -26,9 +26,15 @@ const HeaderBar = () => {
         <div className="flex px-32 text-base font-medium">
           <Link
             to="/purchaseRequest"
-            className="px-3 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
+            className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
           >
             Purchase Request Form
+          </Link>
+          <Link
+            to="/receiptSubmit"
+            className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
+          >
+            Submit In Person Receipts
           </Link>
           <Link
             to="/admin"

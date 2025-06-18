@@ -26,4 +26,8 @@ export interface Order {
   user: User;
   items: Item[];
   lineMemoOptionId: number;
+  lineMemoOption: {
+    id: number;
+    description: string;
+  };
 }
