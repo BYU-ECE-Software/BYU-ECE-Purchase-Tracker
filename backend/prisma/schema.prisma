@@ -47,7 +47,8 @@ model Order {
   store              String
   needByDate         DateTime?
   shippingPreference String
-  professor          String
+  professorId        Int
+  professor          Professors   @relation(fields: [professorId], references: [id])
   purpose            String
   workdayCode        String
   subtotal           Float?
@@ -67,4 +68,17 @@ model LineMemoOption {
   id          Int @id
   description String
   orders      Order[]
+}
+
+// ==========================
+//   MODEL: Professors
+// ==========================
+
+model Professors {
+  id        Int     @id @default(autoincrement())
+  firstName String
+  lastName  String
+  title     String?
+  email     String?
+  orders    Order[]
 }

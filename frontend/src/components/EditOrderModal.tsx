@@ -6,11 +6,14 @@ interface EditOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: Item[];
-  subtotal: number | null;
-  tax: number | null;
-  total: number | null;
+  editedOrder: {
+    subtotal: number | null;
+    tax: number | null;
+    total: number | null;
+    // add more editable fields here as needed
+  };
+  onOrderFieldChange: (field: string, value: any) => void;
   onItemStatusChange: (index: number, newStatus: string) => void;
-  onFieldChange: (field: 'subtotal' | 'tax' | 'total', value: number) => void;
   onSave: () => void;
 }
 
@@ -22,11 +25,9 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   isOpen,
   onClose,
   items,
-  subtotal,
-  tax,
-  total,
+  editedOrder,
   onItemStatusChange,
-  onFieldChange,
+  onOrderFieldChange,
   onSave,
 }) => {
   // Toggles display of individual item status dropdowns
@@ -79,24 +80,28 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
           <input
             type="number"
             placeholder="Subtotal"
-            value={subtotal ?? ''}
+            value={editedOrder.subtotal ?? ''}
             onChange={(e) =>
-              onFieldChange('subtotal', parseFloat(e.target.value))
+              onOrderFieldChange('subtotal', parseFloat(e.target.value))
             }
             className="border p-2 rounded w-full text-byuNavy"
           />
           <input
             type="number"
             placeholder="Tax"
-            value={tax ?? ''}
-            onChange={(e) => onFieldChange('tax', parseFloat(e.target.value))}
+            value={editedOrder.tax ?? ''}
+            onChange={(e) =>
+              onOrderFieldChange('tax', parseFloat(e.target.value))
+            }
             className="border p-2 rounded w-full text-byuNavy"
           />
           <input
             type="number"
             placeholder="Total"
-            value={total ?? ''}
-            onChange={(e) => onFieldChange('total', parseFloat(e.target.value))}
+            value={editedOrder.total ?? ''}
+            onChange={(e) =>
+              onOrderFieldChange('total', parseFloat(e.target.value))
+            }
             className="border p-2 rounded w-full text-byuNavy"
           />
         </div>

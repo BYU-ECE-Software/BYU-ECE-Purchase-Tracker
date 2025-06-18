@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Order, Item } from '../types/order';
-import { fetchOrders } from '../api/purchaseTrackerApi';
+import { fetchOrders, updateOrder } from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
 
 // Admin dashboard component for viewing and editing orders
@@ -15,9 +15,16 @@ const AdminDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   // States for editing fields in the modal
   const [editedItems, setEditedItems] = useState<Item[]>([]);
-  const [subtotal, setSubtotal] = useState<number | null>(null);
-  const [tax, setTax] = useState<number | null>(null);
-  const [total, setTotal] = useState<number | null>(null);
+  const [editedOrder, setEditedOrder] = useState<{
+    subtotal: number | null;
+    tax: number | null;
+    total: number | null;
+    // add more editable fields later as needed
+  }>({
+    subtotal: null,
+    tax: null,
+    total: null,
+  });
 
   // Reference API call to fetch all orders for the dashboard
   useEffect(() => {
@@ -71,9 +78,12 @@ const AdminDashboard = () => {
   const openEditModal = (order: Order) => {
     setSelectedOrder(order);
     setEditedItems(order.items.map((item) => ({ ...item })));
-    setSubtotal(order.subtotal ?? null);
-    setTax(order.tax ?? null);
-    setTotal(order.total ?? null);
+    setEditedOrder({
+      subtotal: order.subtotal ?? null,
+      tax: order.tax ?? null,
+      total: order.total ?? null,
+    });
+
     setIsModalOpen(true);
   };
 
@@ -91,20 +101,32 @@ const AdminDashboard = () => {
   };
 
   // Updates subtotal, tax, or total based on field name
-  const handleFieldChange = (
-    field: 'subtotal' | 'tax' | 'total',
-    value: number
-  ) => {
-    if (field === 'subtotal') setSubtotal(value);
-    if (field === 'tax') setTax(value);
-    if (field === 'total') setTotal(value);
+  const handleOrderFieldChange = (field: string, value: any) => {
+    setEditedOrder((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
-  // Placeholder for future PUT logic to update order and item data
-  const handleSave = () => {
-    console.log('Save not yet implemented');
-    console.log({ editedItems, subtotal, tax, total });
-    closeModal();
+  // PUT logic to update order and item data
+  const handleSave = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      await updateOrder(selectedOrder.id, {
+        ...editedOrder,
+        items: editedItems.map(({ id, status }) => ({ id, status })),
+      });
+
+      //Refresh orders
+      const refreshedOrders = await fetchOrders();
+      setOrders(refreshedOrders);
+      closeModal();
+      alert('Order updated sucessfully!');
+    } catch (err) {
+      console.error('Failed to update order:', err);
+      alert('Something went wrong updating the order.');
+    }
   };
 
   return (
@@ -127,6 +149,8 @@ const AdminDashboard = () => {
             <th className="border px-4 py-2">Workday Code</th>
             <th className="border px-4 py-2">Line Memo Option</th>
             <th className="border px-4 py-2">Purpose</th>
+            <th className="border px-4 py-2">Subtotal</th>
+            <th className="border px-4 py-2">Tax</th>
             <th className="border px-4 py-2">Total</th>
             <th className="border px-4 py-2">Items</th>
           </tr>
@@ -162,14 +186,25 @@ const AdminDashboard = () => {
                     {order.user.firstName} {order.user.lastName}
                   </td>
                   <td className="border px-4 py-2">{order.user.email}</td>
-                  <td className="border px-4 py-2">{order.professor}</td>
+                  <td className="border px-4 py-2">
+                    {order.professor.title} {order.professor.firstName}{' '}
+                    {order.professor.lastName}
+                  </td>
                   <td className="border px-4 py-2">{order.workdayCode}</td>
                   <td className="border px-4 py-2">
                     {order.lineMemoOptionId} -{' '}
                     {order.lineMemoOption.description}
                   </td>
                   <td className="border px-4 py-2">{order.purpose}</td>
-                  <td className="border px-4 py-2">{order.total}</td>
+                  <td className="border px-4 py-2">
+                    {order.subtotal != null ? `$${order.subtotal}` : ''}
+                  </td>
+                  <td className="border px-4 py-2">
+                    {order.tax != null ? `$${order.tax}` : ''}
+                  </td>
+                  <td className="border px-4 py-2">
+                    {order.total != null ? `$${order.total}` : ''}
+                  </td>
                   <td className="border px-4 py-2 text-center">
                     {/* When clicked, this will expand the table and show every item within the corresponding order */}
                     <button
@@ -239,11 +274,9 @@ const AdminDashboard = () => {
         isOpen={isModalOpen}
         onClose={closeModal}
         items={editedItems}
-        subtotal={subtotal}
-        tax={tax}
-        total={total}
+        editedOrder={editedOrder}
         onItemStatusChange={handleItemStatusChange}
-        onFieldChange={handleFieldChange}
+        onOrderFieldChange={handleOrderFieldChange}
         onSave={handleSave}
       />
     </div>

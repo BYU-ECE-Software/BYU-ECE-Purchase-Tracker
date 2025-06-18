@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
-import { createOrder, fetchLineMemoOptions } from '../api/purchaseTrackerApi';
+import {
+  createOrder,
+  fetchLineMemoOptions,
+  fetchProfessors,
+} from '../api/purchaseTrackerApi';
 import type { LineMemoOption } from '../types/lineMemoOption';
+import type { Professor } from '../types/professor';
 
 // Type for an individual item being purchased
 interface PurchaseItem {
@@ -20,13 +25,16 @@ const PurchaseRequestForm = () => {
   const [storeName, setStoreName] = useState('');
   const [dateNeeded, setDateNeeded] = useState('');
   const [shipping, setShipping] = useState('');
-  const [professorName, setProfessorName] = useState('');
   const [purpose, setPurpose] = useState('');
   const [workdayCode, setWorkdayCode] = useState('');
   const [selectedLineMemoId, setSelectedLineMemoId] = useState('');
+  const [selectedProfessorId, setSelectedProfessorId] = useState('');
 
   // Dropdown options for line memo selection
   const [lineMemoOptions, setLineMemoOptions] = useState<LineMemoOption[]>([]);
+
+  // Dropdown options for professor selection
+  const [professors, setProfessors] = useState<Professor[]>([]);
 
   // Load available line memo options from API mount
   useEffect(() => {
@@ -40,6 +48,20 @@ const PurchaseRequestForm = () => {
     };
 
     loadOptions();
+  }, []);
+
+  // Load available Professors from API mount
+  useEffect(() => {
+    const loadProfessors = async () => {
+      try {
+        const professors = await fetchProfessors();
+        setProfessors(professors);
+      } catch (err) {
+        console.error('Failed to load professors:', err);
+      }
+    };
+
+    loadProfessors();
   }, []);
 
   // Handle changes to any item field (including file)
@@ -81,7 +103,7 @@ const PurchaseRequestForm = () => {
         store: storeName,
         needByDate: dateNeeded,
         shippingPreference: shipping,
-        professor: professorName,
+        professorId: Number(selectedProfessorId),
         purpose,
         workdayCode,
         userId: 2, // TEMPORARY: Replace this with real logic later
@@ -260,14 +282,22 @@ const PurchaseRequestForm = () => {
         </h2>
 
         <div>
-          <label className="block font-medium">Professor Name</label>
-          <input
-            type="text"
-            value={professorName}
-            onChange={(e) => setProfessorName(e.target.value)}
+          <label className="block font-medium">Professor</label>
+          <select
+            value={selectedProfessorId}
+            onChange={(e) => setSelectedProfessorId(e.target.value)}
             required
-            className="w-full border border-gray-300 rounded p-2"
-          />
+            className="w-full border border-gray-300 rounded p-2 text-byuNavy"
+          >
+            <option value="" disabled hidden>
+              Select a professor
+            </option>
+            {professors.map((prof) => (
+              <option key={prof.id} value={prof.id}>
+                {prof.title} {prof.firstName} {prof.lastName}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

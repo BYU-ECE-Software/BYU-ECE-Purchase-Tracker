@@ -64,6 +64,7 @@ export const getAllOrders = async (req, res) => {
         items: true,
         user: true,
         lineMemoOption: true,
+        professor: true,
       },
       orderBy: {
         requestDate: "desc",
@@ -74,5 +75,58 @@ export const getAllOrders = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch orders" });
+  }
+};
+
+// Update an existing order and its items
+export const updateOrder = async (req, res) => {
+  const orderId = parseInt(req.params.id);
+  const { items, ...orderFields } = req.body;
+
+  try {
+    // Build dynamic data for the order — remove undefined or null values
+    const cleanedOrderData = Object.fromEntries(
+      Object.entries(orderFields).filter(
+        ([_, v]) => v !== undefined && v !== null
+      )
+    );
+
+    // Handle lineMemoOptionId specially (as it's a relational field)
+    if (cleanedOrderData.lineMemoOptionId) {
+      cleanedOrderData.lineMemoOption = {
+        connect: { id: cleanedOrderData.lineMemoOptionId },
+      };
+      delete cleanedOrderData.lineMemoOptionId;
+    }
+
+    // Update the order with only the provided fields
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: cleanedOrderData,
+    });
+
+    let updatedItems = [];
+
+    // If items array is included, update them
+    if (Array.isArray(items)) {
+      updatedItems = await Promise.all(
+        items.map((item) =>
+          prisma.item.update({
+            where: { id: item.id },
+            data: {
+              ...item, // includes only fields that were sent
+            },
+          })
+        )
+      );
+    }
+
+    res.status(200).json({ order: updatedOrder, items: updatedItems });
+  } catch (error) {
+    console.error("Error updating order:", error);
+    res.status(500).json({
+      error: "Failed to update order",
+      details: error.message,
+    });
   }
 };

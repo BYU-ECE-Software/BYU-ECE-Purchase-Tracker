@@ -16,7 +16,14 @@ export interface Order {
   store: string;
   needByDate?: string; // or `Date`
   shippingPreference: string;
-  professor: string;
+  professorId: number;
+  professor: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    title?: string;
+    email?: string;
+  };
   purpose: string;
   workdayCode: string;
   subtotal?: number;
@@ -30,4 +37,9 @@ export interface Order {
     id: number;
     description: string;
   };
+}
+
+export interface OrderUpdatePayload {
+  [key: string]: any;
+  items?: { id: number; [key: string]: any }[];
 }
