@@ -34,7 +34,7 @@ const HeaderBar = () => {
             to="/receiptSubmit"
             className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
           >
-            Submit In Person Receipts
+            Submit Receipts
           </Link>
           <Link
             to="/admin"

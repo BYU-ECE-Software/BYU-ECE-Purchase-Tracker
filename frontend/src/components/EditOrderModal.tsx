@@ -18,7 +18,7 @@ interface EditOrderModalProps {
 }
 
 // Dropdown options for item status
-const statusOptions = ['Requested', 'Ordered', 'Arrived', 'Cancelled'];
+const statusOptions = ['Requested', 'Ordered', 'Completed', 'Cancelled'];
 
 //Functional EditOrderModal Component
 const EditOrderModal: React.FC<EditOrderModalProps> = ({

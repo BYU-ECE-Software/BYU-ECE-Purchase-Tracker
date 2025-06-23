@@ -9,39 +9,54 @@ export const createOrder = async (req, res) => {
       store,
       needByDate,
       shippingPreference,
-      professor,
+      professorId,
       purpose,
       workdayCode,
+      subtotal,
+      tax,
+      total,
       userId,
       lineMemoOptionId,
+      cardType,
+      purchaseDate,
+      receipt,
     } = req.body;
+
+    // Format the order
+    const orderData = {
+      requestDate: new Date(),
+      store,
+      needByDate: needByDate ? new Date(needByDate) : null,
+      shippingPreference: shippingPreference || null,
+      professor: { connect: { id: professorId } },
+      purpose,
+      workdayCode,
+      subtotal: subtotal || null,
+      tax: tax || null,
+      total: total || null,
+      user: { connect: { id: userId } },
+      lineMemoOption: { connect: { id: lineMemoOptionId } },
+      cardType: cardType || null,
+      purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
+      receipt: receipt || null,
+    };
+
+    // Only create items if they were submitted
+    if (Array.isArray(items) && items.length > 0) {
+      orderData.items = {
+        create: items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          status: item.status,
+          link: item.link || null,
+          file: item.file || null,
+        })),
+      };
+    }
 
     // Create the order
     const newOrder = await prisma.order.create({
-      data: {
-        requestDate: new Date(),
-        store,
-        needByDate: needByDate ? new Date(needByDate) : null,
-        shippingPreference,
-        professor,
-        purpose,
-        workdayCode,
-        user: { connect: { id: userId } },
-        lineMemoOption: { connect: { id: lineMemoOptionId } },
-        // Create each item in the order
-        items: {
-          create: items.map((item) => ({
-            name: item.name,
-            quantity: item.quantity,
-            status: item.status,
-            link: item.link || null,
-            file: item.file || null,
-          })),
-        },
-        subtotal: null, // secretary will fill this in later
-        tax: null,
-        total: null,
-      },
+      data: orderData,
       include: {
         items: true,
       },

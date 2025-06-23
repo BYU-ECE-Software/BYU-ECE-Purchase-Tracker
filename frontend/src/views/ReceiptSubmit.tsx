@@ -7,7 +7,7 @@ function ReceiptSubmit() {
   return (
     <>
       <HeaderBar />
-      <PageTitle title="SUBMIT IN PERSON RECEIPTS" />
+      <PageTitle title="SUBMIT RECEIPTS" />
       <ReceiptSubmitForm />
       <FooterBar />
     </>

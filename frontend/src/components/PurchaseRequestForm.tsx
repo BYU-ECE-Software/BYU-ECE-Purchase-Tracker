@@ -33,9 +33,6 @@ const PurchaseRequestForm = () => {
   // Dropdown options for line memo selection
   const [lineMemoOptions, setLineMemoOptions] = useState<LineMemoOption[]>([]);
 
-  // Dropdown options for professor selection
-  const [professors, setProfessors] = useState<Professor[]>([]);
-
   // Load available line memo options from API mount
   useEffect(() => {
     const loadOptions = async () => {
@@ -49,6 +46,9 @@ const PurchaseRequestForm = () => {
 
     loadOptions();
   }, []);
+
+  // Dropdown options for professor selection
+  const [professors, setProfessors] = useState<Professor[]>([]);
 
   // Load available Professors from API mount
   useEffect(() => {

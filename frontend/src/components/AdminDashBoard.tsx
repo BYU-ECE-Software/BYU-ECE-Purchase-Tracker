@@ -3,11 +3,16 @@ import type { Order, Item } from '../types/order';
 import { fetchOrders, updateOrder } from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
 
+//
+interface OrderWithStatus extends Order {
+  _status: string;
+}
+
 // Admin dashboard component for viewing and editing orders
 
 const AdminDashboard = () => {
   // State to hold all orders
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderWithStatus[]>([]);
   // State to track which orders are expanded to show item details
   const [expandedOrderIds, setExpandedOrderIds] = useState<number[]>([]);
   // Modal state and data for the selected order
@@ -26,11 +31,53 @@ const AdminDashboard = () => {
     total: null,
   });
 
-  // Reference API call to fetch all orders for the dashboard
+  // Sort logic for loading up orders on the dashboard
+  const loadAndSetOrders = async () => {
+    try {
+      // Reference API call to fetch all orders for the dashboard
+      const orders = await fetchOrders();
+      const withStatus: OrderWithStatus[] = orders.map((order) => ({
+        ...order,
+        _status: getOrderStatus(order.items),
+      }));
+
+      // Separates in progress orders (those that have an order status of "Ordered" or "Requested")
+      const sorted = withStatus.sort((a, b) => {
+        const isAInProgress =
+          a._status === 'Requested' || a._status === 'Ordered';
+        const isBInProgress =
+          b._status === 'Requested' || b._status === 'Ordered';
+
+        // In-progress orders go first
+        if (isAInProgress && !isBInProgress) return -1;
+        if (!isAInProgress && isBInProgress) return 1;
+
+        // If both are in-progress, sort by needByDate (nulls last)
+        if (isAInProgress && isBInProgress) {
+          const dateA = a.needByDate
+            ? new Date(a.needByDate).getTime()
+            : Infinity;
+          const dateB = b.needByDate
+            ? new Date(b.needByDate).getTime()
+            : Infinity;
+          return dateA - dateB;
+        }
+
+        // If both are completed/cancelled, sort by requestDate descending
+        const requestA = new Date(a.requestDate).getTime();
+        const requestB = new Date(b.requestDate).getTime();
+        return requestB - requestA;
+      });
+
+      setOrders(sorted);
+    } catch (err) {
+      console.error('Error loading orders:', err);
+    }
+  };
+
+  // fetch all orders for the dashboard
   useEffect(() => {
-    fetchOrders()
-      .then(setOrders)
-      .catch((err) => console.error('Error fetching orders:', err));
+    loadAndSetOrders();
   }, []);
 
   // Toggle whether an order row is expanded to show item details
@@ -44,20 +91,32 @@ const AdminDashboard = () => {
 
   // Derives the overall status of an order based on item statuses
   const getOrderStatus = (items: Item[]) => {
-    if (items.every((item) => item.status === 'Arrived')) {
-      return 'Completed';
-    }
-    if (items.every((item) => item.status === 'Cancelled')) {
+    // If only some items in an order are cancelled, proceed with normal workflow and derive order status based on non-cancelled orders
+    const activeItems = items.filter((item) => item.status !== 'Cancelled');
+
+    // All items cancelled
+    if (
+      items.length > 0 &&
+      items.every((item) => item.status === 'Cancelled')
+    ) {
       return 'Cancelled';
     }
+
+    // All active items completed
     if (
-      items.some(
-        (item) => item.status === 'Ordered' || item.status === 'Arrived'
-      )
+      activeItems.length > 0 &&
+      activeItems.every((item) => item.status === 'Completed')
     ) {
-      return 'Ordered';
+      return 'Completed';
     }
-    return 'Requested';
+
+    // Any active item still requested
+    if (activeItems.some((item) => item.status === 'Requested')) {
+      return 'Requested';
+    }
+
+    // All active items are at least ordered
+    return 'Ordered';
   };
 
   // Returns Tailwind button styling for the order status button based on status
@@ -118,9 +177,8 @@ const AdminDashboard = () => {
         items: editedItems.map(({ id, status }) => ({ id, status })),
       });
 
-      //Refresh orders
-      const refreshedOrders = await fetchOrders();
-      setOrders(refreshedOrders);
+      //Refresh orders and close modal
+      await loadAndSetOrders();
       closeModal();
       alert('Order updated sucessfully!');
     } catch (err) {
@@ -159,7 +217,7 @@ const AdminDashboard = () => {
           {/* Map through all orders and display them in the table */}
           {orders.map((order) => {
             const isExpanded = expandedOrderIds.includes(order.id);
-            const status = getOrderStatus(order.items);
+            const status = order._status ?? getOrderStatus(order.items);
             return (
               <>
                 <tr key={order.id} className="bg-white hover:bg-gray-50">

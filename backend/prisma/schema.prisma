@@ -46,7 +46,7 @@ model Order {
   items              Item[]
   store              String
   needByDate         DateTime?
-  shippingPreference String
+  shippingPreference String?
   professorId        Int
   professor          Professors   @relation(fields: [professorId], references: [id])
   purpose            String
@@ -58,6 +58,9 @@ model Order {
   user               User   @relation(fields: [userId], references: [id])
   lineMemoOptionId   Int
   lineMemoOption     LineMemoOption @relation(fields: [lineMemoOptionId], references: [id])
+  cardType           String?
+  purchaseDate       DateTime?
+  receipt            String?
 }
 
 // ==========================
