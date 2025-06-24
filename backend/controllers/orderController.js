@@ -114,6 +114,11 @@ export const updateOrder = async (req, res) => {
       delete cleanedOrderData.lineMemoOptionId;
     }
 
+    // Convert purchaseDate to a Date object if it exists
+    if (cleanedOrderData.purchaseDate) {
+      cleanedOrderData.purchaseDate = new Date(cleanedOrderData.purchaseDate);
+    }
+
     // Update the order with only the provided fields
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },

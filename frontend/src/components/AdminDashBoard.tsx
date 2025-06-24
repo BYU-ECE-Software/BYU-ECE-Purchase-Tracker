@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { Order, Item } from '../types/order';
+import type { Order } from '../types/order';
+import type { Item } from '../types/item';
 import { fetchOrders, updateOrder } from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
 
@@ -25,11 +26,17 @@ const AdminDashboard = () => {
     subtotal: number | null;
     tax: number | null;
     total: number | null;
+    cardType: string | null;
+    purchaseDate: string | null;
+    receipt: string | null;
     // add more editable fields later as needed
   }>({
     subtotal: null,
     tax: null,
     total: null,
+    cardType: null,
+    purchaseDate: null,
+    receipt: null,
   });
 
   // Sort logic for loading up orders on the dashboard
@@ -151,6 +158,9 @@ const AdminDashboard = () => {
       subtotal: order.subtotal ?? null,
       tax: order.tax ?? null,
       total: order.total ?? null,
+      cardType: order.cardType ?? null,
+      purchaseDate: order.purchaseDate ?? null,
+      receipt: order.receipt ?? null,
     });
 
     setIsModalOpen(true);
@@ -182,6 +192,11 @@ const AdminDashboard = () => {
     if (!selectedOrder) return;
 
     try {
+      console.log('Updating order with:', {
+        ...editedOrder,
+        items: editedItems.map(({ id, status }) => ({ id, status })),
+      });
+
       await updateOrder(selectedOrder.id, {
         ...editedOrder,
         items: editedItems.map(({ id, status }) => ({ id, status })),
