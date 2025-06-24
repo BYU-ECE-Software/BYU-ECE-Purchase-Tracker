@@ -290,6 +290,7 @@ const ReceiptSubmitForm = () => {
               <input
                 type="number"
                 min="0"
+                step="0.01"
                 value={receipt.subtotal}
                 onChange={(e) =>
                   handleReceiptChange(
@@ -308,6 +309,7 @@ const ReceiptSubmitForm = () => {
               <input
                 type="number"
                 min="0"
+                step="0.01"
                 value={receipt.tax}
                 onChange={(e) =>
                   handleReceiptChange(index, 'tax', parseFloat(e.target.value))
@@ -322,6 +324,7 @@ const ReceiptSubmitForm = () => {
               <input
                 type="number"
                 min="0"
+                step="0.01"
                 value={receipt.total}
                 onChange={(e) =>
                   handleReceiptChange(

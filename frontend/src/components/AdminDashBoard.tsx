@@ -13,8 +13,9 @@ interface OrderWithStatus extends Order {
 const AdminDashboard = () => {
   // State to hold all orders
   const [orders, setOrders] = useState<OrderWithStatus[]>([]);
-  // State to track which orders are expanded to show item details
+  // State to track which orders are expanded to show item details or purchase details
   const [expandedOrderIds, setExpandedOrderIds] = useState<number[]>([]);
+  const [expandedPurchaseIds, setExpandedPurchaseIds] = useState<number[]>([]);
   // Modal state and data for the selected order
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -44,9 +45,9 @@ const AdminDashboard = () => {
       // Separates in progress orders (those that have an order status of "Ordered" or "Requested")
       const sorted = withStatus.sort((a, b) => {
         const isAInProgress =
-          a._status === 'Requested' || a._status === 'Ordered';
+          a._status === 'Requested' || a._status === 'Purchased';
         const isBInProgress =
-          b._status === 'Requested' || b._status === 'Ordered';
+          b._status === 'Requested' || b._status === 'Purchased';
 
         // In-progress orders go first
         if (isAInProgress && !isBInProgress) return -1;
@@ -89,6 +90,15 @@ const AdminDashboard = () => {
     );
   };
 
+  // Toggle whether an order row is expanded to show purchase details
+  const togglePurchaseExpand = (orderId: number) => {
+    setExpandedPurchaseIds((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((id) => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
   // Derives the overall status of an order based on item statuses
   const getOrderStatus = (items: Item[]) => {
     // If only some items in an order are cancelled, proceed with normal workflow and derive order status based on non-cancelled orders
@@ -116,7 +126,7 @@ const AdminDashboard = () => {
     }
 
     // All active items are at least ordered
-    return 'Ordered';
+    return 'Purchased';
   };
 
   // Returns Tailwind button styling for the order status button based on status
@@ -124,7 +134,7 @@ const AdminDashboard = () => {
     switch (status) {
       case 'Completed':
         return 'bg-[#10A170] text-white hover:bg-[#006141]';
-      case 'Ordered':
+      case 'Purchased':
         return 'bg-[#FFB700] text-white hover:bg-[#cc9200]';
       case 'Requested':
         return 'bg-[#E61744] text-white hover:bg-[#A3082A]';
@@ -197,20 +207,14 @@ const AdminDashboard = () => {
           {/* Table headers */}
           <tr>
             <th className="border px-4 py-2">Status</th>
-            <th className="border px-4 py-2">Order Placed</th>
+            <th className="border px-4 py-2">Form Submitted</th>
             <th className="border px-4 py-2">Need By</th>
             <th className="border px-4 py-2">Store</th>
             <th className="border px-4 py-2">Shipping</th>
             <th className="border px-4 py-2">Student Name</th>
             <th className="border px-4 py-2">Student Email</th>
-            <th className="border px-4 py-2">Professor</th>
-            <th className="border px-4 py-2">Workday Code</th>
-            <th className="border px-4 py-2">Line Memo Option</th>
-            <th className="border px-4 py-2">Purpose</th>
-            <th className="border px-4 py-2">Subtotal</th>
-            <th className="border px-4 py-2">Tax</th>
-            <th className="border px-4 py-2">Total</th>
-            <th className="border px-4 py-2">Items</th>
+            <th className="border px-4 py-2">Item Info</th>
+            <th className="border px-4 py-2">Purchase Info</th>
           </tr>
         </thead>
         <tbody>
@@ -230,51 +234,58 @@ const AdminDashboard = () => {
                       {status}
                     </button>
                   </td>
-                  <td className="border px-4 py-2">
+                  <td className="border px-4 py-2 text-center">
                     {order.requestDate?.slice(0, 10) || 'N/A'}
                   </td>
-                  <td className="border px-4 py-2">
-                    {order.needByDate?.slice(0, 10) || 'N/A'}
+                  <td
+                    className={`border px-4 py-2 text-center ${
+                      order._status === 'Requested' &&
+                      order.needByDate &&
+                      new Date(order.needByDate) < new Date()
+                        ? 'text-red-600 font-semibold'
+                        : ''
+                    }`}
+                  >
+                    {order.needByDate?.slice(0, 10) || ''}
                   </td>
-                  <td className="border px-4 py-2">{order.store}</td>
-                  <td className="border px-4 py-2">
-                    {order.shippingPreference}
-                  </td>
-                  <td className="border px-4 py-2">
-                    {order.user.firstName} {order.user.lastName}
-                  </td>
-                  <td className="border px-4 py-2">{order.user.email}</td>
-                  <td className="border px-4 py-2">
-                    {order.professor.title} {order.professor.firstName}{' '}
-                    {order.professor.lastName}
-                  </td>
-                  <td className="border px-4 py-2">{order.workdayCode}</td>
-                  <td className="border px-4 py-2">
-                    {order.lineMemoOptionId} -{' '}
-                    {order.lineMemoOption.description}
-                  </td>
-                  <td className="border px-4 py-2">{order.purpose}</td>
-                  <td className="border px-4 py-2">
-                    {order.subtotal != null ? `$${order.subtotal}` : ''}
-                  </td>
-                  <td className="border px-4 py-2">
-                    {order.tax != null ? `$${order.tax}` : ''}
-                  </td>
-                  <td className="border px-4 py-2">
-                    {order.total != null ? `$${order.total}` : ''}
+
+                  <td className="border px-4 py-2 text-center">
+                    {order.store}
                   </td>
                   <td className="border px-4 py-2 text-center">
-                    {/* When clicked, this will expand the table and show every item within the corresponding order */}
+                    {order.shippingPreference}
+                  </td>
+                  <td className="border px-4 py-2 text-center">
+                    {order.user.firstName} {order.user.lastName}
+                  </td>
+                  <td className="border px-4 py-2 text-center">
+                    {order.user.email}
+                  </td>
+                  <td className="border px-4 py-2 text-center">
+                    {order.items.length > 0 ? (
+                      <button
+                        onClick={() => toggleExpand(order.id)}
+                        className="text-byuRoyal hover:underline"
+                      >
+                        {isExpanded ? 'Hide ▲' : 'Show ▼'}
+                      </button>
+                    ) : (
+                      ''
+                    )}
+                  </td>
+                  <td className="border px-4 py-2 text-center">
                     <button
-                      onClick={() => toggleExpand(order.id)}
+                      onClick={() => togglePurchaseExpand(order.id)}
                       className="text-byuRoyal hover:underline"
                     >
-                      {isExpanded ? 'Hide ▲' : 'Show ▼'}
+                      {expandedPurchaseIds.includes(order.id)
+                        ? 'Hide ▲'
+                        : 'Show ▼'}
                     </button>
                   </td>
                 </tr>
                 {/* sub table that displays if user wants to see individual item information for an order */}
-                {isExpanded && (
+                {isExpanded && order.items.length > 0 && (
                   <tr key={`items-${order.id}`}>
                     <td colSpan={7} className="border-t px-4 py-2 bg-gray-50">
                       <table className="w-full table-auto">
@@ -316,6 +327,76 @@ const AdminDashboard = () => {
                               </td>
                             </tr>
                           ))}
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                )}
+                {/* sub table that displays if user wants to see purchase info for an order */}
+                {expandedPurchaseIds.includes(order.id) && (
+                  <tr key={`purchase-${order.id}`}>
+                    <td colSpan={15} className="border-t px-4 py-2 bg-blue-50">
+                      <table className="w-full table-auto">
+                        <thead>
+                          <tr>
+                            <th className="px-2 py-1 text-left">Professor</th>
+                            <th className="px-2 py-1 text-left">
+                              Workday Code
+                            </th>
+                            <th className="px-2 py-1 text-left">
+                              Line Memo Option
+                            </th>
+                            <th className="px-2 py-1 text-left">Purpose</th>
+                            <th className="px-2 py-1 text-left">Card Type</th>
+                            <th className="px-2 py-1 text-left">
+                              Purchase Date
+                            </th>
+                            <th className="px-2 py-1 text-left">Receipt</th>
+                            <th className="px-2 py-1 text-left">Subtotal</th>
+                            <th className="px-2 py-1 text-left">Tax</th>
+                            <th className="px-2 py-1 text-left">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className="px-2 py-1">
+                              {order.professor.title}{' '}
+                              {order.professor.firstName}{' '}
+                              {order.professor.lastName}
+                            </td>
+                            <td className="px-2 py-1">{order.workdayCode}</td>
+                            <td className="px-2 py-1">
+                              {order.lineMemoOptionId} -{' '}
+                              {order.lineMemoOption.description}
+                            </td>
+                            <td className="px-2 py-1">{order.purpose}</td>
+                            <td className="px-2 py-1">
+                              {order.cardType || '-'}
+                            </td>
+                            <td className="px-2 py-1">
+                              {order.purchaseDate
+                                ? order.purchaseDate.slice(0, 10)
+                                : '-'}
+                            </td>
+                            <td className="px-2 py-1">
+                              {order.receipt ? (
+                                <span title={order.receipt}>receipt</span>
+                              ) : (
+                                '-'
+                              )}
+                            </td>
+                            <td className="px-2 py-1">
+                              {order.subtotal != null
+                                ? `$${order.subtotal}`
+                                : '-'}
+                            </td>
+                            <td className="px-2 py-1">
+                              {order.tax != null ? `$${order.tax}` : '-'}
+                            </td>
+                            <td className="px-2 py-1">
+                              {order.total != null ? `$${order.total}` : '-'}
+                            </td>
+                          </tr>
                         </tbody>
                       </table>
                     </td>
