@@ -4,16 +4,20 @@ import type { Item } from '../types/item';
 import { fetchOrders, updateOrder } from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
 
-//
-interface OrderWithStatus extends Order {
-  _status: string;
-}
+//Helper to format date as MM-DD-YYYY
+const formatDate = (isoString: string): string => {
+  const date = new Date(isoString);
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // getMonth() is zero-based
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const year = date.getUTCFullYear();
+  return `${month}-${day}-${year}`;
+};
 
 // Admin dashboard component for viewing and editing orders
 
 const AdminDashboard = () => {
   // State to hold all orders
-  const [orders, setOrders] = useState<OrderWithStatus[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   // State to track which orders are expanded to show item details or purchase details
   const [expandedOrderIds, setExpandedOrderIds] = useState<number[]>([]);
   const [expandedPurchaseIds, setExpandedPurchaseIds] = useState<number[]>([]);
@@ -29,7 +33,7 @@ const AdminDashboard = () => {
     cardType: string | null;
     purchaseDate: string | null;
     receipt: string | null;
-    // add more editable fields later as needed
+    status: string | null;
   }>({
     subtotal: null,
     tax: null,
@@ -37,6 +41,7 @@ const AdminDashboard = () => {
     cardType: null,
     purchaseDate: null,
     receipt: null,
+    status: null,
   });
 
   // Sort logic for loading up orders on the dashboard
@@ -44,17 +49,13 @@ const AdminDashboard = () => {
     try {
       // Reference API call to fetch all orders for the dashboard
       const orders = await fetchOrders();
-      const withStatus: OrderWithStatus[] = orders.map((order) => ({
-        ...order,
-        _status: getOrderStatus(order.items),
-      }));
 
       // Separates in progress orders (those that have an order status of "Ordered" or "Requested")
-      const sorted = withStatus.sort((a, b) => {
+      const sorted = orders.sort((a, b) => {
         const isAInProgress =
-          a._status === 'Requested' || a._status === 'Purchased';
+          a.status === 'Requested' || a.status === 'Purchased';
         const isBInProgress =
-          b._status === 'Requested' || b._status === 'Purchased';
+          b.status === 'Requested' || b.status === 'Purchased';
 
         // In-progress orders go first
         if (isAInProgress && !isBInProgress) return -1;
@@ -77,6 +78,7 @@ const AdminDashboard = () => {
         return requestB - requestA;
       });
 
+      // Update state
       setOrders(sorted);
     } catch (err) {
       console.error('Error loading orders:', err);
@@ -106,36 +108,6 @@ const AdminDashboard = () => {
     );
   };
 
-  // Derives the overall status of an order based on item statuses
-  const getOrderStatus = (items: Item[]) => {
-    // If only some items in an order are cancelled, proceed with normal workflow and derive order status based on non-cancelled orders
-    const activeItems = items.filter((item) => item.status !== 'Cancelled');
-
-    // All items cancelled
-    if (
-      items.length > 0 &&
-      items.every((item) => item.status === 'Cancelled')
-    ) {
-      return 'Cancelled';
-    }
-
-    // All active items completed
-    if (
-      activeItems.length > 0 &&
-      activeItems.every((item) => item.status === 'Completed')
-    ) {
-      return 'Completed';
-    }
-
-    // Any active item still requested
-    if (activeItems.some((item) => item.status === 'Requested')) {
-      return 'Requested';
-    }
-
-    // All active items are at least ordered
-    return 'Purchased';
-  };
-
   // Returns Tailwind button styling for the order status button based on status
   const getStatusButtonStyle = (status: string) => {
     switch (status) {
@@ -161,6 +133,7 @@ const AdminDashboard = () => {
       cardType: order.cardType ?? null,
       purchaseDate: order.purchaseDate ?? null,
       receipt: order.receipt ?? null,
+      status: order.status ?? null,
     });
 
     setIsModalOpen(true);
@@ -188,22 +161,50 @@ const AdminDashboard = () => {
   };
 
   // PUT logic to update order and item data
-  const handleSave = async () => {
+  const handleSave = async (markComplete: boolean) => {
     if (!selectedOrder) return;
 
     try {
-      console.log('Updating order with:', {
+      // Determine status logic
+      let status = selectedOrder.status;
+
+      if (markComplete) {
+        status = 'Completed';
+      } else if (editedItems.length > 0) {
+        const statuses = editedItems.map((item) => item.status);
+        if (statuses.every((s) => s === 'Completed')) {
+          status = 'Completed';
+        } else if (statuses.some((s) => s === 'Requested')) {
+          status = 'Requested';
+        } else {
+          status = 'Purchased';
+        }
+      } else {
+        status = editedOrder.status ?? selectedOrder.status;
+      }
+
+      const payload = {
         ...editedOrder,
         items: editedItems.map(({ id, status }) => ({ id, status })),
-      });
+        status,
+      };
 
-      await updateOrder(selectedOrder.id, {
-        ...editedOrder,
-        items: editedItems.map(({ id, status }) => ({ id, status })),
-      });
+      await updateOrder(selectedOrder.id, payload);
 
-      //Refresh orders and close modal
+      //Refresh orders
       await loadAndSetOrders();
+
+      //  Special case: if no items, and switch was on, override _status manually
+      if (markComplete && selectedOrder.items.length === 0) {
+        setOrders((prev) =>
+          prev.map((order) =>
+            order.id === selectedOrder.id
+              ? { ...order, _status: 'Completed' }
+              : order
+          )
+        );
+      }
+
       closeModal();
       alert('Order updated sucessfully!');
     } catch (err) {
@@ -236,7 +237,7 @@ const AdminDashboard = () => {
           {/* Map through all orders and display them in the table */}
           {orders.map((order) => {
             const isExpanded = expandedOrderIds.includes(order.id);
-            const status = order._status ?? getOrderStatus(order.items);
+            const status = order.status ?? 'Requested';
             return (
               <>
                 <tr key={order.id} className="bg-white hover:bg-gray-50">
@@ -250,18 +251,18 @@ const AdminDashboard = () => {
                     </button>
                   </td>
                   <td className="border px-4 py-2 text-center">
-                    {order.requestDate?.slice(0, 10) || 'N/A'}
+                    {order.requestDate ? formatDate(order.requestDate) : 'N/A'}
                   </td>
                   <td
                     className={`border px-4 py-2 text-center ${
-                      order._status === 'Requested' &&
+                      order.status === 'Requested' &&
                       order.needByDate &&
                       new Date(order.needByDate) < new Date()
                         ? 'text-red-600 font-semibold'
                         : ''
                     }`}
                   >
-                    {order.needByDate?.slice(0, 10) || ''}
+                    {order.needByDate ? formatDate(order.needByDate) : ''}
                   </td>
 
                   <td className="border px-4 py-2 text-center">
@@ -390,7 +391,7 @@ const AdminDashboard = () => {
                             </td>
                             <td className="px-2 py-1">
                               {order.purchaseDate
-                                ? order.purchaseDate.slice(0, 10)
+                                ? formatDate(order.purchaseDate)
                                 : '-'}
                             </td>
                             <td className="px-2 py-1">

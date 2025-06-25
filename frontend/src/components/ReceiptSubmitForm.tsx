@@ -128,6 +128,7 @@ const ReceiptSubmitForm = () => {
           subtotal: receipt.subtotal,
           tax: receipt.tax,
           total: receipt.total,
+          status: 'Purchased',
           items: [],
         });
       }

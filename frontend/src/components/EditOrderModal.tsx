@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { Item } from '../types/item';
 
 // Props expected by the EditOrderModal component
@@ -13,11 +13,12 @@ interface EditOrderModalProps {
     cardType: string | null;
     purchaseDate: string | null;
     receipt: string | null;
+    status: string | null;
     // add more editable fields here as needed
   };
   onOrderFieldChange: (field: string, value: any) => void;
   onItemStatusChange: (index: number, newStatus: string) => void;
-  onSave: () => void;
+  onSave: (markComplete: boolean) => void;
 }
 
 // Dropdown options for item status
@@ -33,16 +34,64 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   onOrderFieldChange,
   onSave,
 }) => {
+  // State to track which tab is currently active in the modal ("items" or "orderInfo")
   const [activeTab, setActiveTab] = React.useState<'items' | 'orderInfo'>(
     'items'
   );
+  // State to track whether the "Mark as Completed" switch is toggled on or off
+  const [markComplete, setMarkComplete] = React.useState(false);
+
+  useEffect(() => {
+    if (editedOrder.status === 'Completed') {
+      setMarkComplete(true);
+    } else {
+      setMarkComplete(false);
+    }
+  }, [editedOrder.status]);
+
+  // Function to change all item status's to "completed" when toggled and "ordered" when toggled off
+  const handleToggleComplete = () => {
+    const newValue = !markComplete;
+    setMarkComplete(newValue);
+
+    if (items.length > 0) {
+      const newStatus = newValue ? 'Completed' : 'Ordered';
+      items.forEach((_, idx) => onItemStatusChange(idx, newStatus));
+    } else {
+      // Optional: update order status if no items (frontend-only)
+      onOrderFieldChange('status', newValue ? 'Completed' : 'Purchased');
+    }
+  };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg w-[90%] max-w-2xl">
-        <h2 className="text-xl text-byuNavy font-bold mb-4">Edit Order</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl text-byuNavy font-bold mb-4">Edit Order</h2>
+          <div className="flex items-center space-x-2">
+            {/* User can mark the entire order as completed */}
+            <label
+              htmlFor="mark-complete"
+              className="text-sm text-byuNavy font-medium"
+            >
+              Mark as Completed
+            </label>
+            <button
+              onClick={handleToggleComplete}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                markComplete ? 'bg-byuRoyal' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  markComplete ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
 
         {/* Tab Navigation */}
         <div className="flex mb-4 border-b">
@@ -200,7 +249,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             Cancel
           </button>
           <button
-            onClick={onSave}
+            onClick={() => onSave(markComplete)}
             className="px-4 py-2 bg-byuRoyal text-white rounded hover:bg-[#003a9a]"
           >
             Save Changes

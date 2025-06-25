@@ -108,6 +108,7 @@ const PurchaseRequestForm = () => {
         workdayCode,
         userId: 2, // TEMPORARY: Replace this with real logic later
         lineMemoOptionId: Number(selectedLineMemoId),
+        status: 'Requested',
         items: items.map((i) => ({
           name: i.item,
           quantity: i.quantity,

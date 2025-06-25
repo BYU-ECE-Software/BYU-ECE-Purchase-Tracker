@@ -24,6 +24,7 @@ export interface Order {
   cardType?: string;
   purchaseDate?: string;
   receipt?: string;
+  status: string;
 }
 
 export interface OrderUpdatePayload {

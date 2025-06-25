@@ -20,6 +20,7 @@ export const createOrder = async (req, res) => {
       cardType,
       purchaseDate,
       receipt,
+      status,
     } = req.body;
 
     // Format the order
@@ -39,6 +40,7 @@ export const createOrder = async (req, res) => {
       cardType: cardType || null,
       purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
       receipt: receipt || null,
+      status,
     };
 
     // Only create items if they were submitted

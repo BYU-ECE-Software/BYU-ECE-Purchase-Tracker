@@ -61,6 +61,7 @@ model Order {
   cardType           String?
   purchaseDate       DateTime?
   receipt            String?
+  status             String
 }
 
 // ==========================
