@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react';
 import type { Order } from '../types/order';
 import type { Item } from '../types/item';
-import { fetchOrders, updateOrder } from '../api/purchaseTrackerApi';
+import {
+  fetchOrders,
+  updateOrder,
+  searchOrders,
+} from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
+import SearchBar from './SearchBar';
 
 //Helper to format date as MM-DD-YYYY
 const formatDate = (isoString: string): string => {
@@ -21,6 +26,8 @@ const AdminDashboard = () => {
   // State to track which orders are expanded to show item details or purchase details
   const [expandedOrderIds, setExpandedOrderIds] = useState<number[]>([]);
   const [expandedPurchaseIds, setExpandedPurchaseIds] = useState<number[]>([]);
+  // State to track Search Terms in the search bar
+  const [searchTerm, setSearchTerm] = useState('');
   // Modal state and data for the selected order
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -213,9 +220,36 @@ const AdminDashboard = () => {
     }
   };
 
+  // Function for the Search Bar. Fetches filtered orders from the backend
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return;
+
+    try {
+      const data = await searchOrders(searchTerm);
+      setOrders(data);
+    } catch (err) {
+      console.error('Search error:', err);
+      alert('Failed to search orders');
+    }
+  };
+
+  // Clearing the Search Bar when done
+  const handleClearSearch = async () => {
+    setSearchTerm('');
+    await loadAndSetOrders(); // Refetch all orders
+  };
+
   return (
     <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Orders</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold mb-4">Orders</h2>
+        <SearchBar
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          onSearch={handleSearch}
+          onClear={handleClearSearch}
+        />
+      </div>
 
       {/* Table to display all order requests and their progress in the workflow */}
       <table className="w-full table-auto border-collapse border">

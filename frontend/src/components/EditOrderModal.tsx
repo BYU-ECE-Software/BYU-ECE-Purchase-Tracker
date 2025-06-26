@@ -74,7 +74,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             {/* User can mark the entire order as completed */}
             <label
               htmlFor="mark-complete"
-              className="text-sm text-byuNavy font-medium"
+              className="text-base text-byuNavy font-medium"
             >
               Mark as Completed
             </label>

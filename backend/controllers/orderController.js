@@ -152,3 +152,57 @@ export const updateOrder = async (req, res) => {
     });
   }
 };
+
+// Search for specific orders
+export const searchOrders = async (req, res) => {
+  const searchTerm = req.query.query?.toString().toLowerCase();
+
+  if (!searchTerm) {
+    return res.status(400).json({ error: "Missing search query" });
+  }
+
+  const isNumeric = !isNaN(Number(searchTerm));
+  const isDate = !isNaN(Date.parse(searchTerm));
+
+  // currently set to search by total, purchase date, store, status, student name, professor name, and items
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        OR: [
+          { store: { contains: searchTerm, mode: "insensitive" } },
+          { status: { contains: searchTerm, mode: "insensitive" } },
+          isNumeric ? { total: Number(searchTerm) } : undefined,
+          isDate ? { purchaseDate: new Date(searchTerm) } : undefined,
+          {
+            user: {
+              firstName: { contains: searchTerm, mode: "insensitive" },
+            },
+          },
+          {
+            professor: {
+              firstName: { contains: searchTerm, mode: "insensitive" },
+            },
+          },
+          {
+            items: {
+              some: {
+                name: { contains: searchTerm, mode: "insensitive" },
+              },
+            },
+          },
+        ].filter(Boolean),
+      },
+      include: {
+        user: true,
+        professor: true,
+        items: true,
+        lineMemoOption: true,
+      },
+    });
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Search failed:", error);
+    res.status(500).json({ error: "Search failed", details: error.message });
+  }
+};

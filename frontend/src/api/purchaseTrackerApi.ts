@@ -58,3 +58,12 @@ export const fetchProfessors = async (): Promise<Professor[]> => {
   if (!res.ok) throw new Error('Failed to fetch professors');
   return await res.json();
 };
+
+// API call to Search Orders
+export const searchOrders = async (query: string): Promise<Order[]> => {
+  const res = await fetch(
+    `${BASE_API_URL}/orders/search?query=${encodeURIComponent(query)}`
+  );
+  if (!res.ok) throw new Error('Failed to search orders');
+  return await res.json();
+};
