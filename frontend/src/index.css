@@ -5,3 +5,9 @@
 body {
   @apply font-sans;
 }
+
+input,
+select,
+textarea {
+  @apply focus:outline-none focus:border-byuNavy focus:ring-1 focus:ring-byuNavy;
+}

@@ -2,6 +2,7 @@ interface PageTitleProps {
   title: string;
 }
 
+// Page Title. On the view, you set what you want the title to actually render and say
 const PageTitle = ({ title }: PageTitleProps) => {
   return (
     <div className="w-full">

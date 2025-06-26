@@ -1,17 +1,17 @@
 import FooterBar from '../components/footer';
 import HeaderBar from '../components/header';
 import PageTitle from '../components/pageTitle';
-import PurchaseRequestForm from '../components/PurchaseRequestForm';
+import ReceiptSubmitForm from '../components/ReceiptSubmitForm';
 
-function PurchaseRequest() {
+function ReceiptSubmit() {
   return (
     <>
       <HeaderBar />
-      <PageTitle title="PURCHASE REQUEST FORM" />
-      <PurchaseRequestForm />
+      <PageTitle title="SUBMIT RECEIPTS" />
+      <ReceiptSubmitForm />
       <FooterBar />
     </>
   );
 }
 
-export default PurchaseRequest;
+export default ReceiptSubmit;

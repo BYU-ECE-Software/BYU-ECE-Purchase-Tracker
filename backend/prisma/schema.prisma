@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================
+//      MODEL: User
+// =====================
+
+model User {
+  id     Int    @id @default(autoincrement())
+  firstName   String
+  lastName    String
+  email  String @unique
+  byuId  String @unique
+  role   String
+  orders Order[]
+}
+
+// =====================
+//      MODEL: Item
+// =====================
+
+model Item {
+  id       Int    @id @default(autoincrement())
+  name     String
+  quantity Int
+  status   String
+  link     String?
+  file     String?
+  orderId  Int
+  order    Order  @relation(fields: [orderId], references: [id])
+}
+
+// =====================
+//      MODEL: Order
+// =====================
+
+model Order {
+  id                 Int     @id @default(autoincrement())
+  requestDate        DateTime
+  items              Item[]
+  store              String
+  needByDate         DateTime?
+  shippingPreference String?
+  professorId        Int
+  professor          Professors   @relation(fields: [professorId], references: [id])
+  purpose            String
+  workdayCode        String
+  subtotal           Float?
+  tax                Float?
+  total              Float?
+  userId             Int
+  user               User   @relation(fields: [userId], references: [id])
+  lineMemoOptionId   Int
+  lineMemoOption     LineMemoOption @relation(fields: [lineMemoOptionId], references: [id])
+  cardType           String?
+  purchaseDate       DateTime?
+  receipt            String?
+  status             String
+}
+
+// ==========================
+//   MODEL: LineMemoOption
+// ==========================
+
+model LineMemoOption {
+  id          Int @id
+  description String
+  orders      Order[]
+}
+
+// ==========================
+//   MODEL: Professors
+// ==========================
+
+model Professors {
+  id        Int     @id @default(autoincrement())
+  firstName String
+  lastName  String
+  title     String?
+  email     String?
+  orders    Order[]
+}
