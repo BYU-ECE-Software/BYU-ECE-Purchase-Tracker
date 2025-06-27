@@ -8,6 +8,7 @@ import {
 } from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
 import SearchBar from './SearchBar';
+import React from 'react';
 
 //Helper to format date as MM-DD-YYYY
 const formatDate = (isoString: string): string => {
@@ -41,6 +42,8 @@ const AdminDashboard = () => {
     purchaseDate: string | null;
     receipt: string | null;
     status: string | null;
+    store: string | null;
+    professorName: string | null;
   }>({
     subtotal: null,
     tax: null,
@@ -49,44 +52,48 @@ const AdminDashboard = () => {
     purchaseDate: null,
     receipt: null,
     status: null,
+    store: null,
+    professorName: null,
   });
 
-  // Sort logic for loading up orders on the dashboard
+  // Sort logic for load up of orders
+  const sortOrders = (orders: Order[]): Order[] => {
+    return orders.sort((a, b) => {
+      // Separates in progress orders (those that have an order status of "Ordered" or "Requested")
+      const isAInProgress =
+        a.status === 'Requested' || a.status === 'Purchased';
+      const isBInProgress =
+        b.status === 'Requested' || b.status === 'Purchased';
+
+      // In-progress orders go first
+      if (isAInProgress && !isBInProgress) return -1;
+      if (!isAInProgress && isBInProgress) return 1;
+
+      // If both are in-progress, sort by needByDate (nulls last)
+      if (isAInProgress && isBInProgress) {
+        const dateA = a.needByDate
+          ? new Date(a.needByDate).getTime()
+          : Infinity;
+        const dateB = b.needByDate
+          ? new Date(b.needByDate).getTime()
+          : Infinity;
+        return dateA - dateB;
+      }
+
+      // If both are completed/cancelled, sort by requestDate descending
+      const requestA = new Date(a.requestDate).getTime();
+      const requestB = new Date(b.requestDate).getTime();
+      return requestB - requestA;
+    });
+  };
+
+  // Load up orders for the main dashboard
   const loadAndSetOrders = async () => {
     try {
       // Reference API call to fetch all orders for the dashboard
       const orders = await fetchOrders();
-
-      // Separates in progress orders (those that have an order status of "Ordered" or "Requested")
-      const sorted = orders.sort((a, b) => {
-        const isAInProgress =
-          a.status === 'Requested' || a.status === 'Purchased';
-        const isBInProgress =
-          b.status === 'Requested' || b.status === 'Purchased';
-
-        // In-progress orders go first
-        if (isAInProgress && !isBInProgress) return -1;
-        if (!isAInProgress && isBInProgress) return 1;
-
-        // If both are in-progress, sort by needByDate (nulls last)
-        if (isAInProgress && isBInProgress) {
-          const dateA = a.needByDate
-            ? new Date(a.needByDate).getTime()
-            : Infinity;
-          const dateB = b.needByDate
-            ? new Date(b.needByDate).getTime()
-            : Infinity;
-          return dateA - dateB;
-        }
-
-        // If both are completed/cancelled, sort by requestDate descending
-        const requestA = new Date(a.requestDate).getTime();
-        const requestB = new Date(b.requestDate).getTime();
-        return requestB - requestA;
-      });
-
       // Update state
-      setOrders(sorted);
+      setOrders(sortOrders(orders));
     } catch (err) {
       console.error('Error loading orders:', err);
     }
@@ -141,6 +148,10 @@ const AdminDashboard = () => {
       purchaseDate: order.purchaseDate ?? null,
       receipt: order.receipt ?? null,
       status: order.status ?? null,
+      store: order.store ?? null,
+      professorName: order.professor
+        ? `${order.professor.title} ${order.professor.firstName} ${order.professor.lastName}`
+        : null,
     });
 
     setIsModalOpen(true);
@@ -190,8 +201,13 @@ const AdminDashboard = () => {
         status = editedOrder.status ?? selectedOrder.status;
       }
 
+      const {
+        professorName, // remove this from payload
+        ...orderFields
+      } = editedOrder;
+
       const payload = {
-        ...editedOrder,
+        ...orderFields,
         items: editedItems.map(({ id, status }) => ({ id, status })),
         status,
       };
@@ -226,7 +242,7 @@ const AdminDashboard = () => {
 
     try {
       const data = await searchOrders(searchTerm);
-      setOrders(data);
+      setOrders(sortOrders(data));
     } catch (err) {
       console.error('Search error:', err);
       alert('Failed to search orders');
@@ -273,8 +289,8 @@ const AdminDashboard = () => {
             const isExpanded = expandedOrderIds.includes(order.id);
             const status = order.status ?? 'Requested';
             return (
-              <>
-                <tr key={order.id} className="bg-white hover:bg-gray-50">
+              <React.Fragment key={order.id}>
+                <tr className="bg-white hover:bg-gray-50">
                   <td className="border px-4 py-2 text-center">
                     {/* Button that displays the status of an order and can be clicked to open the modal to edit info on the order */}
                     <button
@@ -452,7 +468,7 @@ const AdminDashboard = () => {
                     </td>
                   </tr>
                 )}
-              </>
+              </React.Fragment>
             );
           })}
         </tbody>

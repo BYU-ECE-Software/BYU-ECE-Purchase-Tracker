@@ -173,14 +173,23 @@ export const searchOrders = async (req, res) => {
           { status: { contains: searchTerm, mode: "insensitive" } },
           isNumeric ? { total: Number(searchTerm) } : undefined,
           isDate ? { purchaseDate: new Date(searchTerm) } : undefined,
+          // Match user (student) by first name, last name, or full name
           {
             user: {
-              firstName: { contains: searchTerm, mode: "insensitive" },
+              OR: [
+                { firstName: { contains: searchTerm, mode: "insensitive" } },
+                { lastName: { contains: searchTerm, mode: "insensitive" } },
+              ],
             },
           },
+
+          // Match professor by first name, last name, or full name
           {
             professor: {
-              firstName: { contains: searchTerm, mode: "insensitive" },
+              OR: [
+                { firstName: { contains: searchTerm, mode: "insensitive" } },
+                { lastName: { contains: searchTerm, mode: "insensitive" } },
+              ],
             },
           },
           {

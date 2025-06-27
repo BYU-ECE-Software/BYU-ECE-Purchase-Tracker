@@ -14,6 +14,8 @@ interface EditOrderModalProps {
     purchaseDate: string | null;
     receipt: string | null;
     status: string | null;
+    store: string | null;
+    professorName: string | null;
     // add more editable fields here as needed
   };
   onOrderFieldChange: (field: string, value: any) => void;
@@ -99,7 +101,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             onClick={() => setActiveTab('items')}
             className={`px-4 py-2 font-medium text-byuNavy ${activeTab === 'items' ? 'border-b-2 border-byuRoyal' : 'hover:underline'}`}
           >
-            Item Status
+            Items
           </button>
           <button
             onClick={() => setActiveTab('orderInfo')}
@@ -112,23 +114,70 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
         {/* Tab Content */}
         {/* Item Tab */}
         {activeTab === 'items' && (
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Store display */}
+            <div className="flex items-center gap-2 pb-2 text-base font-medium text-byuNavy">
+              <span>Store:</span>
+              <span className="font-normal">{editedOrder.store ?? ''}</span>
+            </div>
+
+            {/* Items List */}
             {items.map((item, idx) => (
-              <div key={item.id}>
-                <label className="block text-byuNavy text-sm font-medium">
-                  {item.name}
-                </label>
-                <select
-                  value={item.status}
-                  onChange={(e) => onItemStatusChange(idx, e.target.value)}
-                  className="border p-2 rounded w-full text-byuNavy"
-                >
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
+              <div
+                key={item.id}
+                className="border rounded p-4 bg-gray-50 shadow-sm space-y-2"
+              >
+                {/* Item name with optional link */}
+                <div className="text-base font-semibold text-byuNavy">
+                  {item.link ? (
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline text-byuRoyal flex items-center gap-1"
+                    >
+                      {item.name}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 text-byuRoyal"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M14 3h7m0 0v7m0-7L10 14"
+                        />
+                      </svg>
+                    </a>
+                  ) : (
+                    item.name
+                  )}
+                </div>
+
+                {/* Quantity and Status aligned horizontally */}
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-700">
+                    Quantity: {item.quantity}
+                  </span>
+
+                  <label className="flex items-center gap-2 text-sm font-medium text-byuNavy">
+                    Status:
+                    <select
+                      value={item.status}
+                      onChange={(e) => onItemStatusChange(idx, e.target.value)}
+                      className="border rounded px-2 py-1 text-sm text-byuNavy"
+                    >
+                      {statusOptions.map((status) => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               </div>
             ))}
           </div>
@@ -137,13 +186,36 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
         {/* Purchase Tab */}
         {activeTab === 'orderInfo' && (
           <div className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <label className="w-20 text-base font-normal text-byuNavy">
-                Card Type:
+            {/* Row: Professor Name (read-only) */}
+            <div className="grid grid-cols-3 items-center gap-4">
+              <label className="font-medium text-byuNavy col-span-1">
+                Professor:
               </label>
-              <div className="flex space-x-6">
+              <span className=" text-byuNavy col-span-2">
+                {editedOrder.professorName ?? ''}
+              </span>
+            </div>
+
+            {/* Row: Store */}
+            <div className="grid grid-cols-3 items-center gap-4">
+              <label className="font-medium text-byuNavy">Store:</label>
+              <input
+                type="text"
+                value={editedOrder.store ?? ''}
+                onChange={(e) => onOrderFieldChange('store', e.target.value)}
+                className="col-span-2 p-2 border rounded text-byuNavy"
+              />
+            </div>
+
+            {/* Row: Card Type */}
+            <div className="grid grid-cols-3 items-start gap-4">
+              <label className="font-medium text-byuNavy">Card Type:</label>
+              <div className="col-span-2 flex flex-col sm:flex-row sm:items-center gap-4">
                 {['Campus Card', 'Off-campus Card'].map((option) => (
-                  <label key={option} className="flex items-center space-x-2">
+                  <label
+                    key={option}
+                    className="flex items-center gap-2 text-sm text-byuNavy"
+                  >
                     <input
                       type="radio"
                       name="cardType"
@@ -153,33 +225,31 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                         onOrderFieldChange('cardType', e.target.value)
                       }
                     />
-                    <span>{option}</span>
+                    {option}
                   </label>
                 ))}
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <label className="w-20 text-base font-normal text-byuNavy">
-                Purchase Date:
-              </label>
+            {/* Row: Purchase Date */}
+            <div className="grid grid-cols-3 items-center gap-4">
+              <label className="font-medium text-byuNavy">Purchase Date:</label>
               <input
                 type="date"
                 value={editedOrder.purchaseDate?.slice(0, 10) ?? ''}
                 onChange={(e) =>
                   onOrderFieldChange('purchaseDate', e.target.value)
                 }
-                className="flex-1 p-2 border rounded text-byuNavy"
+                className="col-span-2 p-2 border rounded text-byuNavy"
               />
             </div>
 
-            <div className="flex items-center space-x-4">
-              <label className="w-20 text-base font-normal text-byuNavy">
-                Receipt:
-              </label>
-              <div className="flex-1 flex items-center space-x-2">
+            {/* Row: Receipt Upload */}
+            <div className="grid grid-cols-3 items-center gap-4">
+              <label className="font-medium text-byuNavy">Receipt:</label>
+              <div className="col-span-2 flex items-center gap-2">
                 {editedOrder.receipt && (
-                  <span className="text-sm text-gray-700 truncate max-w-[200px]">
+                  <span className="text-sm text-gray-600 truncate max-w-[200px]">
                     {editedOrder.receipt}
                   </span>
                 )}
@@ -188,53 +258,50 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      onOrderFieldChange('receipt', file.name); // Just stores the name
+                      onOrderFieldChange('receipt', file.name);
                     }
                   }}
-                  className="flex-1 p-2 border rounded text-byuNavy"
+                  className="p-2 border rounded text-byuNavy"
                 />
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <label className="w-20 text-base font-normal text-byuNavy">
-                Subtotal:
-              </label>
+            {/* Row: Subtotal */}
+            <div className="grid grid-cols-3 items-center gap-4">
+              <label className="font-medium text-byuNavy">Subtotal:</label>
               <input
                 type="number"
                 value={editedOrder.subtotal ?? ''}
                 onChange={(e) =>
                   onOrderFieldChange('subtotal', parseFloat(e.target.value))
                 }
-                className="flex-1 p-2 border rounded text-byuNavy"
+                className="col-span-2 p-2 border rounded text-byuNavy"
               />
             </div>
 
-            <div className="flex items-center space-x-4">
-              <label className="w-20 text-base font-normal text-byuNavy">
-                Tax:
-              </label>
+            {/* Row: Tax */}
+            <div className="grid grid-cols-3 items-center gap-4">
+              <label className="font-medium text-byuNavy">Tax:</label>
               <input
                 type="number"
                 value={editedOrder.tax ?? ''}
                 onChange={(e) =>
                   onOrderFieldChange('tax', parseFloat(e.target.value))
                 }
-                className="flex-1 p-2 border rounded text-byuNavy"
+                className="col-span-2 p-2 border rounded text-byuNavy"
               />
             </div>
 
-            <div className="flex items-center space-x-4">
-              <label className="w-20 text-base font-normal text-byuNavy">
-                Total:
-              </label>
+            {/* Row: Total */}
+            <div className="grid grid-cols-3 items-center gap-4">
+              <label className="font-medium text-byuNavy">Total:</label>
               <input
                 type="number"
                 value={editedOrder.total ?? ''}
                 onChange={(e) =>
                   onOrderFieldChange('total', parseFloat(e.target.value))
                 }
-                className="flex-1 p-2 border rounded text-byuNavy"
+                className="col-span-2 p-2 border rounded text-byuNavy"
               />
             </div>
           </div>
