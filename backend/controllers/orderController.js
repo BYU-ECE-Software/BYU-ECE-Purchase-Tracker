@@ -6,12 +6,13 @@ export const createOrder = async (req, res) => {
   try {
     const {
       items,
-      store,
+      vendor,
       needByDate,
       shippingPreference,
       professorId,
       purpose,
-      workdayCode,
+      operatingUnit,
+      spendCategory,
       subtotal,
       tax,
       total,
@@ -21,17 +22,20 @@ export const createOrder = async (req, res) => {
       purchaseDate,
       receipt,
       status,
+      comment,
+      cartLink,
     } = req.body;
 
     // Format the order
     const orderData = {
       requestDate: new Date(),
-      store,
+      vendor,
       needByDate: needByDate ? new Date(needByDate) : null,
       shippingPreference: shippingPreference || null,
       professor: { connect: { id: professorId } },
       purpose,
-      workdayCode,
+      operatingUnit,
+      spendCategory,
       subtotal: subtotal || null,
       tax: tax || null,
       total: total || null,
@@ -41,6 +45,8 @@ export const createOrder = async (req, res) => {
       purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
       receipt: receipt || null,
       status,
+      comment: comment || null,
+      cartLink: cartLink || null,
     };
 
     // Only create items if they were submitted
@@ -103,9 +109,7 @@ export const updateOrder = async (req, res) => {
   try {
     // Build dynamic data for the order — remove undefined or null values
     const cleanedOrderData = Object.fromEntries(
-      Object.entries(orderFields).filter(
-        ([_, v]) => v !== undefined && v !== null
-      )
+      Object.entries(orderFields).filter(([_, v]) => v !== undefined)
     );
 
     // Handle lineMemoOptionId specially (as it's a relational field)
@@ -164,12 +168,12 @@ export const searchOrders = async (req, res) => {
   const isNumeric = !isNaN(Number(searchTerm));
   const isDate = !isNaN(Date.parse(searchTerm));
 
-  // currently set to search by total, purchase date, store, status, student name, professor name, and items
+  // currently set to search by total, purchase date, vendor, status, student name, professor name, and items
   try {
     const orders = await prisma.order.findMany({
       where: {
         OR: [
-          { store: { contains: searchTerm, mode: "insensitive" } },
+          { vendor: { contains: searchTerm, mode: "insensitive" } },
           { status: { contains: searchTerm, mode: "insensitive" } },
           isNumeric ? { total: Number(searchTerm) } : undefined,
           isDate ? { purchaseDate: new Date(searchTerm) } : undefined,

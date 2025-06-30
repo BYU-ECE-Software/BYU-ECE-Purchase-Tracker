@@ -44,13 +44,14 @@ model Order {
   id                 Int     @id @default(autoincrement())
   requestDate        DateTime
   items              Item[]
-  store              String
+  vendor              String
   needByDate         DateTime?
   shippingPreference String?
   professorId        Int
   professor          Professors   @relation(fields: [professorId], references: [id])
   purpose            String
-  workdayCode        String
+  operatingUnit      String
+  spendCategory      String?
   subtotal           Float?
   tax                Float?
   total              Float?
@@ -62,6 +63,8 @@ model Order {
   purchaseDate       DateTime?
   receipt            String?
   status             String
+  comment            String?
+  cartLink           String?
 }
 
 // ==========================

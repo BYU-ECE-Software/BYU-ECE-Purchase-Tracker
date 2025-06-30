@@ -9,32 +9,35 @@ import type { Professor } from '../types/professor';
 
 // Create a type for a receipt
 interface Receipt {
-  store: string;
+  vendor: string;
   cardType: string;
   purchaseDate: string;
   subtotal: number;
   tax: number;
   total: number;
   receipt: File | null;
+  comment: string;
 }
 
 const ReceiptSubmitForm = () => {
   // Track the list of receipts the user wants to submit in state
   const [receipts, setReceipts] = useState<Receipt[]>([
     {
-      store: '',
+      vendor: '',
       cardType: '',
       purchaseDate: '',
       subtotal: 0,
       tax: 0,
       total: 0,
       receipt: null,
+      comment: '',
     },
   ]);
 
   // Form fields for order-level info
   const [purpose, setPurpose] = useState('');
-  const [workdayCode, setWorkdayCode] = useState('');
+  const [operatingUnit, setOperatingUnit] = useState('');
+  const [spendCategory, setSpendCategory] = useState('');
   const [selectedLineMemoId, setSelectedLineMemoId] = useState('');
   const [selectedProfessorId, setSelectedProfessorId] = useState('');
 
@@ -91,13 +94,14 @@ const ReceiptSubmitForm = () => {
     setReceipts([
       ...receipts,
       {
-        store: '',
+        vendor: '',
         cardType: '',
         purchaseDate: '',
         subtotal: 0,
         tax: 0,
         total: 0,
         receipt: null,
+        comment: '',
       },
     ]);
   };
@@ -115,11 +119,12 @@ const ReceiptSubmitForm = () => {
     try {
       for (const receipt of receipts) {
         await createOrder({
-          store: receipt.store,
+          vendor: receipt.vendor,
           shippingPreference: undefined,
           professorId: Number(selectedProfessorId),
           purpose,
-          workdayCode,
+          operatingUnit,
+          spendCategory,
           userId: 2, // TEMPORARY: Replace this with real logic later
           lineMemoOptionId: Number(selectedLineMemoId),
           cardType: receipt.cardType,
@@ -129,6 +134,8 @@ const ReceiptSubmitForm = () => {
           tax: receipt.tax,
           total: receipt.total,
           status: 'Purchased',
+          comment: receipt.comment,
+          cartLink: undefined,
           items: [],
         });
       }
@@ -136,13 +143,14 @@ const ReceiptSubmitForm = () => {
       alert('Receipts submitted successfully!');
       setReceipts([
         {
-          store: '',
+          vendor: '',
           cardType: '',
           purchaseDate: '',
           subtotal: 0,
           tax: 0,
           total: 0,
           receipt: null,
+          comment: '',
         },
       ]);
     } catch (error) {
@@ -200,11 +208,22 @@ const ReceiptSubmitForm = () => {
       </div>
 
       <div>
-        <label className="block font-medium">Workday Code</label>
+        <label className="block font-medium">Operating Unit</label>
         <input
           type="text"
-          value={workdayCode}
-          onChange={(e) => setWorkdayCode(e.target.value)}
+          value={operatingUnit}
+          onChange={(e) => setOperatingUnit(e.target.value)}
+          required
+          className="w-full border border-gray-300 rounded p-2"
+        />
+      </div>
+
+      <div>
+        <label className="block font-medium">Spend Category</label>
+        <input
+          type="text"
+          value={spendCategory}
+          onChange={(e) => setSpendCategory(e.target.value)}
           required
           className="w-full border border-gray-300 rounded p-2"
         />
@@ -241,12 +260,12 @@ const ReceiptSubmitForm = () => {
             className="border border-gray-300 p-4 rounded-md space-y-4 text-byuNavy"
           >
             <div>
-              <label className="block font-medium">Store Name</label>
+              <label className="block font-medium">Vendor Name</label>
               <input
                 type="text"
-                value={receipt.store}
+                value={receipt.vendor}
                 onChange={(e) =>
-                  handleReceiptChange(index, 'store', e.target.value)
+                  handleReceiptChange(index, 'vendor', e.target.value)
                 }
                 required
                 className="w-full border border-gray-300 rounded p-2"
@@ -345,6 +364,18 @@ const ReceiptSubmitForm = () => {
                 type="file"
                 onChange={(e) => handleReceiptChange(index, 'receipt', e)}
                 className="block mt-1"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium">Comments (optional)</label>
+              <textarea
+                value={receipt.comment}
+                onChange={(e) =>
+                  handleReceiptChange(index, 'comment', e.target.value)
+                }
+                placeholder="Any special instructions or notes about your purchase..."
+                className="w-full border border-gray-300 rounded p-2 resize-y min-h-[100px]"
               />
             </div>
 

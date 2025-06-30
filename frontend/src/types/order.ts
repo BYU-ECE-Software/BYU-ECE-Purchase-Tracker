@@ -6,13 +6,14 @@ import type { Item } from './item';
 export interface Order {
   id: number;
   requestDate: string;
-  store: string;
+  vendor: string;
   needByDate?: string;
   shippingPreference?: string;
   professorId: number;
   professor: Professor;
   purpose: string;
-  workdayCode: string;
+  operatingUnit: string;
+  spendCategory?: string;
   subtotal?: number;
   tax?: number;
   total?: number;
@@ -25,6 +26,8 @@ export interface Order {
   purchaseDate?: string;
   receipt?: string;
   status: string;
+  comment?: string;
+  cartLink?: string;
 }
 
 export interface OrderUpdatePayload {

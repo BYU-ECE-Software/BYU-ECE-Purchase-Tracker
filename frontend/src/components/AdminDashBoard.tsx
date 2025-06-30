@@ -29,6 +29,8 @@ const AdminDashboard = () => {
   const [expandedPurchaseIds, setExpandedPurchaseIds] = useState<number[]>([]);
   // State to track Search Terms in the search bar
   const [searchTerm, setSearchTerm] = useState('');
+  // State to track which comments are shown
+  const [visibleCommentIds, setVisibleCommentIds] = useState<number[]>([]);
   // Modal state and data for the selected order
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -42,7 +44,7 @@ const AdminDashboard = () => {
     purchaseDate: string | null;
     receipt: string | null;
     status: string | null;
-    store: string | null;
+    vendor: string | null;
     professorName: string | null;
   }>({
     subtotal: null,
@@ -52,7 +54,7 @@ const AdminDashboard = () => {
     purchaseDate: null,
     receipt: null,
     status: null,
-    store: null,
+    vendor: null,
     professorName: null,
   });
 
@@ -122,6 +124,15 @@ const AdminDashboard = () => {
     );
   };
 
+  // Toggle whether a comment is being shown
+  const toggleCommentVisibility = (orderId: number) => {
+    setVisibleCommentIds((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((id) => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
   // Returns Tailwind button styling for the order status button based on status
   const getStatusButtonStyle = (status: string) => {
     switch (status) {
@@ -148,7 +159,7 @@ const AdminDashboard = () => {
       purchaseDate: order.purchaseDate ?? null,
       receipt: order.receipt ?? null,
       status: order.status ?? null,
-      store: order.store ?? null,
+      vendor: order.vendor ?? null,
       professorName: order.professor
         ? `${order.professor.title} ${order.professor.firstName} ${order.professor.lastName}`
         : null,
@@ -170,11 +181,12 @@ const AdminDashboard = () => {
     setEditedItems(updatedItems);
   };
 
-  // Updates subtotal, tax, or total based on field name
+  // Updates modal fields based on field name
   const handleOrderFieldChange = (field: string, value: any) => {
+    const normalizedValue = value === '' || value === undefined ? null : value;
     setEditedOrder((prev) => ({
       ...prev,
-      [field]: value,
+      [field]: normalizedValue,
     }));
   };
 
@@ -268,19 +280,20 @@ const AdminDashboard = () => {
       </div>
 
       {/* Table to display all order requests and their progress in the workflow */}
-      <table className="w-full table-auto border-collapse border">
+      <table className="w-full table-fixed border-collapse border">
         <thead className="bg-gray-100">
           {/* Table headers */}
           <tr>
             <th className="border px-4 py-2">Status</th>
             <th className="border px-4 py-2">Form Submitted</th>
             <th className="border px-4 py-2">Need By</th>
-            <th className="border px-4 py-2">Store</th>
+            <th className="border px-4 py-2">Vendor</th>
             <th className="border px-4 py-2">Shipping</th>
             <th className="border px-4 py-2">Student Name</th>
             <th className="border px-4 py-2">Student Email</th>
             <th className="border px-4 py-2">Item Info</th>
             <th className="border px-4 py-2">Purchase Info</th>
+            <th className="border px-4 py-2">Comments</th>
           </tr>
         </thead>
         <tbody>
@@ -316,7 +329,7 @@ const AdminDashboard = () => {
                   </td>
 
                   <td className="border px-4 py-2 text-center">
-                    {order.store}
+                    {order.vendor}
                   </td>
                   <td className="border px-4 py-2 text-center">
                     {order.shippingPreference}
@@ -348,6 +361,28 @@ const AdminDashboard = () => {
                         ? 'Hide ▲'
                         : 'Show ▼'}
                     </button>
+                  </td>
+                  <td className="border px-4 py-2 text-center align-top">
+                    {order.comment ? (
+                      <div>
+                        <button
+                          onClick={() => toggleCommentVisibility(order.id)}
+                          className="text-blue-600 underline hover:text-blue-800"
+                        >
+                          {visibleCommentIds.includes(order.id)
+                            ? 'Hide'
+                            : 'View'}
+                        </button>
+
+                        {visibleCommentIds.includes(order.id) && (
+                          <div className="mt-2 text-sm text-left break-words">
+                            {order.comment}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      ''
+                    )}
                   </td>
                 </tr>
                 {/* sub table that displays if user wants to see individual item information for an order */}
@@ -407,7 +442,10 @@ const AdminDashboard = () => {
                           <tr>
                             <th className="px-2 py-1 text-left">Professor</th>
                             <th className="px-2 py-1 text-left">
-                              Workday Code
+                              Operating Unit
+                            </th>
+                            <th className="px-2 py-1 text-left">
+                              Spend Category
                             </th>
                             <th className="px-2 py-1 text-left">
                               Line Memo Option
@@ -430,7 +468,8 @@ const AdminDashboard = () => {
                               {order.professor.firstName}{' '}
                               {order.professor.lastName}
                             </td>
-                            <td className="px-2 py-1">{order.workdayCode}</td>
+                            <td className="px-2 py-1">{order.operatingUnit}</td>
+                            <td className="px-2 py-1">{order.spendCategory}</td>
                             <td className="px-2 py-1">
                               {order.lineMemoOptionId} -{' '}
                               {order.lineMemoOption.description}

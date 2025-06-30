@@ -22,11 +22,14 @@ const PurchaseRequestForm = () => {
   ]);
 
   // Form fields for order-level info
-  const [storeName, setStoreName] = useState('');
+  const [vendor, setVendor] = useState('');
   const [dateNeeded, setDateNeeded] = useState('');
   const [shipping, setShipping] = useState('');
   const [purpose, setPurpose] = useState('');
-  const [workdayCode, setWorkdayCode] = useState('');
+  const [operatingUnit, setOperatingUnit] = useState('');
+  const [spendCategory, setSpendCategory] = useState('');
+  const [cartLink, setCartLink] = useState('');
+  const [comment, setComment] = useState('');
   const [selectedLineMemoId, setSelectedLineMemoId] = useState('');
   const [selectedProfessorId, setSelectedProfessorId] = useState('');
 
@@ -100,15 +103,18 @@ const PurchaseRequestForm = () => {
 
     try {
       const newOrder = await createOrder({
-        store: storeName,
+        vendor,
         needByDate: dateNeeded,
         shippingPreference: shipping,
         professorId: Number(selectedProfessorId),
         purpose,
-        workdayCode,
+        operatingUnit,
+        spendCategory,
         userId: 2, // TEMPORARY: Replace this with real logic later
         lineMemoOptionId: Number(selectedLineMemoId),
         status: 'Requested',
+        comment,
+        cartLink,
         items: items.map((i) => ({
           name: i.item,
           quantity: i.quantity,
@@ -139,11 +145,11 @@ const PurchaseRequestForm = () => {
       {/* Order details */}
       <div className="text-byuNavy space-y-8">
         <div>
-          <label className="block font-medium">Store Name</label>
+          <label className="block font-medium">Vendor Name</label>
           <input
             type="text"
-            value={storeName}
-            onChange={(e) => setStoreName(e.target.value)}
+            value={vendor}
+            onChange={(e) => setVendor(e.target.value)}
             required
             className="w-full border border-gray-300 rounded p-2"
           />
@@ -176,6 +182,16 @@ const PurchaseRequestForm = () => {
               </label>
             ))}
           </div>
+        </div>
+
+        <div>
+          <label className="block font-medium">Cart Link</label>
+          <input
+            type="url"
+            value={cartLink}
+            onChange={(e) => setCartLink(e.target.value)}
+            className="w-full border border-gray-300 rounded p-2"
+          />
         </div>
 
         {/* Item Details */}
@@ -313,11 +329,22 @@ const PurchaseRequestForm = () => {
         </div>
 
         <div>
-          <label className="block font-medium">Workday Code</label>
+          <label className="block font-medium">Operating Unit</label>
           <input
             type="text"
-            value={workdayCode}
-            onChange={(e) => setWorkdayCode(e.target.value)}
+            value={operatingUnit}
+            onChange={(e) => setOperatingUnit(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium">Spend Category</label>
+          <input
+            type="text"
+            value={spendCategory}
+            onChange={(e) => setSpendCategory(e.target.value)}
             required
             className="w-full border border-gray-300 rounded p-2"
           />
@@ -340,6 +367,16 @@ const PurchaseRequestForm = () => {
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="block font-medium">Comments (optional)</label>
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Any special instructions or notes about your request..."
+            className="w-full border border-gray-300 rounded p-2 resize-y min-h-[100px]"
+          />
         </div>
 
         <div className="flex justify-center">

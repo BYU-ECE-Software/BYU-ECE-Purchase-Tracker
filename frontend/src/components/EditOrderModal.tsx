@@ -14,7 +14,7 @@ interface EditOrderModalProps {
     purchaseDate: string | null;
     receipt: string | null;
     status: string | null;
-    store: string | null;
+    vendor: string | null;
     professorName: string | null;
     // add more editable fields here as needed
   };
@@ -115,10 +115,10 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
         {/* Item Tab */}
         {activeTab === 'items' && (
           <div className="space-y-4">
-            {/* Store display */}
+            {/* Vendor display */}
             <div className="flex items-center gap-2 pb-2 text-base font-medium text-byuNavy">
-              <span>Store:</span>
-              <span className="font-normal">{editedOrder.store ?? ''}</span>
+              <span>Vendor:</span>
+              <span className="font-normal">{editedOrder.vendor ?? ''}</span>
             </div>
 
             {/* Items List */}
@@ -196,13 +196,13 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               </span>
             </div>
 
-            {/* Row: Store */}
+            {/* Row: Vendor */}
             <div className="grid grid-cols-3 items-center gap-4">
-              <label className="font-medium text-byuNavy">Store:</label>
+              <label className="font-medium text-byuNavy">Vendor:</label>
               <input
                 type="text"
-                value={editedOrder.store ?? ''}
-                onChange={(e) => onOrderFieldChange('store', e.target.value)}
+                value={editedOrder.vendor ?? ''}
+                onChange={(e) => onOrderFieldChange('vendor', e.target.value)}
                 className="col-span-2 p-2 border rounded text-byuNavy"
               />
             </div>
@@ -272,9 +272,13 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               <input
                 type="number"
                 value={editedOrder.subtotal ?? ''}
-                onChange={(e) =>
-                  onOrderFieldChange('subtotal', parseFloat(e.target.value))
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onOrderFieldChange(
+                    'subtotal',
+                    val === '' ? null : parseFloat(val)
+                  );
+                }}
                 className="col-span-2 p-2 border rounded text-byuNavy"
               />
             </div>
@@ -285,9 +289,13 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               <input
                 type="number"
                 value={editedOrder.tax ?? ''}
-                onChange={(e) =>
-                  onOrderFieldChange('tax', parseFloat(e.target.value))
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onOrderFieldChange(
+                    'tax',
+                    val === '' ? null : parseFloat(val)
+                  );
+                }}
                 className="col-span-2 p-2 border rounded text-byuNavy"
               />
             </div>
@@ -298,9 +306,13 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               <input
                 type="number"
                 value={editedOrder.total ?? ''}
-                onChange={(e) =>
-                  onOrderFieldChange('total', parseFloat(e.target.value))
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onOrderFieldChange(
+                    'total',
+                    val === '' ? null : parseFloat(val)
+                  );
+                }}
                 className="col-span-2 p-2 border rounded text-byuNavy"
               />
             </div>
