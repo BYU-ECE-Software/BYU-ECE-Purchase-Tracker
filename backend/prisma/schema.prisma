@@ -51,7 +51,8 @@ model Order {
   professor          Professors   @relation(fields: [professorId], references: [id])
   purpose            String
   operatingUnit      String
-  spendCategory      String?
+  spendCategoryId    Int?
+  spendCategory      SpendCategory? @relation(fields: [spendCategoryId], references: [id])
   subtotal           Float?
   tax                Float?
   total              Float?
@@ -65,6 +66,17 @@ model Order {
   status             String
   comment            String?
   cartLink           String?
+}
+
+// ==========================
+//   MODEL: SpendCategory
+// ==========================
+
+model SpendCategory {
+  id           Int     @id @default(autoincrement())
+  code         String
+  description  String
+  orders       Order[]
 }
 
 // ==========================

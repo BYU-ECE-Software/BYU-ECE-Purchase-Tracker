@@ -340,26 +340,34 @@ const AdminDashboard = () => {
                   <td className="border px-4 py-2 text-center">
                     {order.user.email}
                   </td>
-                  <td className="border px-4 py-2 text-center">
-                    {order.items.length > 0 ? (
+                  <td className="border px-4 py-2 text-center space-y-1">
+                    {order.items.length > 0 && (
                       <button
                         onClick={() => toggleExpand(order.id)}
-                        className="text-byuRoyal hover:underline"
+                        className="text-byuRoyal underline hover:text-blue-900 block mx-auto"
                       >
-                        {isExpanded ? 'Hide ▲' : 'Show ▼'}
+                        {isExpanded ? 'Hide' : 'Show'}
                       </button>
-                    ) : (
-                      ''
+                    )}
+
+                    {order.cartLink && (
+                      <a
+                        href={order.cartLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-byuRoyal underline hover:text-blue-900 block mx-auto"
+                      >
+                        Cart Link
+                      </a>
                     )}
                   </td>
+
                   <td className="border px-4 py-2 text-center">
                     <button
                       onClick={() => togglePurchaseExpand(order.id)}
-                      className="text-byuRoyal hover:underline"
+                      className="text-byuRoyal underline hover:text-blue-900"
                     >
-                      {expandedPurchaseIds.includes(order.id)
-                        ? 'Hide ▲'
-                        : 'Show ▼'}
+                      {expandedPurchaseIds.includes(order.id) ? 'Hide' : 'Show'}
                     </button>
                   </td>
                   <td className="border px-4 py-2 text-center align-top">
@@ -367,7 +375,7 @@ const AdminDashboard = () => {
                       <div>
                         <button
                           onClick={() => toggleCommentVisibility(order.id)}
-                          className="text-blue-600 underline hover:text-blue-800"
+                          className="text-byuRoyal underline hover:text-blue-900"
                         >
                           {visibleCommentIds.includes(order.id)
                             ? 'Hide'
@@ -411,9 +419,9 @@ const AdminDashboard = () => {
                                     href={item.link}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-byuRoyal underline"
+                                    className="text-byuRoyal underline hover:text-blue-900"
                                   >
-                                    link
+                                    Link
                                   </a>
                                 ) : (
                                   ''

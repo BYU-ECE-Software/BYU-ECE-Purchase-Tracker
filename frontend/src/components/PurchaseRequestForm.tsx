@@ -145,7 +145,7 @@ const PurchaseRequestForm = () => {
       {/* Order details */}
       <div className="text-byuNavy space-y-8">
         <div>
-          <label className="block font-medium">Vendor Name</label>
+          <label className="block font-medium">Vendor</label>
           <input
             type="text"
             value={vendor}
@@ -184,6 +184,16 @@ const PurchaseRequestForm = () => {
           </div>
         </div>
 
+        {/* Item Details */}
+        <div className="space-y-2">
+          <h2 className="text-2xl text-byuNavy font-semibold">Items</h2>
+
+          <h2 className="text-base text-byuNavy">
+            Please do one of the following: add a cart link or enter item
+            details individually.
+          </h2>
+        </div>
+
         <div>
           <label className="block font-medium">Cart Link</label>
           <input
@@ -193,9 +203,6 @@ const PurchaseRequestForm = () => {
             className="w-full border border-gray-300 rounded p-2"
           />
         </div>
-
-        {/* Item Details */}
-        <h2 className="text-2xl text-byuNavy font-semibold mb-4">Items</h2>
 
         {items.map((item, index) => (
           <div

@@ -170,7 +170,7 @@ const ReceiptSubmitForm = () => {
         Purchasing Details
       </h2>
 
-      <h2 className="text-l text-byuNavy mb-4">
+      <h2 className="text-base text-byuNavy mb-4">
         If submitting multiple receipts, the following purchasing detail
         information must be the same for each receipt (professor name, workday
         codes, etc). If you are submitting different receipts for differing
@@ -260,7 +260,7 @@ const ReceiptSubmitForm = () => {
             className="border border-gray-300 p-4 rounded-md space-y-4 text-byuNavy"
           >
             <div>
-              <label className="block font-medium">Vendor Name</label>
+              <label className="block font-medium">Vendor</label>
               <input
                 type="text"
                 value={receipt.vendor}
