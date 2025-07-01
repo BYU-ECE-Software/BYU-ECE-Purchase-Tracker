@@ -14,7 +14,6 @@ interface Receipt {
   vendor: string;
   cardType: string;
   purchaseDate: string;
-  subtotal: number;
   tax: number;
   total: number;
   receipt: File | null;
@@ -28,7 +27,6 @@ const ReceiptSubmitForm = () => {
       vendor: '',
       cardType: '',
       purchaseDate: '',
-      subtotal: 0,
       tax: 0,
       total: 0,
       receipt: null,
@@ -117,7 +115,6 @@ const ReceiptSubmitForm = () => {
         vendor: '',
         cardType: '',
         purchaseDate: '',
-        subtotal: 0,
         tax: 0,
         total: 0,
         receipt: null,
@@ -150,7 +147,6 @@ const ReceiptSubmitForm = () => {
           cardType: receipt.cardType,
           purchaseDate: receipt.purchaseDate,
           receipt: receipt.receipt ? receipt.receipt.name : undefined,
-          subtotal: receipt.subtotal,
           tax: receipt.tax,
           total: receipt.total,
           status: 'Purchased',
@@ -166,7 +162,6 @@ const ReceiptSubmitForm = () => {
           vendor: '',
           cardType: '',
           purchaseDate: '',
-          subtotal: 0,
           tax: 0,
           total: 0,
           receipt: null,
@@ -328,25 +323,6 @@ const ReceiptSubmitForm = () => {
                 value={receipt.purchaseDate}
                 onChange={(e) =>
                   handleReceiptChange(index, 'purchaseDate', e.target.value)
-                }
-                required
-                className="w-full border border-gray-300 rounded p-2"
-              />
-            </div>
-
-            <div>
-              <label className="block font-medium">Subtotal</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={receipt.subtotal}
-                onChange={(e) =>
-                  handleReceiptChange(
-                    index,
-                    'subtotal',
-                    parseFloat(e.target.value)
-                  )
                 }
                 required
                 className="w-full border border-gray-300 rounded p-2"

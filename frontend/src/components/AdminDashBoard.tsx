@@ -37,7 +37,6 @@ const AdminDashboard = () => {
   // States for editing fields in the modal
   const [editedItems, setEditedItems] = useState<Item[]>([]);
   const [editedOrder, setEditedOrder] = useState<{
-    subtotal: number | null;
     tax: number | null;
     total: number | null;
     cardType: string | null;
@@ -47,7 +46,6 @@ const AdminDashboard = () => {
     vendor: string | null;
     professorName: string | null;
   }>({
-    subtotal: null,
     tax: null,
     total: null,
     cardType: null,
@@ -71,18 +69,7 @@ const AdminDashboard = () => {
       if (isAInProgress && !isBInProgress) return -1;
       if (!isAInProgress && isBInProgress) return 1;
 
-      // If both are in-progress, sort by needByDate (nulls last)
-      if (isAInProgress && isBInProgress) {
-        const dateA = a.needByDate
-          ? new Date(a.needByDate).getTime()
-          : Infinity;
-        const dateB = b.needByDate
-          ? new Date(b.needByDate).getTime()
-          : Infinity;
-        return dateA - dateB;
-      }
-
-      // If both are completed/cancelled, sort by requestDate descending
+      // Within each group, sort by requestDate descending
       const requestA = new Date(a.requestDate).getTime();
       const requestB = new Date(b.requestDate).getTime();
       return requestB - requestA;
@@ -152,7 +139,6 @@ const AdminDashboard = () => {
     setSelectedOrder(order);
     setEditedItems(order.items.map((item) => ({ ...item })));
     setEditedOrder({
-      subtotal: order.subtotal ?? null,
       tax: order.tax ?? null,
       total: order.total ?? null,
       cardType: order.cardType ?? null,
@@ -269,8 +255,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold mb-4">Orders</h2>
+      <div className="flex justify-end mb-4">
         <SearchBar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -286,7 +271,6 @@ const AdminDashboard = () => {
           <tr>
             <th className="border px-4 py-2">Status</th>
             <th className="border px-4 py-2">Form Submitted</th>
-            <th className="border px-4 py-2">Need By</th>
             <th className="border px-4 py-2">Vendor</th>
             <th className="border px-4 py-2">Shipping</th>
             <th className="border px-4 py-2">Student Name</th>
@@ -316,18 +300,6 @@ const AdminDashboard = () => {
                   <td className="border px-4 py-2 text-center">
                     {order.requestDate ? formatDate(order.requestDate) : 'N/A'}
                   </td>
-                  <td
-                    className={`border px-4 py-2 text-center ${
-                      order.status === 'Requested' &&
-                      order.needByDate &&
-                      new Date(order.needByDate) < new Date()
-                        ? 'text-red-600 font-semibold'
-                        : ''
-                    }`}
-                  >
-                    {order.needByDate ? formatDate(order.needByDate) : ''}
-                  </td>
-
                   <td className="border px-4 py-2 text-center">
                     {order.vendor}
                   </td>
@@ -396,7 +368,7 @@ const AdminDashboard = () => {
                 {/* sub table that displays if user wants to see individual item information for an order */}
                 {isExpanded && order.items.length > 0 && (
                   <tr key={`items-${order.id}`}>
-                    <td colSpan={10} className="border-t px-4 py-2 bg-gray-50">
+                    <td colSpan={9} className="border-t px-4 py-2 bg-gray-50">
                       <table className="min-w-full table-fixed">
                         <thead>
                           <tr>
@@ -444,7 +416,7 @@ const AdminDashboard = () => {
                 {/* sub table that displays if user wants to see purchase info for an order */}
                 {expandedPurchaseIds.includes(order.id) && (
                   <tr key={`purchase-${order.id}`}>
-                    <td colSpan={10} className="border-t px-4 py-2 bg-blue-50">
+                    <td colSpan={9} className="border-t px-4 py-2 bg-blue-50">
                       <table className="min-w-full table-fixed">
                         <thead>
                           <tr>
@@ -461,7 +433,6 @@ const AdminDashboard = () => {
                               Purchase Date
                             </th>
                             <th className="px-2 py-1 text-left">Receipt</th>
-                            <th className="px-2 py-1 text-left">Subtotal</th>
                             <th className="px-2 py-1 text-left">Tax</th>
                             <th className="px-2 py-1 text-left">Total</th>
                           </tr>
@@ -495,11 +466,6 @@ const AdminDashboard = () => {
                               ) : (
                                 '-'
                               )}
-                            </td>
-                            <td className="px-2 py-1">
-                              {order.subtotal != null
-                                ? `$${order.subtotal}`
-                                : '-'}
                             </td>
                             <td className="px-2 py-1">
                               {order.tax != null ? `$${order.tax}` : '-'}

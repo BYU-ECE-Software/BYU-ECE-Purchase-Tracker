@@ -7,7 +7,6 @@ interface EditOrderModalProps {
   onClose: () => void;
   items: Item[];
   editedOrder: {
-    subtotal: number | null;
     tax: number | null;
     total: number | null;
     cardType: string | null;
@@ -264,23 +263,6 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                   className="p-2 border rounded text-byuNavy"
                 />
               </div>
-            </div>
-
-            {/* Row: Subtotal */}
-            <div className="grid grid-cols-3 items-center gap-4">
-              <label className="font-medium text-byuNavy">Subtotal:</label>
-              <input
-                type="number"
-                value={editedOrder.subtotal ?? ''}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  onOrderFieldChange(
-                    'subtotal',
-                    val === '' ? null : parseFloat(val)
-                  );
-                }}
-                className="col-span-2 p-2 border rounded text-byuNavy"
-              />
             </div>
 
             {/* Row: Tax */}

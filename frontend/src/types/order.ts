@@ -8,7 +8,6 @@ export interface Order {
   id: number;
   requestDate: string;
   vendor: string;
-  needByDate?: string;
   shippingPreference?: string;
   professorId: number;
   professor: Professor;
@@ -16,7 +15,6 @@ export interface Order {
   operatingUnit: string;
   spendCategoryId: number;
   spendCategory: SpendCategory;
-  subtotal?: number;
   tax?: number;
   total?: number;
   userId: number;

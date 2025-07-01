@@ -25,7 +25,6 @@ const PurchaseRequestForm = () => {
 
   // Form fields for order-level info
   const [vendor, setVendor] = useState('');
-  const [dateNeeded, setDateNeeded] = useState('');
   const [shipping, setShipping] = useState('');
   const [purpose, setPurpose] = useState('');
   const [operatingUnit, setOperatingUnit] = useState('');
@@ -123,7 +122,6 @@ const PurchaseRequestForm = () => {
     try {
       const newOrder = await createOrder({
         vendor,
-        needByDate: dateNeeded,
         shippingPreference: shipping,
         professorId: Number(selectedProfessorId),
         purpose,
@@ -169,17 +167,6 @@ const PurchaseRequestForm = () => {
             type="text"
             value={vendor}
             onChange={(e) => setVendor(e.target.value)}
-            required
-            className="w-full border border-gray-300 rounded p-2"
-          />
-        </div>
-
-        <div>
-          <label className="block font-medium">Date Needed</label>
-          <input
-            type="date"
-            value={dateNeeded}
-            onChange={(e) => setDateNeeded(e.target.value)}
             required
             className="w-full border border-gray-300 rounded p-2"
           />

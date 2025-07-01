@@ -45,7 +45,6 @@ model Order {
   requestDate        DateTime
   items              Item[]
   vendor              String
-  needByDate         DateTime?
   shippingPreference String?
   professorId        Int
   professor          Professors   @relation(fields: [professorId], references: [id])
@@ -53,7 +52,6 @@ model Order {
   operatingUnit      String
   spendCategoryId    Int
   spendCategory      SpendCategory @relation(fields: [spendCategoryId], references: [id])
-  subtotal           Float?
   tax                Float?
   total              Float?
   userId             Int
