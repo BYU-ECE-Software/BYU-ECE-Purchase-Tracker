@@ -3,6 +3,7 @@
 import type { LineMemoOption } from '../types/lineMemoOption';
 import type { Order, OrderUpdatePayload } from '../types/order';
 import type { Professor } from '../types/professor';
+import type { SpendCategory } from '../types/spendCategory';
 
 //base api url used in every call
 const BASE_API_URL = 'http://localhost:4000/api';
@@ -42,6 +43,13 @@ export const updateOrder = async (
 
   if (!res.ok) throw new Error('Failed to update order');
 
+  return await res.json();
+};
+
+// API Call to Fetch all Spend Categories
+export const fetchSpendCategories = async (): Promise<SpendCategory[]> => {
+  const res = await fetch(`${BASE_API_URL}/spendCategories`);
+  if (!res.ok) throw new Error('Failed to fetch spend categories');
   return await res.json();
 };
 

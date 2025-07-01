@@ -2,6 +2,7 @@ import express from "express";
 import orderRoutes from "./routes/orderRoutes.js";
 import lineMemoRoutes from "./routes/lineMemoRoutes.js";
 import professorRoutes from "./routes/professorRoutes.js";
+import spendCategoryRoutes from "./routes/spendCategoryRoutes.js";
 import cors from "cors";
 
 const app = express();
@@ -17,5 +18,8 @@ app.use("/api/lineMemoOptions", lineMemoRoutes);
 
 // Professors route mount point
 app.use("/api/professors", professorRoutes);
+
+// Spend categories route mount point
+app.use("/api/spendCategories", spendCategoryRoutes);
 
 export default app;

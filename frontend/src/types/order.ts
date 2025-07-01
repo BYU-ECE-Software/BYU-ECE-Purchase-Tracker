@@ -2,6 +2,7 @@ import type { User } from './user';
 import type { Professor } from './professor';
 import type { LineMemoOption } from './lineMemoOption';
 import type { Item } from './item';
+import type { SpendCategory } from './spendCategory';
 
 export interface Order {
   id: number;
@@ -13,7 +14,8 @@ export interface Order {
   professor: Professor;
   purpose: string;
   operatingUnit: string;
-  spendCategory?: string;
+  spendCategoryId: number;
+  spendCategory: SpendCategory;
   subtotal?: number;
   tax?: number;
   total?: number;

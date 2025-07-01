@@ -3,9 +3,11 @@ import {
   createOrder,
   fetchLineMemoOptions,
   fetchProfessors,
+  fetchSpendCategories,
 } from '../api/purchaseTrackerApi';
 import type { LineMemoOption } from '../types/lineMemoOption';
 import type { Professor } from '../types/professor';
+import type { SpendCategory } from '../types/spendCategory';
 
 // Create a type for a receipt
 interface Receipt {
@@ -38,8 +40,26 @@ const ReceiptSubmitForm = () => {
   const [purpose, setPurpose] = useState('');
   const [operatingUnit, setOperatingUnit] = useState('');
   const [spendCategory, setSpendCategory] = useState('');
+  const [selectedSpendCategoryId, setSelectedSpendCategoryId] = useState('');
   const [selectedLineMemoId, setSelectedLineMemoId] = useState('');
   const [selectedProfessorId, setSelectedProfessorId] = useState('');
+
+  // Dropdown options for spend category selection
+  const [spendCategories, setSpendCategories] = useState<SpendCategory[]>([]);
+
+  // Load available spend categories from API mount
+  useEffect(() => {
+    const loadSpendCategories = async () => {
+      try {
+        const categories = await fetchSpendCategories();
+        setSpendCategories(categories);
+      } catch (err) {
+        console.error('Failed to load spend categories:', err);
+      }
+    };
+
+    loadSpendCategories();
+  }, []);
 
   // Dropdown options for line memo selection
   const [lineMemoOptions, setLineMemoOptions] = useState<LineMemoOption[]>([]);
@@ -124,7 +144,7 @@ const ReceiptSubmitForm = () => {
           professorId: Number(selectedProfessorId),
           purpose,
           operatingUnit,
-          spendCategory,
+          spendCategoryId: Number(selectedSpendCategoryId),
           userId: 2, // TEMPORARY: Replace this with real logic later
           lineMemoOptionId: Number(selectedLineMemoId),
           cardType: receipt.cardType,
@@ -166,15 +186,65 @@ const ReceiptSubmitForm = () => {
       className="max-w-3xl mx-auto mt-4 mb-8 p-6 bg-white shadow-md rounded-md space-y-6"
     >
       {/* Purchasing/Workday Details */}
-      <h2 className="text-2xl text-byuNavy font-semibold mb-4">
-        Purchasing Details
+      <h2 className="text-base text-byuNavy mb-4">
+        All receipts on one form submission must use the same funding code. If
+        you are submitting receipts with different funding codes, please submit
+        multiple forms.
       </h2>
 
-      <h2 className="text-base text-byuNavy mb-4">
-        If submitting multiple receipts, the following purchasing detail
-        information must be the same for each receipt (professor name, workday
-        codes, etc). If you are submitting different receipts for differing
-        reasons, please submit multiple forms.
+      <h2 className="text-2xl text-byuNavy font-semibold mb-4">Funding Code</h2>
+
+      <div>
+        <label className="block font-medium">Operating Unit</label>
+        <input
+          type="text"
+          value={operatingUnit}
+          onChange={(e) => setOperatingUnit(e.target.value)}
+          required
+          className="w-full border border-gray-300 rounded p-2"
+        />
+      </div>
+
+      <div>
+        <label className="block font-medium">Spend Category</label>
+        <select
+          value={selectedSpendCategoryId}
+          onChange={(e) => setSelectedSpendCategoryId(e.target.value)}
+          required
+          className="w-full border border-gray-300 rounded p-2"
+        >
+          <option value="" disabled hidden>
+            Select a spend category
+          </option>
+          {spendCategories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.code} - {category.description}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block font-medium">Line Memo Options</label>
+        <select
+          value={selectedLineMemoId}
+          onChange={(e) => setSelectedLineMemoId(e.target.value)}
+          required
+          className="w-full border border-gray-300 rounded p-2 text-byuNavy"
+        >
+          <option value="" disabled hidden>
+            Select an option
+          </option>
+          {lineMemoOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.description}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <h2 className="text-2xl text-byuNavy font-semibold mb-4">
+        Purchasing Details
       </h2>
 
       <div>
@@ -205,47 +275,6 @@ const ReceiptSubmitForm = () => {
           required
           className="w-full border border-gray-300 rounded p-2"
         />
-      </div>
-
-      <div>
-        <label className="block font-medium">Operating Unit</label>
-        <input
-          type="text"
-          value={operatingUnit}
-          onChange={(e) => setOperatingUnit(e.target.value)}
-          required
-          className="w-full border border-gray-300 rounded p-2"
-        />
-      </div>
-
-      <div>
-        <label className="block font-medium">Spend Category</label>
-        <input
-          type="text"
-          value={spendCategory}
-          onChange={(e) => setSpendCategory(e.target.value)}
-          required
-          className="w-full border border-gray-300 rounded p-2"
-        />
-      </div>
-
-      <div>
-        <label className="block font-medium">Line Memo Options</label>
-        <select
-          value={selectedLineMemoId}
-          onChange={(e) => setSelectedLineMemoId(e.target.value)}
-          required
-          className="w-full border border-gray-300 rounded p-2 text-byuNavy"
-        >
-          <option value="" disabled hidden>
-            Select an option
-          </option>
-          {lineMemoOptions.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.description}
-            </option>
-          ))}
-        </select>
       </div>
 
       <div className="text-byuNavy space-y-8">

@@ -51,8 +51,8 @@ model Order {
   professor          Professors   @relation(fields: [professorId], references: [id])
   purpose            String
   operatingUnit      String
-  spendCategoryId    Int?
-  spendCategory      SpendCategory? @relation(fields: [spendCategoryId], references: [id])
+  spendCategoryId    Int
+  spendCategory      SpendCategory @relation(fields: [spendCategoryId], references: [id])
   subtotal           Float?
   tax                Float?
   total              Float?

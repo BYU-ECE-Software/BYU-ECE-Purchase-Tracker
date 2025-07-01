@@ -346,7 +346,7 @@ const AdminDashboard = () => {
                         onClick={() => toggleExpand(order.id)}
                         className="text-byuRoyal underline hover:text-blue-900 block mx-auto"
                       >
-                        {isExpanded ? 'Hide' : 'Show'}
+                        {isExpanded ? 'Hide Items' : 'Show Items'}
                       </button>
                     )}
 
@@ -396,8 +396,8 @@ const AdminDashboard = () => {
                 {/* sub table that displays if user wants to see individual item information for an order */}
                 {isExpanded && order.items.length > 0 && (
                   <tr key={`items-${order.id}`}>
-                    <td colSpan={7} className="border-t px-4 py-2 bg-gray-50">
-                      <table className="w-full table-auto">
+                    <td colSpan={10} className="border-t px-4 py-2 bg-gray-50">
+                      <table className="min-w-full table-fixed">
                         <thead>
                           <tr>
                             <th className="px-2 py-1 text-left">Item Name</th>
@@ -444,16 +444,13 @@ const AdminDashboard = () => {
                 {/* sub table that displays if user wants to see purchase info for an order */}
                 {expandedPurchaseIds.includes(order.id) && (
                   <tr key={`purchase-${order.id}`}>
-                    <td colSpan={15} className="border-t px-4 py-2 bg-blue-50">
-                      <table className="w-full table-auto">
+                    <td colSpan={10} className="border-t px-4 py-2 bg-blue-50">
+                      <table className="min-w-full table-fixed">
                         <thead>
                           <tr>
                             <th className="px-2 py-1 text-left">Professor</th>
                             <th className="px-2 py-1 text-left">
-                              Operating Unit
-                            </th>
-                            <th className="px-2 py-1 text-left">
-                              Spend Category
+                              Funding Code
                             </th>
                             <th className="px-2 py-1 text-left">
                               Line Memo Option
@@ -476,8 +473,9 @@ const AdminDashboard = () => {
                               {order.professor.firstName}{' '}
                               {order.professor.lastName}
                             </td>
-                            <td className="px-2 py-1">{order.operatingUnit}</td>
-                            <td className="px-2 py-1">{order.spendCategory}</td>
+                            <td className="px-2 py-1">
+                              {order.operatingUnit}-{order.spendCategory.code}
+                            </td>
                             <td className="px-2 py-1">
                               {order.lineMemoOptionId} -{' '}
                               {order.lineMemoOption.description}
