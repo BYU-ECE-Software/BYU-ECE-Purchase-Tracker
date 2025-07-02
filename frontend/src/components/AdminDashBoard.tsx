@@ -9,6 +9,7 @@ import {
 import EditOrderModal from './EditOrderModal';
 import SearchBar from './SearchBar';
 import React from 'react';
+import ViewOrderModal from './ViewOrderModal';
 
 //Helper to format date as MM-DD-YYYY
 const formatDate = (isoString: string): string => {
@@ -24,16 +25,18 @@ const formatDate = (isoString: string): string => {
 const AdminDashboard = () => {
   // State to hold all orders
   const [orders, setOrders] = useState<Order[]>([]);
-  // State to track which orders are expanded to show item details or purchase details
-  const [expandedOrderIds, setExpandedOrderIds] = useState<number[]>([]);
-  const [expandedPurchaseIds, setExpandedPurchaseIds] = useState<number[]>([]);
+
   // State to track Search Terms in the search bar
   const [searchTerm, setSearchTerm] = useState('');
-  // State to track which comments are shown
-  const [visibleCommentIds, setVisibleCommentIds] = useState<number[]>([]);
+
+  // State for the View Order Modal
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewOrder, setViewOrder] = useState<Order | null>(null);
+
   // Modal state and data for the selected order
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
   // States for editing fields in the modal
   const [editedItems, setEditedItems] = useState<Item[]>([]);
   const [editedOrder, setEditedOrder] = useState<{
@@ -93,31 +96,10 @@ const AdminDashboard = () => {
     loadAndSetOrders();
   }, []);
 
-  // Toggle whether an order row is expanded to show item details
-  const toggleExpand = (orderId: number) => {
-    setExpandedOrderIds((prev) =>
-      prev.includes(orderId)
-        ? prev.filter((id) => id !== orderId)
-        : [...prev, orderId]
-    );
-  };
-
-  // Toggle whether an order row is expanded to show purchase details
-  const togglePurchaseExpand = (orderId: number) => {
-    setExpandedPurchaseIds((prev) =>
-      prev.includes(orderId)
-        ? prev.filter((id) => id !== orderId)
-        : [...prev, orderId]
-    );
-  };
-
-  // Toggle whether a comment is being shown
-  const toggleCommentVisibility = (orderId: number) => {
-    setVisibleCommentIds((prev) =>
-      prev.includes(orderId)
-        ? prev.filter((id) => id !== orderId)
-        : [...prev, orderId]
-    );
+  // Trigger the opening of the view order modal
+  const openViewModal = (order: Order) => {
+    setViewOrder(order);
+    setIsViewModalOpen(true);
   };
 
   // Returns Tailwind button styling for the order status button based on status
@@ -275,15 +257,12 @@ const AdminDashboard = () => {
             <th className="border px-4 py-2">Shipping</th>
             <th className="border px-4 py-2">Student Name</th>
             <th className="border px-4 py-2">Student Email</th>
-            <th className="border px-4 py-2">Item Info</th>
-            <th className="border px-4 py-2">Purchase Info</th>
-            <th className="border px-4 py-2">Comments</th>
+            <th className="border px-4 py-2">View Order</th>
           </tr>
         </thead>
         <tbody>
           {/* Map through all orders and display them in the table */}
           {orders.map((order) => {
-            const isExpanded = expandedOrderIds.includes(order.id);
             const status = order.status ?? 'Requested';
             return (
               <React.Fragment key={order.id}>
@@ -312,180 +291,29 @@ const AdminDashboard = () => {
                   <td className="border px-4 py-2 text-center">
                     {order.user.email}
                   </td>
-                  <td className="border px-4 py-2 text-center space-y-1">
-                    {order.items.length > 0 && (
-                      <button
-                        onClick={() => toggleExpand(order.id)}
-                        className="text-byuRoyal underline hover:text-blue-900 block mx-auto"
-                      >
-                        {isExpanded ? 'Hide Items' : 'Show Items'}
-                      </button>
-                    )}
-
-                    {order.cartLink && (
-                      <a
-                        href={order.cartLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-byuRoyal underline hover:text-blue-900 block mx-auto"
-                      >
-                        Cart Link
-                      </a>
-                    )}
-                  </td>
-
                   <td className="border px-4 py-2 text-center">
                     <button
-                      onClick={() => togglePurchaseExpand(order.id)}
+                      onClick={() => openViewModal(order)}
                       className="text-byuRoyal underline hover:text-blue-900"
                     >
-                      {expandedPurchaseIds.includes(order.id) ? 'Hide' : 'Show'}
+                      View
                     </button>
                   </td>
-                  <td className="border px-4 py-2 text-center align-top">
-                    {order.comment ? (
-                      <div>
-                        <button
-                          onClick={() => toggleCommentVisibility(order.id)}
-                          className="text-byuRoyal underline hover:text-blue-900"
-                        >
-                          {visibleCommentIds.includes(order.id)
-                            ? 'Hide'
-                            : 'View'}
-                        </button>
-
-                        {visibleCommentIds.includes(order.id) && (
-                          <div className="mt-2 text-sm text-left break-words">
-                            {order.comment}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      ''
-                    )}
-                  </td>
                 </tr>
-                {/* sub table that displays if user wants to see individual item information for an order */}
-                {isExpanded && order.items.length > 0 && (
-                  <tr key={`items-${order.id}`}>
-                    <td colSpan={9} className="border-t px-4 py-2 bg-gray-50">
-                      <table className="min-w-full table-fixed">
-                        <thead>
-                          <tr>
-                            <th className="px-2 py-1 text-left">Item Name</th>
-                            <th className="px-2 py-1 text-left">Quantity</th>
-                            <th className="px-2 py-1 text-left">Status</th>
-                            <th className="px-2 py-1 text-left">Link</th>
-                            <th className="px-2 py-1 text-left">File</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {order.items.map((item) => (
-                            <tr key={item.id}>
-                              <td className="px-2 py-1">{item.name}</td>
-                              <td className="px-2 py-1">{item.quantity}</td>
-                              <td className="px-2 py-1">{item.status}</td>
-                              <td className="px-2 py-1">
-                                {item.link ? (
-                                  <a
-                                    href={item.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-byuRoyal underline hover:text-blue-900"
-                                  >
-                                    Link
-                                  </a>
-                                ) : (
-                                  ''
-                                )}
-                              </td>
-                              <td className="px-2 py-1">
-                                {item.file ? (
-                                  <span title={item.file}>file</span>
-                                ) : (
-                                  ''
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-                )}
-                {/* sub table that displays if user wants to see purchase info for an order */}
-                {expandedPurchaseIds.includes(order.id) && (
-                  <tr key={`purchase-${order.id}`}>
-                    <td colSpan={9} className="border-t px-4 py-2 bg-blue-50">
-                      <table className="min-w-full table-fixed">
-                        <thead>
-                          <tr>
-                            <th className="px-2 py-1 text-left">Professor</th>
-                            <th className="px-2 py-1 text-left">
-                              Funding Code
-                            </th>
-                            <th className="px-2 py-1 text-left">
-                              Line Memo Option
-                            </th>
-                            <th className="px-2 py-1 text-left">Purpose</th>
-                            <th className="px-2 py-1 text-left">Card Type</th>
-                            <th className="px-2 py-1 text-left">
-                              Purchase Date
-                            </th>
-                            <th className="px-2 py-1 text-left">Receipt</th>
-                            <th className="px-2 py-1 text-left">Tax</th>
-                            <th className="px-2 py-1 text-left">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td className="px-2 py-1">
-                              {order.professor.title}{' '}
-                              {order.professor.firstName}{' '}
-                              {order.professor.lastName}
-                            </td>
-                            <td className="px-2 py-1">
-                              {order.operatingUnit}-{order.spendCategory.code}
-                            </td>
-                            <td className="px-2 py-1">
-                              {order.lineMemoOptionId} -{' '}
-                              {order.lineMemoOption.description}
-                            </td>
-                            <td className="px-2 py-1">{order.purpose}</td>
-                            <td className="px-2 py-1">
-                              {order.cardType || '-'}
-                            </td>
-                            <td className="px-2 py-1">
-                              {order.purchaseDate
-                                ? formatDate(order.purchaseDate)
-                                : '-'}
-                            </td>
-                            <td className="px-2 py-1">
-                              {order.receipt ? (
-                                <span title={order.receipt}>receipt</span>
-                              ) : (
-                                '-'
-                              )}
-                            </td>
-                            <td className="px-2 py-1">
-                              {order.tax != null ? `$${order.tax}` : '-'}
-                            </td>
-                            <td className="px-2 py-1">
-                              {order.total != null ? `$${order.total}` : '-'}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-                )}
               </React.Fragment>
             );
           })}
         </tbody>
       </table>
 
-      {/* Instance of the Modal Component that is used to edit info for an order */}
+      {/* View Order Modal  */}
+      <ViewOrderModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        order={viewOrder}
+      />
+
+      {/* Edit Order Modal*/}
       <EditOrderModal
         isOpen={isModalOpen}
         onClose={closeModal}
