@@ -23,7 +23,7 @@ const PurchaseRequestForm = () => {
     { item: '', quantity: 1, link: '', file: null },
   ]);
 
-  // Form fields for order-level info
+  // State for order-level info
   const [vendor, setVendor] = useState('');
   const [shipping, setShipping] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -33,6 +33,11 @@ const PurchaseRequestForm = () => {
   const [comment, setComment] = useState('');
   const [selectedLineMemoId, setSelectedLineMemoId] = useState('');
   const [selectedProfessorId, setSelectedProfessorId] = useState('');
+
+  // State to track 'other' spend category
+  const [customSpendCategory, setCustomSpendCategory] = useState('');
+  const [selectedSpendCategoryCode, setSelectedSpendCategoryCode] =
+    useState('');
 
   // Dropdown options for spend category selection
   const [spendCategories, setSpendCategories] = useState<SpendCategory[]>([]);
@@ -86,18 +91,19 @@ const PurchaseRequestForm = () => {
   }, []);
 
   // Handle changes to any item field (including file)
-  const handleItemChange = (
+  const handleItemChange = <key extends keyof PurchaseItem>(
     index: number,
-    field: keyof PurchaseItem,
-    value: any
+    field: key,
+    value: PurchaseItem[key] | React.ChangeEvent<HTMLInputElement>
   ) => {
     const updatedItems = [...items];
     const updatedItem = { ...updatedItems[index] };
 
     if (field === 'file') {
-      updatedItem[field] = value.target.files[0];
+      updatedItem[field] = (value as React.ChangeEvent<HTMLInputElement>).target
+        .files?.[0] as PurchaseItem[key];
     } else {
-      updatedItem[field] = value;
+      updatedItem[field] = value as PurchaseItem[key];
     }
 
     updatedItems[index] = updatedItem;
@@ -119,6 +125,20 @@ const PurchaseRequestForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // User must have entered either a cart link or an item and quantity before it will submit
+    const hasCartLink = cartLink.trim() !== '';
+
+    const hasValidItem = items.some(
+      (item) => item.item.trim() !== '' && item.quantity > 0
+    );
+
+    if (!hasCartLink && !hasValidItem) {
+      alert(
+        'Please provide either a cart link or at least one item with name and quantity.'
+      );
+      return;
+    }
+
     try {
       const newOrder = await createOrder({
         vendor,
@@ -130,7 +150,10 @@ const PurchaseRequestForm = () => {
         userId: 2, // TEMPORARY: Replace this with real logic later
         lineMemoOptionId: Number(selectedLineMemoId),
         status: 'Requested',
-        comment,
+        comment:
+          selectedSpendCategoryCode === 'Other'
+            ? `Spend Category: ${customSpendCategory}\n${comment}`
+            : comment,
         cartLink,
         items: items.map((i) => ({
           name: i.item,
@@ -162,7 +185,7 @@ const PurchaseRequestForm = () => {
       {/* Order details */}
       <div className="text-byuNavy space-y-8">
         <div>
-          <label className="block font-medium">Vendor</label>
+          <label className="block font-medium">Vendor *</label>
           <input
             type="text"
             value={vendor}
@@ -175,7 +198,12 @@ const PurchaseRequestForm = () => {
         <div>
           <span className="block font-medium mb-1">Shipping Preference</span>
           <div className="space-y-1">
-            {['Overnight', 'Regular', 'Any'].map((option) => (
+            {[
+              'Overnight / Next Day',
+              'Standard',
+              'Economy / Lowest Cost',
+              'No Preference',
+            ].map((option) => (
               <label key={option} className="flex items-center space-x-2">
                 <input
                   type="radio"
@@ -223,7 +251,6 @@ const PurchaseRequestForm = () => {
                 onChange={(e) =>
                   handleItemChange(index, 'item', e.target.value)
                 }
-                required
                 className="w-full border border-gray-300 rounded p-2"
               />
             </div>
@@ -237,7 +264,6 @@ const PurchaseRequestForm = () => {
                 onChange={(e) =>
                   handleItemChange(index, 'quantity', Number(e.target.value))
                 }
-                required
                 className="w-full border border-gray-300 rounded p-2"
               />
             </div>
@@ -307,12 +333,18 @@ const PurchaseRequestForm = () => {
         </button>
 
         {/* Purchasing/Workday Details */}
-        <h2 className="text-2xl text-byuNavy font-semibold mb-4">
-          Funding Code
-        </h2>
+        <div className="space-y-2">
+          <h2 className="text-2xl text-byuNavy font-semibold">Funding Code</h2>
+
+          <h2 className="text-base text-byuNavy">
+            Format: Operating Unit (Letters GR, AC, CC, etc, followed by 5
+            numbers) - Spend Category (choose one of the following options or
+            enter a different code manually)
+          </h2>
+        </div>
 
         <div>
-          <label className="block font-medium">Operating Unit</label>
+          <label className="block font-medium">Operating Unit *</label>
           <input
             type="text"
             value={operatingUnit}
@@ -323,10 +355,23 @@ const PurchaseRequestForm = () => {
         </div>
 
         <div>
-          <label className="block font-medium">Spend Category</label>
+          <label className="block font-medium">Spend Category *</label>
           <select
             value={selectedSpendCategoryId}
-            onChange={(e) => setSelectedSpendCategoryId(e.target.value)}
+            onChange={(e) => {
+              const selectedId = e.target.value;
+              setSelectedSpendCategoryId(selectedId);
+
+              const selected = spendCategories.find(
+                (sc) => sc.id.toString() === selectedId
+              );
+              setSelectedSpendCategoryCode(selected?.code || '');
+
+              // If user selects "Other", show the input and reset any previous custom value
+              if (selected?.code === 'Other') {
+                setCustomSpendCategory('');
+              }
+            }}
             required
             className="w-full border border-gray-300 rounded p-2"
           >
@@ -341,12 +386,26 @@ const PurchaseRequestForm = () => {
           </select>
         </div>
 
+        {/* If user selects 'Other' spend category, this question pops up to allow them to manually enter a SC */}
+        {selectedSpendCategoryCode === 'Other' && (
+          <div className="mt-2">
+            <label className="block font-medium">Custom Spend Category *</label>
+            <input
+              type="text"
+              value={customSpendCategory}
+              onChange={(e) => setCustomSpendCategory(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded p-2"
+              placeholder="Format: SCXXXX"
+            />
+          </div>
+        )}
+
         <div>
           <label className="block font-medium">Line Memo Options</label>
           <select
             value={selectedLineMemoId}
             onChange={(e) => setSelectedLineMemoId(e.target.value)}
-            required
             className="w-full border border-gray-300 rounded p-2 text-byuNavy"
           >
             <option value="" disabled hidden>
@@ -365,7 +424,7 @@ const PurchaseRequestForm = () => {
         </h2>
 
         <div>
-          <label className="block font-medium">Professor</label>
+          <label className="block font-medium">Professor *</label>
           <select
             value={selectedProfessorId}
             onChange={(e) => setSelectedProfessorId(e.target.value)}
@@ -384,7 +443,7 @@ const PurchaseRequestForm = () => {
         </div>
 
         <div>
-          <label className="block font-medium">Purpose</label>
+          <label className="block font-medium">Purpose * (be specific)</label>
           <input
             type="text"
             value={purpose}

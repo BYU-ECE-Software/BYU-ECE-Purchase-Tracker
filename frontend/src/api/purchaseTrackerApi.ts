@@ -1,6 +1,7 @@
 //contains all api calls used throughout the frontend
 
 import type { LineMemoOption } from '../types/lineMemoOption';
+import type { NewOrderPayload } from '../types/newOrder';
 import type { Order, OrderUpdatePayload } from '../types/order';
 import type { Professor } from '../types/professor';
 import type { SpendCategory } from '../types/spendCategory';
@@ -17,7 +18,7 @@ export const fetchOrders = async (): Promise<Order[]> => {
 
 // API Call to Create a new Order
 export const createOrder = async (
-  orderData: Partial<Order>
+  orderData: NewOrderPayload
 ): Promise<Order> => {
   const res = await fetch(`${BASE_API_URL}/orders`, {
     method: 'POST',

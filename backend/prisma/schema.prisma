@@ -56,8 +56,8 @@ model Order {
   total              Float?
   userId             Int
   user               User   @relation(fields: [userId], references: [id])
-  lineMemoOptionId   Int
-  lineMemoOption     LineMemoOption @relation(fields: [lineMemoOptionId], references: [id])
+  lineMemoOptionId   Int?
+  lineMemoOption     LineMemoOption? @relation(fields: [lineMemoOptionId], references: [id])
   cardType           String?
   purchaseDate       DateTime?
   receipt            String?

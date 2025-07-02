@@ -12,6 +12,7 @@ import type { SpendCategory } from '../types/spendCategory';
 // Create a type for a receipt
 interface Receipt {
   vendor: string;
+  purpose: string;
   cardType: string;
   purchaseDate: string;
   tax: number;
@@ -25,6 +26,7 @@ const ReceiptSubmitForm = () => {
   const [receipts, setReceipts] = useState<Receipt[]>([
     {
       vendor: '',
+      purpose: '',
       cardType: '',
       purchaseDate: '',
       tax: 0,
@@ -35,12 +37,15 @@ const ReceiptSubmitForm = () => {
   ]);
 
   // Form fields for order-level info
-  const [purpose, setPurpose] = useState('');
   const [operatingUnit, setOperatingUnit] = useState('');
-  const [spendCategory, setSpendCategory] = useState('');
   const [selectedSpendCategoryId, setSelectedSpendCategoryId] = useState('');
   const [selectedLineMemoId, setSelectedLineMemoId] = useState('');
   const [selectedProfessorId, setSelectedProfessorId] = useState('');
+
+  // State to track 'other' spend category
+  const [customSpendCategory, setCustomSpendCategory] = useState('');
+  const [selectedSpendCategoryCode, setSelectedSpendCategoryCode] =
+    useState('');
 
   // Dropdown options for spend category selection
   const [spendCategories, setSpendCategories] = useState<SpendCategory[]>([]);
@@ -113,6 +118,7 @@ const ReceiptSubmitForm = () => {
       ...receipts,
       {
         vendor: '',
+        purpose: '',
         cardType: '',
         purchaseDate: '',
         tax: 0,
@@ -139,7 +145,7 @@ const ReceiptSubmitForm = () => {
           vendor: receipt.vendor,
           shippingPreference: undefined,
           professorId: Number(selectedProfessorId),
-          purpose,
+          purpose: receipt.purpose,
           operatingUnit,
           spendCategoryId: Number(selectedSpendCategoryId),
           userId: 2, // TEMPORARY: Replace this with real logic later
@@ -150,7 +156,10 @@ const ReceiptSubmitForm = () => {
           tax: receipt.tax,
           total: receipt.total,
           status: 'Purchased',
-          comment: receipt.comment,
+          comment:
+            selectedSpendCategoryCode === 'Other'
+              ? `Spend Category: ${customSpendCategory}\n${receipt.comment}`
+              : receipt.comment,
           cartLink: undefined,
           items: [],
         });
@@ -160,6 +169,7 @@ const ReceiptSubmitForm = () => {
       setReceipts([
         {
           vendor: '',
+          purpose: '',
           cardType: '',
           purchaseDate: '',
           tax: 0,
@@ -178,7 +188,7 @@ const ReceiptSubmitForm = () => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-3xl mx-auto mt-4 mb-8 p-6 bg-white shadow-md rounded-md space-y-6"
+      className="max-w-3xl mx-auto mt-4 mb-8 p-6 text-byuNavy space-y-8 bg-white shadow-md rounded-md"
     >
       {/* Purchasing/Workday Details */}
       <h2 className="text-base text-byuNavy mb-4">
@@ -187,26 +197,51 @@ const ReceiptSubmitForm = () => {
         multiple forms.
       </h2>
 
-      <h2 className="text-2xl text-byuNavy font-semibold mb-4">Funding Code</h2>
+      <div className="space-y-2">
+        <h2 className="text-2xl text-byuNavy font-semibold">Funding Code</h2>
+
+        <h2 className="text-base text-byuNavy">
+          Format: Operating Unit (Letters GR, AC, CC, etc, followed by 5
+          numbers) - Spend Category (choose one of the following options or
+          enter a different code)
+        </h2>
+      </div>
 
       <div>
-        <label className="block font-medium">Operating Unit</label>
+        <label className="block font-medium text-byuNavy">
+          Operating Unit *
+        </label>
         <input
           type="text"
           value={operatingUnit}
           onChange={(e) => setOperatingUnit(e.target.value)}
           required
-          className="w-full border border-gray-300 rounded p-2"
+          className="w-full border text-byuNavy border-gray-300 rounded p-2"
         />
       </div>
 
       <div>
-        <label className="block font-medium">Spend Category</label>
+        <label className="block font-medium text-byuNavy">
+          Spend Category *
+        </label>
         <select
           value={selectedSpendCategoryId}
-          onChange={(e) => setSelectedSpendCategoryId(e.target.value)}
+          onChange={(e) => {
+            const selectedId = e.target.value;
+            setSelectedSpendCategoryId(selectedId);
+
+            const selected = spendCategories.find(
+              (sc) => sc.id.toString() === selectedId
+            );
+            setSelectedSpendCategoryCode(selected?.code || '');
+
+            // If user selects "Other", show the input and reset any previous custom value
+            if (selected?.code === 'Other') {
+              setCustomSpendCategory('');
+            }
+          }}
           required
-          className="w-full border border-gray-300 rounded p-2"
+          className="w-full border text-byuNavy border-gray-300 rounded p-2"
         >
           <option value="" disabled hidden>
             Select a spend category
@@ -219,12 +254,28 @@ const ReceiptSubmitForm = () => {
         </select>
       </div>
 
+      {/* If user selects 'Other' spend category, this question pops up to allow them to manually enter a SC */}
+      {selectedSpendCategoryCode === 'Other' && (
+        <div className="mt-2">
+          <label className="block font-medium">Custom Spend Category *</label>
+          <input
+            type="text"
+            value={customSpendCategory}
+            onChange={(e) => setCustomSpendCategory(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded p-2"
+            placeholder="Format: SCXXXX"
+          />
+        </div>
+      )}
+
       <div>
-        <label className="block font-medium">Line Memo Options</label>
+        <label className="block font-medium text-byuNavy">
+          Line Memo Options
+        </label>
         <select
           value={selectedLineMemoId}
           onChange={(e) => setSelectedLineMemoId(e.target.value)}
-          required
           className="w-full border border-gray-300 rounded p-2 text-byuNavy"
         >
           <option value="" disabled hidden>
@@ -243,7 +294,7 @@ const ReceiptSubmitForm = () => {
       </h2>
 
       <div>
-        <label className="block font-medium">Professor</label>
+        <label className="block font-medium text-byuNavy">Professor *</label>
         <select
           value={selectedProfessorId}
           onChange={(e) => setSelectedProfessorId(e.target.value)}
@@ -261,17 +312,6 @@ const ReceiptSubmitForm = () => {
         </select>
       </div>
 
-      <div>
-        <label className="block font-medium">Purpose</label>
-        <input
-          type="text"
-          value={purpose}
-          onChange={(e) => setPurpose(e.target.value)}
-          required
-          className="w-full border border-gray-300 rounded p-2"
-        />
-      </div>
-
       <div className="text-byuNavy space-y-8">
         {/* Receipt Details */}
         <h2 className="text-2xl text-byuNavy font-semibold mb-4 mt-12">
@@ -281,10 +321,10 @@ const ReceiptSubmitForm = () => {
         {receipts.map((receipt, index) => (
           <div
             key={index}
-            className="border border-gray-300 p-4 rounded-md space-y-4 text-byuNavy"
+            className="border border-gray-300 p-4 rounded-md space-y-8 text-byuNavy"
           >
             <div>
-              <label className="block font-medium">Vendor</label>
+              <label className="block font-medium">Vendor *</label>
               <input
                 type="text"
                 value={receipt.vendor}
@@ -297,7 +337,22 @@ const ReceiptSubmitForm = () => {
             </div>
 
             <div>
-              <span className="block font-medium mb-1">Type of Card</span>
+              <label className="block font-medium">
+                Purpose * (be specific)
+              </label>
+              <input
+                type="text"
+                value={receipt.purpose}
+                onChange={(e) =>
+                  handleReceiptChange(index, 'purpose', e.target.value)
+                }
+                required
+                className="w-full border border-gray-300 rounded p-2"
+              />
+            </div>
+
+            <div>
+              <span className="block font-medium mb-1">Type of Card *</span>
               <div className="space-y-1">
                 {['Campus Card', 'Off-campus Card'].map((option) => (
                   <label key={option} className="flex items-center space-x-2">
@@ -309,6 +364,7 @@ const ReceiptSubmitForm = () => {
                       onChange={(e) =>
                         handleReceiptChange(index, 'cardType', e.target.value)
                       }
+                      required
                     />
                     <span>{option}</span>
                   </label>
@@ -317,7 +373,7 @@ const ReceiptSubmitForm = () => {
             </div>
 
             <div>
-              <label className="block font-medium">Date Purchased</label>
+              <label className="block font-medium">Date Purchased *</label>
               <input
                 type="date"
                 value={receipt.purchaseDate}
@@ -330,7 +386,7 @@ const ReceiptSubmitForm = () => {
             </div>
 
             <div>
-              <label className="block font-medium">Tax</label>
+              <label className="block font-medium">Tax *</label>
               <input
                 type="number"
                 min="0"
@@ -345,7 +401,7 @@ const ReceiptSubmitForm = () => {
             </div>
 
             <div>
-              <label className="block font-medium">Total</label>
+              <label className="block font-medium">Total *</label>
               <input
                 type="number"
                 min="0"
@@ -364,10 +420,11 @@ const ReceiptSubmitForm = () => {
             </div>
 
             <div>
-              <label className="block font-medium">Receipt Upload</label>
+              <label className="block font-medium">Receipt Upload *</label>
               <input
                 type="file"
                 onChange={(e) => handleReceiptChange(index, 'receipt', e)}
+                required
                 className="block mt-1"
               />
             </div>
