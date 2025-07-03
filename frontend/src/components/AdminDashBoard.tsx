@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
 import type { Order } from '../types/order';
 import type { Item } from '../types/item';
+import type { Professor } from '../types/professor';
 import {
   fetchOrders,
   updateOrder,
   searchOrders,
+  fetchLineMemoOptions,
+  fetchProfessors,
+  fetchSpendCategories,
 } from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
 import SearchBar from './SearchBar';
 import React from 'react';
 import ViewOrderModal from './ViewOrderModal';
+import type { SpendCategory } from '../types/spendCategory';
+import type { LineMemoOption } from '../types/lineMemoOption';
 
 //Helper to format date as MM-DD-YYYY
 const formatDate = (isoString: string): string => {
@@ -33,31 +39,15 @@ const AdminDashboard = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewOrder, setViewOrder] = useState<Order | null>(null);
 
-  // Modal state and data for the selected order
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
-  // States for editing fields in the modal
+  // State for the Edit Order Modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editedOrder, setEditedOrder] = useState<Order | null>(null);
   const [editedItems, setEditedItems] = useState<Item[]>([]);
-  const [editedOrder, setEditedOrder] = useState<{
-    tax: number | null;
-    total: number | null;
-    cardType: string | null;
-    purchaseDate: string | null;
-    receipt: string | null;
-    status: string | null;
-    vendor: string | null;
-    professorName: string | null;
-  }>({
-    tax: null,
-    total: null,
-    cardType: null,
-    purchaseDate: null,
-    receipt: null,
-    status: null,
-    vendor: null,
-    professorName: null,
-  });
+
+  // States for dropdowns
+  const [professors, setProfessors] = useState<Professor[]>([]);
+  const [spendCategories, setSpendCategories] = useState<SpendCategory[]>([]);
+  const [lineMemoOptions, setLineMemoOptions] = useState<LineMemoOption[]>([]);
 
   // Sort logic for load up of orders
   const sortOrders = (orders: Order[]): Order[] => {
@@ -96,6 +86,48 @@ const AdminDashboard = () => {
     loadAndSetOrders();
   }, []);
 
+  // Load up professors for dropdown
+  useEffect(() => {
+    const loadProfessors = async () => {
+      try {
+        const data = await fetchProfessors();
+        setProfessors(data);
+      } catch (err) {
+        console.error('Failed to load professors:', err);
+      }
+    };
+
+    loadProfessors();
+  }, []);
+
+  // Load up line memo options for dropdown
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        const options = await fetchLineMemoOptions();
+        setLineMemoOptions(options);
+      } catch (err) {
+        console.error('Failed to load line memo options:', err);
+      }
+    };
+
+    loadOptions();
+  }, []);
+
+  // Load up spend categories for dropdown
+  useEffect(() => {
+    const loadSpendCategories = async () => {
+      try {
+        const categories = await fetchSpendCategories();
+        setSpendCategories(categories);
+      } catch (err) {
+        console.error('Failed to load spend categories:', err);
+      }
+    };
+
+    loadSpendCategories();
+  }, []);
+
   // Trigger the opening of the view order modal
   const openViewModal = (order: Order) => {
     setViewOrder(order);
@@ -106,65 +138,52 @@ const AdminDashboard = () => {
   const getStatusButtonStyle = (status: string) => {
     switch (status) {
       case 'Completed':
-        return 'bg-[#10A170] text-white hover:bg-[#006141]';
+        return 'bg-[#10A170] text-white';
       case 'Purchased':
-        return 'bg-[#FFB700] text-white hover:bg-[#cc9200]';
+        return 'bg-[#FFB700] text-white';
       case 'Requested':
-        return 'bg-[#E61744] text-white hover:bg-[#A3082A]';
+        return 'bg-[#E61744] text-white';
       case 'Cancelled':
-        return 'bg-[#666666] text-white hover:bg-[#4d4d4d]';
+        return 'bg-[#666666] text-white';
     }
   };
 
-  // Opens modal and loads selected order data into state
+  // Opens edit modal and loads order data into state
   const openEditModal = (order: Order) => {
-    setSelectedOrder(order);
+    setEditedOrder(order);
     setEditedItems(order.items.map((item) => ({ ...item })));
-    setEditedOrder({
-      tax: order.tax ?? null,
-      total: order.total ?? null,
-      cardType: order.cardType ?? null,
-      purchaseDate: order.purchaseDate ?? null,
-      receipt: order.receipt ?? null,
-      status: order.status ?? null,
-      vendor: order.vendor ?? null,
-      professorName: order.professor
-        ? `${order.professor.title} ${order.professor.firstName} ${order.professor.lastName}`
-        : null,
-    });
-
-    setIsModalOpen(true);
+    setIsEditModalOpen(true);
   };
 
-  // Closes modal and resets related state
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedOrder(null);
+  // Closes edit modal and resets related state
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditedOrder(null);
   };
 
-  // Updates status of a specific item in modal
+  // edit fields on an order
+  const handleOrderFieldChange = (field: string, value: any) => {
+    const normalizedValue = value === '' || value === undefined ? null : value;
+    setEditedOrder((prev) => ({
+      ...prev!,
+      [field]: normalizedValue,
+    }));
+  };
+
+  // Updates status of a specific item in edit modal
   const handleItemStatusChange = (index: number, newStatus: string) => {
     const updatedItems = [...editedItems];
     updatedItems[index].status = newStatus;
     setEditedItems(updatedItems);
   };
 
-  // Updates modal fields based on field name
-  const handleOrderFieldChange = (field: string, value: any) => {
-    const normalizedValue = value === '' || value === undefined ? null : value;
-    setEditedOrder((prev) => ({
-      ...prev,
-      [field]: normalizedValue,
-    }));
-  };
-
   // PUT logic to update order and item data
   const handleSave = async (markComplete: boolean) => {
-    if (!selectedOrder) return;
+    if (!editedOrder) return;
 
     try {
       // Determine status logic
-      let status = selectedOrder.status;
+      let status = editedOrder.status;
 
       if (markComplete) {
         status = 'Completed';
@@ -177,38 +196,31 @@ const AdminDashboard = () => {
         } else {
           status = 'Purchased';
         }
-      } else {
-        status = editedOrder.status ?? selectedOrder.status;
       }
 
-      const {
-        professorName, // remove this from payload
-        ...orderFields
-      } = editedOrder;
-
       const payload = {
-        ...orderFields,
+        ...editedOrder,
         items: editedItems.map(({ id, status }) => ({ id, status })),
         status,
       };
 
-      await updateOrder(selectedOrder.id, payload);
+      await updateOrder(editedOrder.id, payload);
 
       //Refresh orders
       await loadAndSetOrders();
 
       //  Special case: if no items, and switch was on, override _status manually
-      if (markComplete && selectedOrder.items.length === 0) {
+      if (markComplete && editedOrder.items.length === 0) {
         setOrders((prev) =>
           prev.map((order) =>
-            order.id === selectedOrder.id
+            order.id === editedOrder.id
               ? { ...order, _status: 'Completed' }
               : order
           )
         );
       }
 
-      closeModal();
+      closeEditModal();
       alert('Order updated sucessfully!');
     } catch (err) {
       console.error('Failed to update order:', err);
@@ -247,7 +259,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Table to display all order requests and their progress in the workflow */}
-      <table className="w-full table-fixed border-collapse border">
+      <table className="w-full table-fixed border-collapse border text-byuNavy">
         <thead className="bg-gray-100">
           {/* Table headers */}
           <tr>
@@ -257,7 +269,7 @@ const AdminDashboard = () => {
             <th className="border px-4 py-2">Shipping</th>
             <th className="border px-4 py-2">Student Name</th>
             <th className="border px-4 py-2">Student Email</th>
-            <th className="border px-4 py-2">View Order</th>
+            <th className="border px-4 py-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -268,13 +280,12 @@ const AdminDashboard = () => {
               <React.Fragment key={order.id}>
                 <tr className="bg-white hover:bg-gray-50">
                   <td className="border px-4 py-2 text-center">
-                    {/* Button that displays the status of an order and can be clicked to open the modal to edit info on the order */}
-                    <button
-                      onClick={() => openEditModal(order)}
-                      className={`px-3 py-1 rounded font-medium ${getStatusButtonStyle(status)}`}
+                    {/* Displays the color-coded status of the order */}
+                    <span
+                      className={`px-3 py-1 rounded font-medium inline-block ${getStatusButtonStyle(status)}`}
                     >
                       {status}
-                    </button>
+                    </span>
                   </td>
                   <td className="border px-4 py-2 text-center">
                     {order.requestDate ? formatDate(order.requestDate) : 'N/A'}
@@ -292,12 +303,20 @@ const AdminDashboard = () => {
                     {order.user.email}
                   </td>
                   <td className="border px-4 py-2 text-center">
-                    <button
-                      onClick={() => openViewModal(order)}
-                      className="text-byuRoyal underline hover:text-blue-900"
-                    >
-                      View
-                    </button>
+                    <div className="flex justify-center gap-3">
+                      <button
+                        onClick={() => openViewModal(order)}
+                        className="px-3 py-1 border border-byuNavy text-byuNavy rounded hover:bg-byuNavy hover:text-white transition-colors duration-150 text-sm font-medium"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => openEditModal(order)}
+                        className="px-3 py-1 border border-byuRoyal text-byuRoyal rounded hover:bg-byuRoyal hover:text-white transition-colors duration-150 text-sm font-medium"
+                      >
+                        Update
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </React.Fragment>
@@ -314,15 +333,20 @@ const AdminDashboard = () => {
       />
 
       {/* Edit Order Modal*/}
-      <EditOrderModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        items={editedItems}
-        editedOrder={editedOrder}
-        onItemStatusChange={handleItemStatusChange}
-        onOrderFieldChange={handleOrderFieldChange}
-        onSave={handleSave}
-      />
+      {isEditModalOpen && editedOrder && (
+        <EditOrderModal
+          isOpen={isEditModalOpen}
+          onClose={closeEditModal}
+          order={editedOrder} // ✅ TS now knows it's never null
+          items={editedItems}
+          professors={professors}
+          lineMemoOptions={lineMemoOptions}
+          spendCategories={spendCategories}
+          onItemStatusChange={handleItemStatusChange}
+          onOrderFieldChange={handleOrderFieldChange}
+          onSave={handleSave}
+        />
+      )}
     </div>
   );
 };

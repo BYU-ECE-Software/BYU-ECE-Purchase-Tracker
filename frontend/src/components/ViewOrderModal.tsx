@@ -258,13 +258,6 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
               </span>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-gray-200">
-              <span className="text-sm font-medium text-byuNavy">Total</span>
-              <span className="text-sm text-gray-700">
-                {order.total != null ? `$${order.total}` : '—'}
-              </span>
-            </div>
-
             {order.comment && (
               <div className="py-2 border-b border-gray-200">
                 <span className="block text-sm font-medium text-byuNavy mb-1">
