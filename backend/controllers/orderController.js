@@ -100,22 +100,15 @@ export const getAllOrders = async (req, res) => {
 
 // Update an existing order and its items
 export const updateOrder = async (req, res) => {
+  console.log(req.body);
   const orderId = parseInt(req.params.id);
-  const { items, ...orderFields } = req.body;
+  const { items, id, ...orderFields } = req.body;
 
   try {
     // Build dynamic data for the order — remove undefined or null values
     const cleanedOrderData = Object.fromEntries(
       Object.entries(orderFields).filter(([_, v]) => v !== undefined)
     );
-
-    // Handle lineMemoOptionId specially (as it's a relational field)
-    if (cleanedOrderData.lineMemoOptionId) {
-      cleanedOrderData.lineMemoOption = {
-        connect: { id: cleanedOrderData.lineMemoOptionId },
-      };
-      delete cleanedOrderData.lineMemoOptionId;
-    }
 
     // Convert purchaseDate to a Date object if it exists
     if (cleanedOrderData.purchaseDate) {

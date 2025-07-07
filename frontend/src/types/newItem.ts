@@ -1,4 +1,3 @@
-// types/newItem.ts
 export interface NewItemPayload {
   name: string;
   quantity: number;

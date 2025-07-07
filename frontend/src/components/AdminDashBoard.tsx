@@ -8,7 +8,7 @@ import {
   searchOrders,
   fetchLineMemoOptions,
   fetchProfessors,
-  fetchSpendCategories,
+  fetchAllSpendCategories,
 } from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
 import SearchBar from './SearchBar';
@@ -118,7 +118,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const loadSpendCategories = async () => {
       try {
-        const categories = await fetchSpendCategories();
+        const categories = await fetchAllSpendCategories();
         setSpendCategories(categories);
       } catch (err) {
         console.error('Failed to load spend categories:', err);
@@ -198,8 +198,11 @@ const AdminDashboard = () => {
         }
       }
 
+      const { user, professor, spendCategory, lineMemoOption, ...rest } =
+        editedOrder;
+
       const payload = {
-        ...editedOrder,
+        ...rest,
         items: editedItems.map(({ id, status }) => ({ id, status })),
         status,
       };

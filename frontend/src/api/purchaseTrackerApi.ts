@@ -4,19 +4,26 @@ import type { LineMemoOption } from '../types/lineMemoOption';
 import type { NewOrderPayload } from '../types/newOrder';
 import type { Order, OrderUpdatePayload } from '../types/order';
 import type { Professor } from '../types/professor';
-import type { SpendCategory } from '../types/spendCategory';
+import type {
+  SpendCategory,
+  NewSpendCategoryPayload,
+} from '../types/spendCategory';
 
 //base api url used in every call
 const BASE_API_URL = 'http://localhost:4000/api';
 
-// API Call to Fetch all Orders
+// ==========================
+//   Order API Calls
+// ==========================
+
+// Fetch all Orders
 export const fetchOrders = async (): Promise<Order[]> => {
   const res = await fetch(`${BASE_API_URL}/orders`);
   if (!res.ok) throw new Error('Failed to fetch orders');
   return await res.json();
 };
 
-// API Call to Create a new Order
+// Create a new Order
 export const createOrder = async (
   orderData: NewOrderPayload
 ): Promise<Order> => {
@@ -31,7 +38,7 @@ export const createOrder = async (
   return await res.json();
 };
 
-// API Call to Edit an Order
+// Edit an Order
 export const updateOrder = async (
   orderId: number,
   updatedData: OrderUpdatePayload
@@ -47,32 +54,68 @@ export const updateOrder = async (
   return await res.json();
 };
 
-// API Call to Fetch all Spend Categories
-export const fetchSpendCategories = async (): Promise<SpendCategory[]> => {
+// Search Orders
+export const searchOrders = async (query: string): Promise<Order[]> => {
+  const res = await fetch(
+    `${BASE_API_URL}/orders/search?query=${encodeURIComponent(query)}`
+  );
+  if (!res.ok) throw new Error('Failed to search orders');
+  return await res.json();
+};
+
+// ==========================
+//   Spend Category API Calls
+// ==========================
+
+// Fetch all Spend Categories
+export const fetchAllSpendCategories = async (): Promise<SpendCategory[]> => {
   const res = await fetch(`${BASE_API_URL}/spendCategories`);
   if (!res.ok) throw new Error('Failed to fetch spend categories');
   return await res.json();
 };
 
-// API Call to Fetch all Line Memo Options
+// Fetch only the Spend Categories visible to students
+export const fetchStudentSpendCategories = async (): Promise<
+  SpendCategory[]
+> => {
+  const res = await fetch(`${BASE_API_URL}/spendCategories/studentVisible`);
+  if (!res.ok) throw new Error('Failed to fetch spend categories');
+  return await res.json();
+};
+
+// Create Spend Category
+export const createSpendCategory = async (
+  categoryData: NewSpendCategoryPayload
+): Promise<SpendCategory> => {
+  const res = await fetch(`${BASE_API_URL}/spendCategories`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(categoryData),
+  });
+
+  if (!res.ok) throw new Error('Failed to create spend category');
+
+  return await res.json();
+};
+
+// ==========================
+//   Line Memo API Calls
+// ==========================
+
+// Fetch all Line Memo Options
 export const fetchLineMemoOptions = async (): Promise<LineMemoOption[]> => {
   const res = await fetch(`${BASE_API_URL}/lineMemoOptions`);
   if (!res.ok) throw new Error('Failed to fetch line memo options');
   return await res.json();
 };
 
-//API Call to Fetch all Professors
+// ==========================
+//   Professor API Calls
+// ==========================
+
+// Fetch all Professors
 export const fetchProfessors = async (): Promise<Professor[]> => {
   const res = await fetch(`${BASE_API_URL}/professors`);
   if (!res.ok) throw new Error('Failed to fetch professors');
-  return await res.json();
-};
-
-// API call to Search Orders
-export const searchOrders = async (query: string): Promise<Order[]> => {
-  const res = await fetch(
-    `${BASE_API_URL}/orders/search?query=${encodeURIComponent(query)}`
-  );
-  if (!res.ok) throw new Error('Failed to search orders');
   return await res.json();
 };

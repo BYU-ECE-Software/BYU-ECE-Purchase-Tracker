@@ -3,7 +3,7 @@ import {
   createOrder,
   fetchLineMemoOptions,
   fetchProfessors,
-  fetchSpendCategories,
+  fetchStudentSpendCategories,
 } from '../api/purchaseTrackerApi';
 import type { LineMemoOption } from '../types/lineMemoOption';
 import type { Professor } from '../types/professor';
@@ -57,7 +57,7 @@ const ReceiptSubmitForm = () => {
   useEffect(() => {
     const loadSpendCategories = async () => {
       try {
-        const categories = await fetchSpendCategories();
+        const categories = await fetchStudentSpendCategories();
         setSpendCategories(categories);
       } catch (err) {
         console.error('Failed to load spend categories:', err);

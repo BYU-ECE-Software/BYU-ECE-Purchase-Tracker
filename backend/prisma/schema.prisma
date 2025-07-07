@@ -71,9 +71,10 @@ model Order {
 // ==========================
 
 model SpendCategory {
-  id           Int     @id @default(autoincrement())
-  code         String
-  description  String
+  id                Int     @id @default(autoincrement())
+  code              String
+  description       String
+  visibleToStudents Boolean @default(true)
   orders       Order[]
 }
 

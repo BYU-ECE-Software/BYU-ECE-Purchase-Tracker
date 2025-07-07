@@ -4,6 +4,7 @@ import type { Order } from '../types/order';
 import type { Professor } from '../types/professor';
 import type { LineMemoOption } from '../types/lineMemoOption';
 import type { SpendCategory } from '../types/spendCategory';
+import AddSpendCategoryModal from './addSpendCategoryModal';
 
 // Props expected by the EditOrderModal component
 interface EditOrderModalProps {
@@ -41,6 +42,13 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   );
   // State to track whether the "Mark as Completed" switch is toggled on or off
   const [markComplete, setMarkComplete] = React.useState(false);
+
+  // State for the Add Spend Category Modal open/close
+  const [isSCModalOpen, setIsSCModalOpen] = React.useState(false);
+
+  //State to update spend categories
+  const [localSpendCategories, setLocalSpendCategories] =
+    React.useState(spendCategories);
 
   useEffect(() => {
     setMarkComplete(order.status === 'Completed');
@@ -240,7 +248,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               <select
                 value={order.professorId ?? ''}
                 onChange={(e) =>
-                  onOrderFieldChange('professorId', e.target.value)
+                  onOrderFieldChange('professorId', parseInt(e.target.value))
                 }
                 className="p-2 border rounded text-sm text-byuNavy"
               >
@@ -256,18 +264,50 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             </div>
 
             {/* Row: Funding Code */}
-            <div className="flex items-center justify-between pt-0 pb-3 border-b border-gray-200">
-              <label className="text-sm font-medium text-byuNavy">
-                Funding Code
-              </label>
-              <input
-                type="text"
-                value={order.operatingUnit ?? ''}
-                onChange={(e) =>
-                  onOrderFieldChange('operatingUnit', e.target.value)
-                }
-                className="p-2 border rounded text-sm text-byuNavy w-1/2"
-              />
+            <div className="flex items-center justify-between pt-0 pb-3 border-b border-gray-200 gap-4">
+              <div className="flex flex-col w-1/2">
+                <label className="text-sm font-medium text-byuNavy">
+                  Operating Unit
+                </label>
+                <input
+                  type="text"
+                  value={order.operatingUnit ?? ''}
+                  onChange={(e) =>
+                    onOrderFieldChange('operatingUnit', e.target.value)
+                  }
+                  className="p-2 border rounded text-sm text-byuNavy w-full"
+                />
+              </div>
+
+              <div className="flex flex-col w-1/2">
+                <label className="text-sm font-medium text-byuNavy">
+                  Spend Category
+                </label>
+                <select
+                  value={order.spendCategoryId ?? ''}
+                  onChange={(e) => {
+                    if (e.target.value === 'add-new') {
+                      setIsSCModalOpen(true);
+                    } else {
+                      onOrderFieldChange(
+                        'spendCategoryId',
+                        parseInt(e.target.value)
+                      );
+                    }
+                  }}
+                  className="p-2 border rounded text-sm text-byuNavy w-full"
+                >
+                  <option value="" disabled hidden>
+                    Select a spend category
+                  </option>
+                  {localSpendCategories.map((sc) => (
+                    <option key={sc.id} value={sc.id}>
+                      {sc.code} - {sc.description}
+                    </option>
+                  ))}
+                  <option value="add-new">+ Add new Spend Category</option>
+                </select>
+              </div>
             </div>
 
             {/* Row: Line Memo Options */}
@@ -278,7 +318,10 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               <select
                 value={order.lineMemoOptionId ?? ''}
                 onChange={(e) =>
-                  onOrderFieldChange('lineMemoOptionId', e.target.value)
+                  onOrderFieldChange(
+                    'lineMemoOptionId',
+                    parseInt(e.target.value)
+                  )
                 }
                 className="p-2 border rounded text-sm text-byuNavy"
               >
@@ -414,7 +457,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 Comments
               </label>
               <textarea
-                value={order.comment}
+                value={order.comment ?? ''}
                 onChange={(e) => onOrderFieldChange('comment', e.target.value)}
                 placeholder="Any notes to add about the purchase..."
                 className="w-full border border-gray-300 rounded p-2 resize-y min-h-[50px] text-sm text-byuNavy"
@@ -438,6 +481,17 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             Save Changes
           </button>
         </div>
+
+        {/* Add Spend Category Modal */}
+        <AddSpendCategoryModal
+          isOpen={isSCModalOpen}
+          onClose={() => setIsSCModalOpen(false)}
+          onCreate={(newCategory) => {
+            setLocalSpendCategories([...localSpendCategories, newCategory]);
+            onOrderFieldChange('spendCategoryId', newCategory.id); // select the newly created one
+            setIsSCModalOpen(false);
+          }}
+        />
       </div>
     </div>
   );
