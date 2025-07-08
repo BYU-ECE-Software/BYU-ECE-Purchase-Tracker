@@ -60,6 +60,12 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
         {/* Item Tab */}
         {activeTab === 'items' && (
           <div className="space-y-4 text-byuNavy text-base">
+            {/* Order Status */}
+            <div className="flex items-start gap-2">
+              <span className="font-semibold text-byuNavy">Order Status:</span>
+              <span className="">{order.status ?? ''}</span>
+            </div>
+
             {/* Vendor */}
             <div className="flex items-start gap-2">
               <span className="font-semibold text-byuNavy">Vendor:</span>

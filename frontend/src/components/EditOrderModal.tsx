@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { Item } from '../types/item';
 import type { Order } from '../types/order';
 import type { Professor } from '../types/professor';
@@ -21,7 +21,13 @@ interface EditOrderModalProps {
 }
 
 // Dropdown options for item status
-const statusOptions = ['Requested', 'Ordered', 'Completed', 'Cancelled'];
+const statusOptions = [
+  'Requested',
+  'Ordered',
+  'Completed',
+  'Returned',
+  'Cancelled',
+];
 
 // Functional EditOrderModal Component
 const EditOrderModal: React.FC<EditOrderModalProps> = ({
@@ -50,9 +56,24 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   const [localSpendCategories, setLocalSpendCategories] =
     React.useState(spendCategories);
 
+  // State to control whether the Line Memo dropdown is shown.
+  const [showLineMemo, setShowLineMemo] = React.useState(
+    !!order.lineMemoOptionId
+  );
+
+  // Ref to the Line Memo dropdown <select> element, used for focusing when it's shown.
+  const lineMemoRef = useRef<HTMLSelectElement>(null);
+
   useEffect(() => {
     setMarkComplete(order.status === 'Completed');
   }, [order.status]);
+
+  // When the Line Memo dropdown becomes visible, automatically focus it for better UX.
+  useEffect(() => {
+    if (showLineMemo && lineMemoRef.current) {
+      lineMemoRef.current.focus();
+    }
+  }, [showLineMemo]);
 
   // Function to change all item status's to "completed" when toggled and "ordered" when toggled off
   const handleToggleComplete = () => {
@@ -73,7 +94,14 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
       <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg p-6 relative overflow-y-auto max-h-[90vh]">
-        <div className="flex justify-between items-center mb-4">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-black text-lg"
+        >
+          ✕
+        </button>
+
+        <div className="flex justify-between items-center mb-4 pt-6">
           <h2 className="text-2xl font-bold text-byuNavy">Edit Order</h2>
           {/* User can mark the order as completed */}
           <div className="flex items-center space-x-2">
@@ -310,31 +338,54 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               </div>
             </div>
 
-            {/* Row: Line Memo Options */}
-            <div className="flex items-center justify-between pt-0 pb-3 border-b border-gray-200">
-              <label className="text-sm font-medium text-byuNavy">
-                Line Memo
-              </label>
-              <select
-                value={order.lineMemoOptionId ?? ''}
-                onChange={(e) =>
-                  onOrderFieldChange(
-                    'lineMemoOptionId',
-                    parseInt(e.target.value)
-                  )
-                }
-                className="p-2 border rounded text-sm text-byuNavy"
-              >
-                <option value="" disabled hidden>
-                  Select a line memo option
-                </option>
-                {lineMemoOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.id} - {option.description}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Line Memo Row */}
+            {showLineMemo ? (
+              <div className="flex items-center justify-between pt-0 pb-3 border-b border-gray-200">
+                <label className="text-sm font-medium text-byuNavy">
+                  Line Memo
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    ref={lineMemoRef}
+                    value={order.lineMemoOptionId ?? ''}
+                    onChange={(e) =>
+                      onOrderFieldChange(
+                        'lineMemoOptionId',
+                        parseInt(e.target.value)
+                      )
+                    }
+                    className="p-2 border rounded text-sm text-byuNavy"
+                  >
+                    <option value="" disabled hidden>
+                      Select a line memo option
+                    </option>
+                    {lineMemoOptions.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.id} - {option.description}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => {
+                      onOrderFieldChange('lineMemoOptionId', null);
+                      setShowLineMemo(false);
+                    }}
+                    className="text-sm text-red-600 hover:underline"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-end pt-0 pb-3">
+                <button
+                  onClick={() => setShowLineMemo(true)}
+                  className="text-sm text-byuRoyal hover:underline"
+                >
+                  + Add Line Memo
+                </button>
+              </div>
+            )}
 
             {/* Row: Purpose */}
             <div className="flex items-center justify-between pt-0 pb-3 border-b border-gray-200">

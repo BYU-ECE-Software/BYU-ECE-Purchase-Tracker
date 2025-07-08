@@ -143,6 +143,8 @@ const AdminDashboard = () => {
         return 'bg-[#FFB700] text-white';
       case 'Requested':
         return 'bg-[#E61744] text-white';
+      case 'Returned':
+        return 'bg-[#666666] text-white';
       case 'Cancelled':
         return 'bg-[#666666] text-white';
     }
@@ -191,6 +193,10 @@ const AdminDashboard = () => {
         const statuses = editedItems.map((item) => item.status);
         if (statuses.every((s) => s === 'Completed')) {
           status = 'Completed';
+        } else if (statuses.every((s) => s === 'Returned')) {
+          status = 'Returned';
+        } else if (statuses.every((s) => s === 'Cancelled')) {
+          status = 'Cancelled';
         } else if (statuses.some((s) => s === 'Requested')) {
           status = 'Requested';
         } else {

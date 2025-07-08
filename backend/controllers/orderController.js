@@ -100,7 +100,6 @@ export const getAllOrders = async (req, res) => {
 
 // Update an existing order and its items
 export const updateOrder = async (req, res) => {
-  console.log(req.body);
   const orderId = parseInt(req.params.id);
   const { items, id, ...orderFields } = req.body;
 

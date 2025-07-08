@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
   createOrder,
-  fetchLineMemoOptions,
   fetchProfessors,
   fetchStudentSpendCategories,
 } from '../api/purchaseTrackerApi';
-import type { LineMemoOption } from '../types/lineMemoOption';
 import type { Professor } from '../types/professor';
 import type { SpendCategory } from '../types/spendCategory';
 
@@ -31,7 +29,6 @@ const PurchaseRequestForm = () => {
   const [selectedSpendCategoryId, setSelectedSpendCategoryId] = useState('');
   const [cartLink, setCartLink] = useState('');
   const [comment, setComment] = useState('');
-  const [selectedLineMemoId, setSelectedLineMemoId] = useState('');
   const [selectedProfessorId, setSelectedProfessorId] = useState('');
 
   // State for confirmation modal
@@ -57,23 +54,6 @@ const PurchaseRequestForm = () => {
     };
 
     loadSpendCategories();
-  }, []);
-
-  // Dropdown options for line memo selection
-  const [lineMemoOptions, setLineMemoOptions] = useState<LineMemoOption[]>([]);
-
-  // Load available line memo options from API mount
-  useEffect(() => {
-    const loadOptions = async () => {
-      try {
-        const options = await fetchLineMemoOptions();
-        setLineMemoOptions(options);
-      } catch (err) {
-        console.error('Failed to load line memo options:', err);
-      }
-    };
-
-    loadOptions();
   }, []);
 
   // Dropdown options for professor selection
@@ -151,7 +131,6 @@ const PurchaseRequestForm = () => {
         operatingUnit,
         spendCategoryId: Number(selectedSpendCategoryId),
         userId: 2, // TEMPORARY: Replace this with real logic later
-        lineMemoOptionId: Number(selectedLineMemoId),
         status: 'Requested',
         comment:
           selectedSpendCategoryCode === 'Other'
@@ -411,24 +390,6 @@ const PurchaseRequestForm = () => {
               />
             </div>
           )}
-
-          <div>
-            <label className="block font-medium">Line Memo Options</label>
-            <select
-              value={selectedLineMemoId}
-              onChange={(e) => setSelectedLineMemoId(e.target.value)}
-              className="w-full border border-gray-300 rounded p-2 text-byuNavy"
-            >
-              <option value="" disabled hidden>
-                Select an option
-              </option>
-              {lineMemoOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.description}
-                </option>
-              ))}
-            </select>
-          </div>
 
           <h2 className="text-2xl text-byuNavy font-semibold mb-4">
             Purchasing Details
