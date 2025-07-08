@@ -23,7 +23,7 @@ interface EditOrderModalProps {
 // Dropdown options for item status
 const statusOptions = [
   'Requested',
-  'Ordered',
+  'Purchased',
   'Completed',
   'Returned',
   'Cancelled',
@@ -81,7 +81,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
     setMarkComplete(newValue);
 
     if (items.length > 0) {
-      const newStatus = newValue ? 'Completed' : 'Ordered';
+      const newStatus = newValue ? 'Completed' : 'Purchased';
       items.forEach((_, idx) => onItemStatusChange(idx, newStatus));
     } else {
       // Optional: update order status if no items (frontend-only)
@@ -142,6 +142,24 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
         {/* Item Tab */}
         {activeTab === 'items' && (
           <div className="space-y-4 text-byuNavy text-base">
+            {/* Order Status */}
+            {items.length === 0 && (
+              <label className="flex items-center gap-2 font-semibold">
+                Order Status:
+                <select
+                  value={order.status}
+                  onChange={(e) => onOrderFieldChange('status', e.target.value)}
+                  className="font-normal text-byuNavy border rounded px-2 py-1"
+                >
+                  {statusOptions.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             {/* Vendor */}
             <div className="flex items-start gap-2">
               <span className="font-semibold text-byuNavy">Vendor:</span>
@@ -227,7 +245,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                   </span>
 
                   <label className="flex items-center gap-2 text-sm font-medium text-byuNavy">
-                    Status:
+                    Item Status:
                     <select
                       value={item.status}
                       onChange={(e) => onItemStatusChange(idx, e.target.value)}

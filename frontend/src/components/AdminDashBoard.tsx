@@ -191,6 +191,7 @@ const AdminDashboard = () => {
         status = 'Completed';
       } else if (editedItems.length > 0) {
         const statuses = editedItems.map((item) => item.status);
+
         if (statuses.every((s) => s === 'Completed')) {
           status = 'Completed';
         } else if (statuses.every((s) => s === 'Returned')) {
