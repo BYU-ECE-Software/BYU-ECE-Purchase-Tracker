@@ -137,13 +137,15 @@ const PurchaseRequestForm = () => {
             ? `Spend Category: ${customSpendCategory}\n${comment}`
             : comment,
         cartLink,
-        items: items.map((i) => ({
-          name: i.item,
-          quantity: i.quantity,
-          status: 'Requested',
-          link: i.link,
-          file: i.file ? i.file.name : null, // Note: still doesn't upload file yet
-        })),
+        items: items
+          .filter((i) => i.item.trim() !== '')
+          .map((i) => ({
+            name: i.item,
+            quantity: i.quantity,
+            status: 'Requested',
+            link: i.link,
+            file: i.file ? i.file.name : null, // Note: still doesn't upload file yet
+          })),
       });
 
       setShowConfirmModal(true);

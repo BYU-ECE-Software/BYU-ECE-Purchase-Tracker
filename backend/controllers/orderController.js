@@ -36,26 +36,34 @@ export const createOrder = async (req, res) => {
       tax: tax || null,
       total: total || null,
       user: { connect: { id: userId } },
-      lineMemoOption: { connect: { id: lineMemoOptionId } },
       cardType: cardType || null,
       purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
       receipt: receipt || null,
       status,
       comment: comment || null,
       cartLink: cartLink || null,
+      ...(lineMemoOptionId && {
+        lineMemoOption: { connect: { id: lineMemoOptionId } },
+      }),
     };
 
     // Only create items if they were submitted
-    if (Array.isArray(items) && items.length > 0) {
-      orderData.items = {
-        create: items.map((item) => ({
-          name: item.name,
-          quantity: item.quantity,
-          status: item.status,
-          link: item.link || null,
-          file: item.file || null,
-        })),
-      };
+    if (Array.isArray(items)) {
+      const validItems = items.filter(
+        (item) => item.name && item.name.trim() !== ""
+      );
+
+      if (validItems.length > 0) {
+        orderData.items = {
+          create: validItems.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+            status: item.status,
+            link: item.link || null,
+            file: item.file || null,
+          })),
+        };
+      }
     }
 
     // Create the order
