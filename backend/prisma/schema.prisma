@@ -44,24 +44,38 @@ model Order {
   id                 Int     @id @default(autoincrement())
   requestDate        DateTime
   items              Item[]
-  store              String
-  needByDate         DateTime?
+  vendor              String
   shippingPreference String?
   professorId        Int
   professor          Professors   @relation(fields: [professorId], references: [id])
   purpose            String
-  workdayCode        String
-  subtotal           Float?
+  operatingUnit      String
+  spendCategoryId    Int
+  spendCategory      SpendCategory @relation(fields: [spendCategoryId], references: [id])
   tax                Float?
   total              Float?
   userId             Int
   user               User   @relation(fields: [userId], references: [id])
-  lineMemoOptionId   Int
-  lineMemoOption     LineMemoOption @relation(fields: [lineMemoOptionId], references: [id])
+  lineMemoOptionId   Int?
+  lineMemoOption     LineMemoOption? @relation(fields: [lineMemoOptionId], references: [id])
   cardType           String?
   purchaseDate       DateTime?
   receipt            String?
   status             String
+  comment            String?
+  cartLink           String?
+}
+
+// ==========================
+//   MODEL: SpendCategory
+// ==========================
+
+model SpendCategory {
+  id                Int     @id @default(autoincrement())
+  code              String
+  description       String
+  visibleToStudents Boolean @default(true)
+  orders       Order[]
 }
 
 // ==========================

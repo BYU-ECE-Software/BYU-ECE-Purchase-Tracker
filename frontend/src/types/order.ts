@@ -2,18 +2,19 @@ import type { User } from './user';
 import type { Professor } from './professor';
 import type { LineMemoOption } from './lineMemoOption';
 import type { Item } from './item';
+import type { SpendCategory } from './spendCategory';
 
 export interface Order {
   id: number;
   requestDate: string;
-  store: string;
-  needByDate?: string;
+  vendor: string;
   shippingPreference?: string;
   professorId: number;
   professor: Professor;
   purpose: string;
-  workdayCode: string;
-  subtotal?: number;
+  operatingUnit: string;
+  spendCategoryId: number;
+  spendCategory: SpendCategory;
   tax?: number;
   total?: number;
   userId: number;
@@ -25,6 +26,8 @@ export interface Order {
   purchaseDate?: string;
   receipt?: string;
   status: string;
+  comment?: string;
+  cartLink?: string;
 }
 
 export interface OrderUpdatePayload {

@@ -6,13 +6,12 @@ export const createOrder = async (req, res) => {
   try {
     const {
       items,
-      store,
-      needByDate,
+      vendor,
       shippingPreference,
       professorId,
       purpose,
-      workdayCode,
-      subtotal,
+      operatingUnit,
+      spendCategoryId,
       tax,
       total,
       userId,
@@ -21,39 +20,50 @@ export const createOrder = async (req, res) => {
       purchaseDate,
       receipt,
       status,
+      comment,
+      cartLink,
     } = req.body;
 
     // Format the order
     const orderData = {
       requestDate: new Date(),
-      store,
-      needByDate: needByDate ? new Date(needByDate) : null,
+      vendor,
       shippingPreference: shippingPreference || null,
       professor: { connect: { id: professorId } },
       purpose,
-      workdayCode,
-      subtotal: subtotal || null,
+      operatingUnit,
+      spendCategory: { connect: { id: spendCategoryId } },
       tax: tax || null,
       total: total || null,
       user: { connect: { id: userId } },
-      lineMemoOption: { connect: { id: lineMemoOptionId } },
       cardType: cardType || null,
       purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
       receipt: receipt || null,
       status,
+      comment: comment || null,
+      cartLink: cartLink || null,
+      ...(lineMemoOptionId && {
+        lineMemoOption: { connect: { id: lineMemoOptionId } },
+      }),
     };
 
     // Only create items if they were submitted
-    if (Array.isArray(items) && items.length > 0) {
-      orderData.items = {
-        create: items.map((item) => ({
-          name: item.name,
-          quantity: item.quantity,
-          status: item.status,
-          link: item.link || null,
-          file: item.file || null,
-        })),
-      };
+    if (Array.isArray(items)) {
+      const validItems = items.filter(
+        (item) => item.name && item.name.trim() !== ""
+      );
+
+      if (validItems.length > 0) {
+        orderData.items = {
+          create: validItems.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+            status: item.status,
+            link: item.link || null,
+            file: item.file || null,
+          })),
+        };
+      }
     }
 
     // Create the order
@@ -82,6 +92,7 @@ export const getAllOrders = async (req, res) => {
         user: true,
         lineMemoOption: true,
         professor: true,
+        spendCategory: true,
       },
       orderBy: {
         requestDate: "desc",
@@ -98,23 +109,13 @@ export const getAllOrders = async (req, res) => {
 // Update an existing order and its items
 export const updateOrder = async (req, res) => {
   const orderId = parseInt(req.params.id);
-  const { items, ...orderFields } = req.body;
+  const { items, id, ...orderFields } = req.body;
 
   try {
     // Build dynamic data for the order — remove undefined or null values
     const cleanedOrderData = Object.fromEntries(
-      Object.entries(orderFields).filter(
-        ([_, v]) => v !== undefined && v !== null
-      )
+      Object.entries(orderFields).filter(([_, v]) => v !== undefined)
     );
-
-    // Handle lineMemoOptionId specially (as it's a relational field)
-    if (cleanedOrderData.lineMemoOptionId) {
-      cleanedOrderData.lineMemoOption = {
-        connect: { id: cleanedOrderData.lineMemoOptionId },
-      };
-      delete cleanedOrderData.lineMemoOptionId;
-    }
 
     // Convert purchaseDate to a Date object if it exists
     if (cleanedOrderData.purchaseDate) {
@@ -150,5 +151,68 @@ export const updateOrder = async (req, res) => {
       error: "Failed to update order",
       details: error.message,
     });
+  }
+};
+
+// Search for specific orders
+export const searchOrders = async (req, res) => {
+  const searchTerm = req.query.query?.toString().toLowerCase();
+
+  if (!searchTerm) {
+    return res.status(400).json({ error: "Missing search query" });
+  }
+
+  const isNumeric = !isNaN(Number(searchTerm));
+  const isDate = !isNaN(Date.parse(searchTerm));
+
+  // currently set to search by total, purchase date, vendor, status, student name, professor name, and items
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        OR: [
+          { vendor: { contains: searchTerm, mode: "insensitive" } },
+          { status: { contains: searchTerm, mode: "insensitive" } },
+          isNumeric ? { total: Number(searchTerm) } : undefined,
+          isDate ? { purchaseDate: new Date(searchTerm) } : undefined,
+          // Match user (student) by first name, last name, or full name
+          {
+            user: {
+              OR: [
+                { firstName: { contains: searchTerm, mode: "insensitive" } },
+                { lastName: { contains: searchTerm, mode: "insensitive" } },
+              ],
+            },
+          },
+
+          // Match professor by first name, last name, or full name
+          {
+            professor: {
+              OR: [
+                { firstName: { contains: searchTerm, mode: "insensitive" } },
+                { lastName: { contains: searchTerm, mode: "insensitive" } },
+              ],
+            },
+          },
+          {
+            items: {
+              some: {
+                name: { contains: searchTerm, mode: "insensitive" },
+              },
+            },
+          },
+        ].filter(Boolean),
+      },
+      include: {
+        user: true,
+        professor: true,
+        items: true,
+        lineMemoOption: true,
+      },
+    });
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Search failed:", error);
+    res.status(500).json({ error: "Search failed", details: error.message });
   }
 };
