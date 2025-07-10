@@ -130,7 +130,7 @@ const PurchaseRequestForm = () => {
         purpose,
         operatingUnit,
         spendCategoryId: Number(selectedSpendCategoryId),
-        userId: 2, // TEMPORARY: Replace this with real logic later
+        userId: 3, // TEMPORARY: Replace this with real logic later
         status: 'Requested',
         comment:
           selectedSpendCategoryCode === 'Other'

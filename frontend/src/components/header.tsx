@@ -37,10 +37,16 @@ const HeaderBar = () => {
             Submit Receipts
           </Link>
           <Link
+            to="/orderHistory"
+            className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
+          >
+            My Orders
+          </Link>
+          <Link
             to="/admin"
             className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
           >
-            Orders
+            Order Dashboard
           </Link>
         </div>
       </nav>

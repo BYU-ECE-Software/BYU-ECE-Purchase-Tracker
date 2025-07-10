@@ -106,6 +106,36 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
+// Fetch orders for a specific user
+export const getOrdersByUser = async (req, res) => {
+  const userId = parseInt(req.params.userId);
+
+  if (isNaN(userId)) {
+    return res.status(400).json({ error: "Invalid user ID" });
+  }
+
+  try {
+    const orders = await prisma.order.findMany({
+      where: { userId },
+      include: {
+        items: true,
+        user: true,
+        lineMemoOption: true,
+        professor: true,
+        spendCategory: true,
+      },
+      orderBy: {
+        requestDate: "desc",
+      },
+    });
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Failed to fetch user orders:", error);
+    res.status(500).json({ error: "Failed to fetch user orders" });
+  }
+};
+
 // Update an existing order and its items
 export const updateOrder = async (req, res) => {
   const orderId = parseInt(req.params.id);
