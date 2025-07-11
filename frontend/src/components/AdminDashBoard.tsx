@@ -16,6 +16,7 @@ import React from 'react';
 import ViewOrderModal from './ViewOrderModal';
 import type { SpendCategory } from '../types/spendCategory';
 import type { LineMemoOption } from '../types/lineMemoOption';
+import { getStatusColor } from '../utils/getStatusColor'; // adjust path if needed
 
 //Helper to format date as MM-DD-YYYY
 const formatDate = (isoString: string): string => {
@@ -132,22 +133,6 @@ const AdminDashboard = () => {
   const openViewModal = (order: Order) => {
     setViewOrder(order);
     setIsViewModalOpen(true);
-  };
-
-  // Returns Tailwind button styling for the order status button based on status
-  const getStatusButtonStyle = (status: string) => {
-    switch (status) {
-      case 'Completed':
-        return 'bg-[#10A170] text-white';
-      case 'Purchased':
-        return 'bg-[#FFB700] text-white';
-      case 'Requested':
-        return 'bg-[#E61744] text-white';
-      case 'Returned':
-        return 'bg-[#666666] text-white';
-      case 'Cancelled':
-        return 'bg-[#666666] text-white';
-    }
   };
 
   // Opens edit modal and loads order data into state
@@ -292,7 +277,7 @@ const AdminDashboard = () => {
                   <td className="border px-4 py-2 text-center">
                     {/* Displays the color-coded status of the order */}
                     <span
-                      className={`px-3 py-1 rounded font-medium inline-block ${getStatusButtonStyle(status)}`}
+                      className={`px-3 py-1 rounded font-medium inline-block ${getStatusColor(status)}`}
                     >
                       {status}
                     </span>

@@ -131,7 +131,7 @@ const ReceiptSubmitForm = () => {
           purpose: receipt.purpose,
           operatingUnit,
           spendCategoryId: Number(selectedSpendCategoryId),
-          userId: 2, // TEMPORARY: Replace this with real logic later
+          userId: 3, // TEMPORARY: Replace this with real logic later
           cardType: receipt.cardType,
           purchaseDate: receipt.purchaseDate,
           receipt: receipt.receipt ? receipt.receipt.name : undefined,

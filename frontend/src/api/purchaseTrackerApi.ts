@@ -63,6 +63,13 @@ export const searchOrders = async (query: string): Promise<Order[]> => {
   return await res.json();
 };
 
+// Fetch Orders by student Id
+export const fetchOrdersByUser = async (userId: number): Promise<Order[]> => {
+  const res = await fetch(`${BASE_API_URL}/orders/user/${userId}`);
+  if (!res.ok) throw new Error('Failed to fetch user orders');
+  return await res.json();
+};
+
 // ==========================
 //   Spend Category API Calls
 // ==========================
