@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Order } from '../types/order';
 import { getStatusColor } from '../utils/getStatusColor';
+import { formatDate } from '../utils/formatDate';
 
 type Props = {
   order: Order;
@@ -9,13 +10,9 @@ type Props = {
 const StudentOrderCard: React.FC<Props> = ({ order }) => {
   const [expanded, setExpanded] = useState(false);
   const statusColor = getStatusColor(order.status);
-  const formattedDate = new Date(order.requestDate).toLocaleDateString();
-  const totalDisplay = order.total
-    ? `$${order.total.toFixed(2)}`
-    : 'Not purchased yet';
 
   return (
-    <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex flex-col justify-between transition hover:shadow-md">
+    <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex flex-col justify-between transition hover:shadow-md text-byuNavy">
       {/* Status badge */}
       <div className="mb-2">
         <span
@@ -26,12 +23,12 @@ const StudentOrderCard: React.FC<Props> = ({ order }) => {
       </div>
 
       {/* Vendor */}
-      <h2 className="text-md font-bold text-[#002E5D] mb-2">{order.vendor}</h2>
+      <h2 className="text-md font-bold mb-2">{order.vendor}</h2>
 
       {/* Item List */}
       {order.items.length > 0 && (
         <div className="mb-3">
-          <ul className="text-sm text-gray-700 list-disc list-inside space-y-1">
+          <ul className="text-sm list-disc list-inside space-y-1">
             {order.items.map((item) => (
               <li key={item.id}>
                 {item.link ? (
@@ -46,62 +43,82 @@ const StudentOrderCard: React.FC<Props> = ({ order }) => {
                 ) : (
                   <span className="font-medium">{item.name}</span>
                 )}
-                <span className="text-gray-500"> ({item.status})</span>
+                {item.quantity > 1 && <span> x{item.quantity} </span>}
+                <span> ({item.status})</span>
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* Meta Info Row */}
-      <div className="flex justify-between items-center text-sm text-gray-600 border-t border-gray-100 pt-3 mt-auto">
+      {/* Date Submitted Row */}
+      <div className="flex justify-between items-center text-sm border-t border-gray-100 pt-3 mt-auto">
         <div>
-          <div className="font-medium">Date</div>
-          <div className="text-gray-500">{formattedDate}</div>
-        </div>
-        <div>
-          <div className="font-medium">Total</div>
-          <div className="text-gray-500">{totalDisplay}</div>
+          <div className="font-medium">Date Submitted</div>
+          <div>{formatDate(order.requestDate)}</div>
         </div>
       </div>
+
+      {/* Purchase Date/Total Row */}
+      {order.purchaseDate && (
+        <div className="flex justify-between items-center text-sm pt-3 mt-auto">
+          <div>
+            <div className="font-medium">Date Purchased</div>
+            <div>{formatDate(order.purchaseDate)}</div>
+          </div>
+
+          <div>
+            <div className="font-medium">Total</div>
+            <div>${order.total}</div>
+          </div>
+        </div>
+      )}
 
       {/* Expand/Collapse Button */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="mt-3 text-sm text-[#0057B7] font-semibold hover:underline self-start"
+        className="mt-3 text-sm text-byuRoyal font-semibold hover:underline self-start"
       >
         {expanded ? 'Hide Details' : 'More Details'}
       </button>
 
       {expanded && (
-        <div className="mt-4 border-t pt-4 text-sm text-gray-700 space-y-2">
+        <div className="mt-4 border-t pt-4 text-sm space-y-2">
+          {order.shippingPreference && (
+            <div>
+              <span className="font-medium">Shipping:</span>{' '}
+              {order.shippingPreference || '—'}
+            </div>
+          )}
           <div>
-            <span className="font-medium text-gray-600">Purpose:</span>{' '}
-            {order.purpose}
-          </div>
-          <div>
-            <span className="font-medium text-gray-600">Shipping:</span>{' '}
-            {order.shippingPreference || '—'}
-          </div>
-          <div>
-            <span className="font-medium text-gray-600">Professor:</span>{' '}
+            <span className="font-medium ">Professor:</span>{' '}
             {order.professor.title} {order.professor.firstName}{' '}
             {order.professor.lastName}
           </div>
           <div>
-            <span className="font-medium text-gray-600">Funding Code:</span>{' '}
+            <span className="font-medium">Funding Code:</span>{' '}
             {order.operatingUnit}-{order.spendCategory.code}
           </div>
-          {order.comment && (
+          <div>
+            <span className="font-medium">Purpose:</span> {order.purpose}
+          </div>
+          {order.tax && (
             <div>
-              <span className="font-medium text-gray-600">Comment:</span>{' '}
-              {order.comment}
+              <span className="font-medium">Tax:</span>
+              {' $'}
+              {order.tax}
             </div>
           )}
-          {order.receipt && (
+          {order.total && (
             <div>
-              <span className="font-medium text-gray-600">Receipt:</span>{' '}
-              <span className="underline">{order.receipt}</span>
+              <span className="font-medium">Total:</span>
+              {' $'}
+              {order.total}
+            </div>
+          )}
+          {order.comment && (
+            <div>
+              <span className="font-medium">Comment:</span> {order.comment}
             </div>
           )}
         </div>

@@ -16,16 +16,8 @@ import React from 'react';
 import ViewOrderModal from './ViewOrderModal';
 import type { SpendCategory } from '../types/spendCategory';
 import type { LineMemoOption } from '../types/lineMemoOption';
-import { getStatusColor } from '../utils/getStatusColor'; // adjust path if needed
-
-//Helper to format date as MM-DD-YYYY
-const formatDate = (isoString: string): string => {
-  const date = new Date(isoString);
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // getMonth() is zero-based
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const year = date.getUTCFullYear();
-  return `${month}-${day}-${year}`;
-};
+import { getStatusColor } from '../utils/getStatusColor';
+import { formatDate } from '../utils/formatDate';
 
 // Admin dashboard component for viewing and editing orders
 

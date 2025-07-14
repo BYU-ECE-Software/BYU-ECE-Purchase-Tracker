@@ -4,6 +4,7 @@ import type { Order } from '../types/order';
 import type { Professor } from '../types/professor';
 import type { LineMemoOption } from '../types/lineMemoOption';
 import type { SpendCategory } from '../types/spendCategory';
+import { formatDate } from '../utils/formatDate';
 import AddSpendCategoryModal from './addSpendCategoryModal';
 
 // Props expected by the EditOrderModal component

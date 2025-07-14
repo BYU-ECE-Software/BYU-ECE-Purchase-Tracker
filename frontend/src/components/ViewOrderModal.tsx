@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Order } from '../types/order';
+import { formatDate } from '../utils/formatDate';
 
 interface ViewOrderModalProps {
   isOpen: boolean;
@@ -15,11 +16,6 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
   const [activeTab, setActiveTab] = useState<'items' | 'purchase' | 'student'>(
     'items'
   );
-
-  const formatDatePlain = (isoString: string): string => {
-    const [year, month, day] = isoString.split('T')[0].split('-');
-    return `${month}/${day}/${year}`;
-  };
 
   if (!isOpen || !order) return null;
 
@@ -228,7 +224,7 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
                 Purchase Date
               </span>
               <span className="text-sm text-gray-700">
-                {order.purchaseDate ? formatDatePlain(order.purchaseDate) : '—'}
+                {order.purchaseDate ? formatDate(order.purchaseDate) : '—'}
               </span>
             </div>
 

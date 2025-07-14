@@ -7,7 +7,7 @@ function OrderHistory() {
   return (
     <>
       <HeaderBar />
-      <PageTitle title="MY ORDERS" />
+      <PageTitle title="STUDENT ORDER HISTORY" />
       <StudentOrderHistoryList />
       <FooterBar />
     </>

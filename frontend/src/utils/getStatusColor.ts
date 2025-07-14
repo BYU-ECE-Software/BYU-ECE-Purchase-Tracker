@@ -1,4 +1,4 @@
-//
+// Assigns every status to a color
 
 export const getStatusColor = (status: string): string => {
   switch (status) {
