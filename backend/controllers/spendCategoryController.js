@@ -73,3 +73,57 @@ export const createSpendCategory = async (req, res) => {
     res.status(500).json({ error: "Failed to create spend category" });
   }
 };
+
+// Update a Spend Category
+export const updateSpendCategory = async (req, res) => {
+  const { id } = req.params;
+  const { code, description, visibleToStudents } = req.body;
+
+  //Basic Validation
+  if (!code || !description || typeof visibleToStudents !== "boolean") {
+    return res.status(400).json({ error: "Missing required fields. " });
+  }
+
+  try {
+    const updatedSpendCategory = await prisma.spendCategory.update({
+      where: { id: parseInt(id) },
+      data: {
+        code,
+        description,
+        visibleToStudents,
+      },
+    });
+
+    res.status(200).json(updatedSpendCategory);
+  } catch (error) {
+    console.error("Error updating spend category:", error);
+    res.status(500).json({ error: "Failed to update spend category." });
+  }
+};
+
+// Delete a Spend Category
+export const deleteSpendCategory = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedSpendCategory = await prisma.spendCategory.delete({
+      where: { id: parseInt(id) },
+    });
+
+    res
+      .status(200)
+      .json({
+        message: "Spend Category deleted successfully",
+        deletedSpendCategory,
+      });
+  } catch (error) {
+    console.error("Error deleting spend category:", error);
+
+    // Handle case where spend category doesn't exist
+    if (error.code === "P2025") {
+      return res.status(404).json({ error: "Spend Category not found" });
+    }
+
+    res.status(500).json({ error: "Failed to delete spend category" });
+  }
+};

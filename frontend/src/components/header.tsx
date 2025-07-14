@@ -43,10 +43,16 @@ const HeaderBar = () => {
             Student Order History
           </Link>
           <Link
-            to="/admin"
+            to="/orderDashboard"
             className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
           >
             Order Dashboard
+          </Link>
+          <Link
+            to="/admin"
+            className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
+          >
+            Site Admin
           </Link>
         </div>
       </nav>

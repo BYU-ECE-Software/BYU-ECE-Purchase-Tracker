@@ -4,6 +4,7 @@ import PurchaseRequest from './views/PurchaseRequest';
 import Admin from './views/Admin';
 import ReceiptSubmit from './views/ReceiptSubmit';
 import OrderHistory from './views/OrderHistory';
+import OrderDashboard from './views/OrderDashboard';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/receiptSubmit" element={<ReceiptSubmit />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/orderHistory" element={<OrderHistory />} />
+          <Route path="/orderDashboard" element={<OrderDashboard />} />
         </Routes>
       </Router>
     </>
