@@ -105,6 +105,30 @@ export const createSpendCategory = async (
   return await res.json();
 };
 
+// Update a spend category
+export const updateSpendCategory = async (
+  id: number,
+  updatedData: Partial<SpendCategory>
+): Promise<SpendCategory> => {
+  const res = await fetch(`${BASE_API_URL}/spendCategories/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updatedData),
+  });
+
+  if (!res.ok) throw new Error('Failed to update spend category');
+  return res.json();
+};
+
+// Delete a spend category
+export const deleteSpendCategory = async (id: number): Promise<void> => {
+  const res = await fetch(`${BASE_API_URL}/spendCategories/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok) throw new Error('Failed to delete spend category');
+};
+
 // ==========================
 //   Line Memo API Calls
 // ==========================
@@ -116,6 +140,44 @@ export const fetchLineMemoOptions = async (): Promise<LineMemoOption[]> => {
   return await res.json();
 };
 
+// Create a new line memo option
+export const createLineMemo = async (
+  newOption: LineMemoOption
+): Promise<LineMemoOption> => {
+  const res = await fetch(`${BASE_API_URL}/lineMemoOptions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newOption),
+  });
+
+  if (!res.ok) throw new Error('Failed to create line memo option');
+  return res.json();
+};
+
+// Update a line memo option
+export const updateLineMemo = async (
+  id: number,
+  updatedData: Partial<LineMemoOption>
+): Promise<LineMemoOption> => {
+  const res = await fetch(`${BASE_API_URL}/lineMemoOptions/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updatedData),
+  });
+
+  if (!res.ok) throw new Error('Failed to update line memo option');
+  return res.json();
+};
+
+// Delete a line memo option
+export const deleteLineMemo = async (id: number): Promise<void> => {
+  const res = await fetch(`${BASE_API_URL}/lineMemoOptions/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok) throw new Error('Failed to delete line memo option');
+};
+
 // ==========================
 //   Professor API Calls
 // ==========================
@@ -125,4 +187,42 @@ export const fetchProfessors = async (): Promise<Professor[]> => {
   const res = await fetch(`${BASE_API_URL}/professors`);
   if (!res.ok) throw new Error('Failed to fetch professors');
   return await res.json();
+};
+
+// Create a new professor
+export const createProfessor = async (
+  newProfessor: Omit<Professor, 'id'>
+): Promise<Professor> => {
+  const res = await fetch(`${BASE_API_URL}/professors`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newProfessor),
+  });
+
+  if (!res.ok) throw new Error('Failed to create professor');
+  return res.json();
+};
+
+// Update a professor
+export const updateProfessor = async (
+  id: number,
+  updatedData: Partial<Professor>
+): Promise<Professor> => {
+  const res = await fetch(`${BASE_API_URL}/professors/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updatedData),
+  });
+
+  if (!res.ok) throw new Error('Failed to update professor');
+  return res.json();
+};
+
+// Delete a professor
+export const deleteProfessor = async (id: number): Promise<void> => {
+  const res = await fetch(`${BASE_API_URL}/professors/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok) throw new Error('Failed to delete professor');
 };
