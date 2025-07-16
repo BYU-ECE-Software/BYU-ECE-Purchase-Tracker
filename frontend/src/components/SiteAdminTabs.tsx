@@ -1,9 +1,11 @@
+// Props for the AdminTabs component, generic over string literal tab names
 interface AdminTabsProps<T extends string> {
-  tabs: T[];
-  activeTab: T;
-  setActiveTab: (tab: T) => void;
+  tabs: T[]; // List of tab names
+  activeTab: T; // Currently selected tab
+  setActiveTab: (tab: T) => void; // Function to update active tab
 }
 
+// Generic AdminTabs component for rendering a vertical list of tab buttons
 function AdminTabs<T extends string>({
   tabs,
   activeTab,
