@@ -21,8 +21,15 @@ import type {
 } from '../types/spendCategory';
 import type { LineMemoOption } from '../types/lineMemoOption';
 
+/**
+ * Central configuration for generating CRUD panels for different models.
+ * Each key represents a tab title and includes:
+ * - Field definitions (for form rendering)
+ * - API functions (for backend interaction)
+ */
 export const crudConfigs = {
-  Professors: {
+  // Professors and Staff
+  'Professors & Staff': {
     fields: {
       firstName: { label: 'First Name', type: 'text', required: true },
       lastName: { label: 'Last Name', type: 'text', required: true },
@@ -37,13 +44,14 @@ export const crudConfigs = {
     },
   } satisfies CrudConfig<Professor, Omit<Professor, 'id'>>,
 
+  // Spend Categories
   'Spend Categories': {
     fields: {
       code: { label: 'Code', type: 'text', required: true },
       description: { label: 'Description', type: 'text', required: true },
       visibleToStudents: {
-        label: 'Visible to Students',
-        type: 'checkbox',
+        label: 'Include in Student Dropdown',
+        type: 'radio',
         required: true,
       },
     },
@@ -55,6 +63,7 @@ export const crudConfigs = {
     },
   } satisfies CrudConfig<SpendCategory, NewSpendCategoryPayload>,
 
+  // Line Memo Options
   'Line Memos': {
     fields: {
       id: { label: 'Code', type: 'number', required: true },

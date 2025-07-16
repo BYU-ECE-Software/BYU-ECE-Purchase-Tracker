@@ -110,12 +110,10 @@ export const deleteSpendCategory = async (req, res) => {
       where: { id: parseInt(id) },
     });
 
-    res
-      .status(200)
-      .json({
-        message: "Spend Category deleted successfully",
-        deletedSpendCategory,
-      });
+    res.status(200).json({
+      message: "Spend Category deleted successfully",
+      deletedSpendCategory,
+    });
   } catch (error) {
     console.error("Error deleting spend category:", error);
 
