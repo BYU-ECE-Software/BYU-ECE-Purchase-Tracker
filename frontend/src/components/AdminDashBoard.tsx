@@ -20,6 +20,7 @@ import { getStatusColor } from '../utils/getStatusColor';
 import { formatDate } from '../utils/formatDate';
 import { BarsArrowDownIcon, BarsArrowUpIcon } from '@heroicons/react/24/solid';
 import StatusFilter from './StatusFilter';
+import Pagination from './Pagination';
 
 // Admin dashboard component for viewing and editing orders
 
@@ -50,6 +51,11 @@ const AdminDashboard = () => {
   const [hasUserSorted, setHasUserSorted] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+
   // Sort logic for load up of orders
   const sortOrders = (orders: Order[]): Order[] => {
     return orders.sort((a, b) => {
@@ -74,12 +80,15 @@ const AdminDashboard = () => {
   const loadAndSetOrders = async () => {
     try {
       const res = await fetchOrders({
+        page: currentPage,
+        pageSize,
         sortBy,
         order: sortOrder,
         status: selectedStatus || undefined,
       });
       const data = hasUserSorted ? res.data : sortOrders(res.data);
       setOrders(data);
+      setTotalPages(res.totalPages);
     } catch (err) {
       console.error('Error loading orders:', err);
     }
@@ -99,7 +108,7 @@ const AdminDashboard = () => {
   // fetch all orders for the dashboard
   useEffect(() => {
     loadAndSetOrders();
-  }, [sortBy, sortOrder, selectedStatus]);
+  }, [sortBy, sortOrder, selectedStatus, currentPage, pageSize]);
 
   // Load up professors for dropdown
   useEffect(() => {
@@ -448,6 +457,15 @@ const AdminDashboard = () => {
           })}
         </tbody>
       </table>
+
+      {/* Table Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => setCurrentPage(page)}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
+      />
 
       {/* View Order Modal  */}
       <ViewOrderModal

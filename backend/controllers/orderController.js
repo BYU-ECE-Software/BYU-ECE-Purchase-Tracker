@@ -88,7 +88,7 @@ export const getAllOrders = async (req, res) => {
   try {
     const {
       page = 1,
-      pageSize = 25,
+      pageSize = 50,
       sortBy = "requestDate",
       order = "desc",
       status,

@@ -36,7 +36,7 @@ export const fetchOrders = async (
 }> => {
   const {
     page = 1,
-    pageSize = 25,
+    pageSize = 50,
     sortBy = 'requestDate',
     order = 'desc',
     status,
