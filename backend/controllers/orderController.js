@@ -86,20 +86,75 @@ export const createOrder = async (req, res) => {
 // Fetch all orders with items and users
 export const getAllOrders = async (req, res) => {
   try {
-    const orders = await prisma.order.findMany({
-      include: {
-        items: true,
-        user: true,
-        lineMemoOption: true,
-        professor: true,
-        spendCategory: true,
-      },
-      orderBy: {
-        requestDate: "desc",
-      },
-    });
+    const {
+      page = 1,
+      pageSize = 25,
+      sortBy = "requestDate",
+      order = "desc",
+      status,
+    } = req.query;
 
-    res.status(200).json(orders);
+    // Validate safe fields to sort by (prevent injection)
+    const validSortFields = [
+      "status",
+      "requestDate",
+      "vendor",
+      "shippingPreference",
+      "studentName",
+      "studentEmail",
+    ];
+
+    const sortField = validSortFields.includes(sortBy) ? sortBy : "requestDate";
+    const sortOrder = order === "asc" ? "asc" : "desc";
+
+    // Handle special sorting logic
+    let orderBy;
+    switch (sortField) {
+      case "studentName":
+        orderBy = [
+          { user: { lastName: sortOrder } },
+          { user: { firstName: sortOrder } },
+        ];
+        break;
+      case "studentEmail":
+        orderBy = { user: { email: sortOrder } };
+        break;
+      default:
+        orderBy = { [sortField]: sortOrder };
+    }
+
+    // Pagination math
+    const skip = (Number(page) - 1) * Number(pageSize);
+    const take = Number(pageSize);
+
+    // Add status filtering to where clause
+    const where = status ? { status } : {};
+
+    // Prisma query
+    const [orders, totalCount] = await Promise.all([
+      prisma.order.findMany({
+        skip,
+        take,
+        where,
+        orderBy,
+        include: {
+          items: true,
+          user: true,
+          lineMemoOption: true,
+          professor: true,
+          spendCategory: true,
+        },
+      }),
+      prisma.order.count({ where }), // total for pagination
+    ]);
+
+    res.status(200).json({
+      data: orders,
+      page: Number(page),
+      pageSize: Number(pageSize),
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch orders" });

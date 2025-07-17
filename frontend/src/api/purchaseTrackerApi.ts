@@ -17,8 +17,42 @@ const BASE_API_URL = 'http://localhost:4000/api';
 // ==========================
 
 // Fetch all Orders
-export const fetchOrders = async (): Promise<Order[]> => {
-  const res = await fetch(`${BASE_API_URL}/orders`);
+type FetchOrdersOptions = {
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  order?: 'asc' | 'desc';
+  status?: string;
+};
+
+export const fetchOrders = async (
+  options: FetchOrdersOptions = {}
+): Promise<{
+  data: Order[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}> => {
+  const {
+    page = 1,
+    pageSize = 25,
+    sortBy = 'requestDate',
+    order = 'desc',
+    status,
+  } = options;
+
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+    sortBy,
+    order,
+  });
+
+  // Filter by a certain status if one has been selected
+  if (status) queryParams.append('status', status);
+
+  const res = await fetch(`${BASE_API_URL}/orders?${queryParams.toString()}`);
   if (!res.ok) throw new Error('Failed to fetch orders');
   return await res.json();
 };

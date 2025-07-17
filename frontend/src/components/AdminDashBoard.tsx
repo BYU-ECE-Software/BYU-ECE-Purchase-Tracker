@@ -18,6 +18,8 @@ import type { SpendCategory } from '../types/spendCategory';
 import type { LineMemoOption } from '../types/lineMemoOption';
 import { getStatusColor } from '../utils/getStatusColor';
 import { formatDate } from '../utils/formatDate';
+import { BarsArrowDownIcon, BarsArrowUpIcon } from '@heroicons/react/24/solid';
+import StatusFilter from './StatusFilter';
 
 // Admin dashboard component for viewing and editing orders
 
@@ -42,6 +44,12 @@ const AdminDashboard = () => {
   const [spendCategories, setSpendCategories] = useState<SpendCategory[]>([]);
   const [lineMemoOptions, setLineMemoOptions] = useState<LineMemoOption[]>([]);
 
+  // State for sorting/filtering
+  const [sortBy, setSortBy] = useState('requestDate');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [hasUserSorted, setHasUserSorted] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState('');
+
   // Sort logic for load up of orders
   const sortOrders = (orders: Order[]): Order[] => {
     return orders.sort((a, b) => {
@@ -65,19 +73,33 @@ const AdminDashboard = () => {
   // Load up orders for the main dashboard
   const loadAndSetOrders = async () => {
     try {
-      // Reference API call to fetch all orders for the dashboard
-      const orders = await fetchOrders();
-      // Update state
-      setOrders(sortOrders(orders));
+      const res = await fetchOrders({
+        sortBy,
+        order: sortOrder,
+        status: selectedStatus || undefined,
+      });
+      const data = hasUserSorted ? res.data : sortOrders(res.data);
+      setOrders(data);
     } catch (err) {
       console.error('Error loading orders:', err);
+    }
+  };
+
+  // Handles table sorting logic
+  const handleSort = (field: string) => {
+    setHasUserSorted(true);
+    if (field === sortBy) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
     }
   };
 
   // fetch all orders for the dashboard
   useEffect(() => {
     loadAndSetOrders();
-  }, []);
+  }, [sortBy, sortOrder, selectedStatus]);
 
   // Load up professors for dropdown
   useEffect(() => {
@@ -236,13 +258,32 @@ const AdminDashboard = () => {
 
   return (
     <div className="p-6">
-      <div className="flex justify-end mb-4">
-        <SearchBar
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          onSearch={handleSearch}
-          onClear={handleClearSearch}
-        />
+      <div className="flex justify-between items-center mb-4">
+        {/* Left-aligned filter */}
+        <div>
+          <StatusFilter
+            selectedStatus={selectedStatus}
+            setSelectedStatus={setSelectedStatus}
+            onClearFilters={() => {
+              setSelectedStatus('');
+              setSearchTerm('');
+              setSortBy('requestDate');
+              setSortOrder('desc');
+              setHasUserSorted(false);
+              loadAndSetOrders(); // triggers your original sortOrders logic
+            }}
+          />
+        </div>
+
+        {/* Right-aligned search */}
+        <div className="flex justify-end">
+          <SearchBar
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            onSearch={handleSearch}
+            onClear={handleClearSearch}
+          />
+        </div>
       </div>
 
       {/* Table to display all order requests and their progress in the workflow */}
@@ -250,12 +291,108 @@ const AdminDashboard = () => {
         <thead className="bg-gray-100">
           {/* Table headers */}
           <tr>
-            <th className="border px-4 py-2">Status</th>
-            <th className="border px-4 py-2">Form Submitted</th>
-            <th className="border px-4 py-2">Vendor</th>
-            <th className="border px-4 py-2">Shipping</th>
-            <th className="border px-4 py-2">Student Name</th>
-            <th className="border px-4 py-2">Student Email</th>
+            <th
+              className="border px-4 py-2 cursor-pointer"
+              onClick={() => handleSort('status')}
+            >
+              <div className="flex items-center justify-center gap-2">
+                Status
+                {sortBy === 'status' ? (
+                  sortOrder === 'asc' ? (
+                    <BarsArrowUpIcon className="h-4 w-4 text-byuNavy" />
+                  ) : (
+                    <BarsArrowDownIcon className="h-4 w-4 text-byuNavy" />
+                  )
+                ) : (
+                  <BarsArrowDownIcon className="h-4 w-4 text-byuMediumGray" />
+                )}
+              </div>
+            </th>
+            <th
+              className="border px-4 py-2 cursor-pointer"
+              onClick={() => handleSort('requestDate')}
+            >
+              <div className="flex items-center justify-center gap-2">
+                Form Submitted
+                {sortBy === 'requestDate' ? (
+                  sortOrder === 'asc' ? (
+                    <BarsArrowUpIcon className="h-4 w-4 text-byuNavy" />
+                  ) : (
+                    <BarsArrowDownIcon className="h-4 w-4 text-byuNavy" />
+                  )
+                ) : (
+                  <BarsArrowDownIcon className="h-4 w-4 text-byuMediumGray" />
+                )}
+              </div>
+            </th>
+            <th
+              className="border px-4 py-2 cursor-pointer"
+              onClick={() => handleSort('vendor')}
+            >
+              <div className="flex items-center justify-center gap-2">
+                Vendor
+                {sortBy === 'vendor' ? (
+                  sortOrder === 'asc' ? (
+                    <BarsArrowUpIcon className="h-4 w-4 text-byuNavy" />
+                  ) : (
+                    <BarsArrowDownIcon className="h-4 w-4 text-byuNavy" />
+                  )
+                ) : (
+                  <BarsArrowDownIcon className="h-4 w-4 text-byuMediumGray" />
+                )}
+              </div>
+            </th>
+            <th
+              className="border px-4 py-2 cursor-pointer"
+              onClick={() => handleSort('shippingPreference')}
+            >
+              <div className="flex items-center justify-center gap-2">
+                Shipping
+                {sortBy === 'shippingPreference' ? (
+                  sortOrder === 'asc' ? (
+                    <BarsArrowUpIcon className="h-4 w-4 text-byuNavy" />
+                  ) : (
+                    <BarsArrowDownIcon className="h-4 w-4 text-byuNavy" />
+                  )
+                ) : (
+                  <BarsArrowDownIcon className="h-4 w-4 text-byuMediumGray" />
+                )}
+              </div>
+            </th>
+            <th
+              className="border px-4 py-2 cursor-pointer"
+              onClick={() => handleSort('studentName')}
+            >
+              <div className="flex items-center justify-center gap-2">
+                Student Name
+                {sortBy === 'studentName' ? (
+                  sortOrder === 'asc' ? (
+                    <BarsArrowUpIcon className="h-4 w-4 text-byuNavy" />
+                  ) : (
+                    <BarsArrowDownIcon className="h-4 w-4 text-byuNavy" />
+                  )
+                ) : (
+                  <BarsArrowDownIcon className="h-4 w-4 text-byuMediumGray" />
+                )}
+              </div>
+            </th>
+            <th
+              className="border px-4 py-2 cursor-pointer"
+              onClick={() => handleSort('studentEmail')}
+            >
+              <div className="flex items-center justify-center gap-2">
+                Student Email
+                {sortBy === 'studentEmail' ? (
+                  sortOrder === 'asc' ? (
+                    <BarsArrowUpIcon className="h-4 w-4 text-byuNavy" />
+                  ) : (
+                    <BarsArrowDownIcon className="h-4 w-4 text-byuNavy" />
+                  )
+                ) : (
+                  <BarsArrowDownIcon className="h-4 w-4 text-byuMediumGray" />
+                )}
+              </div>
+            </th>
             <th className="border px-4 py-2"></th>
           </tr>
         </thead>
