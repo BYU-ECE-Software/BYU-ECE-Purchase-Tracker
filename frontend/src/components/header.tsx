@@ -1,23 +1,44 @@
 import BYULogo from '../assets/BYU_monogram_white.svg';
 import { Link } from 'react-router-dom';
+import { FaUserCircle } from 'react-icons/fa';
 import '../css/header.css';
 
 // Header Bar to be used on every page
 const HeaderBar = () => {
+  // Mock user data
+  const user = {
+    name: 'Demo User',
+  };
+
   return (
     <div className="w-full sticky top-0 z-50">
       {/* Top navy bar */}
       <header className="w-screen bg-byuNavy text-white py-4 px-6 shadow-md">
-        <div className="flex items-center">
-          <a
-            href="https://www.byu.edu"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mr-4 border-r-[1px] border-byuRoyal"
-          >
-            <img src={BYULogo} alt="Logo" className="h-10 w-auto" />
-          </a>
-          <h1 className="text-2xl">ECE Purchasing</h1>
+        <div className="flex items-center justify-between">
+          {/* Left: BYU Logo + Title */}
+          <div className="flex items-center">
+            <a
+              href="https://www.byu.edu"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mr-4 border-r-[1px] border-byuRoyal"
+            >
+              <img src={BYULogo} alt="Logo" className="h-10 w-auto" />
+            </a>
+            <h1 className="text-2xl">ECE Purchasing</h1>
+          </div>
+
+          {/* Right: Mock user info */}
+          <div className="flex items-center space-x-3 pr-6 text-base">
+            <span>{user.name}</span>
+            <FaUserCircle size={25} color="white" />
+            <button
+              onClick={() => console.log('Sign out clicked')} // placeholder
+              className="underline hover:text-gray-200 transition"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 
