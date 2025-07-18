@@ -5,7 +5,6 @@ import type { Professor } from '../types/professor';
 import {
   fetchOrders,
   updateOrder,
-  searchOrders,
   fetchLineMemoOptions,
   fetchProfessors,
   fetchAllSpendCategories,
@@ -50,11 +49,12 @@ const AdminDashboard = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [hasUserSorted, setHasUserSorted] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [date, setDate] = useState('');
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
+  const [pageSize, setPageSize] = useState(25);
 
   // Sort logic for load up of orders
   const sortOrders = (orders: Order[]): Order[] => {
@@ -85,6 +85,7 @@ const AdminDashboard = () => {
         sortBy,
         order: sortOrder,
         status: selectedStatus || undefined,
+        query: searchTerm.trim() || undefined,
       });
       const data = hasUserSorted ? res.data : sortOrders(res.data);
       setOrders(data);
@@ -248,21 +249,58 @@ const AdminDashboard = () => {
 
   // Function for the Search Bar. Fetches filtered orders from the backend
   const handleSearch = async () => {
-    if (!searchTerm.trim()) return;
-
     try {
-      const data = await searchOrders(searchTerm);
-      setOrders(sortOrders(data));
+      if (!searchTerm.trim() && !date.trim()) return;
+
+      const res = await fetchOrders({
+        page: currentPage,
+        pageSize,
+        sortBy,
+        order: sortOrder,
+        status: selectedStatus || undefined,
+        query: searchTerm.trim() || undefined,
+        date: date || undefined,
+      });
+
+      const data = hasUserSorted ? res.data : sortOrders(res.data);
+      setOrders(data);
+      setTotalPages(res.totalPages);
     } catch (err) {
       console.error('Search error:', err);
       alert('Failed to search orders');
     }
   };
 
+  // Trigger search when a date is selected
+  useEffect(() => {
+    if (date) {
+      handleSearch();
+    }
+  }, [date]);
+
   // Clearing the Search Bar when done
   const handleClearSearch = async () => {
     setSearchTerm('');
-    await loadAndSetOrders(); // Refetch all orders
+    setDate('');
+    setCurrentPage(1);
+
+    try {
+      const res = await fetchOrders({
+        page: 1,
+        pageSize,
+        sortBy,
+        order: sortOrder,
+        status: selectedStatus || undefined,
+        query: undefined, // ✅ explicitly omit search
+      });
+
+      const data = hasUserSorted ? res.data : sortOrders(res.data);
+      setOrders(data);
+      setTotalPages(res.totalPages);
+    } catch (err) {
+      console.error('Failed to clear search:', err);
+      alert('Failed to reload orders without search');
+    }
   };
 
   return (
@@ -276,6 +314,7 @@ const AdminDashboard = () => {
             onClearFilters={() => {
               setSelectedStatus('');
               setSearchTerm('');
+              setDate('');
               setSortBy('requestDate');
               setSortOrder('desc');
               setHasUserSorted(false);
@@ -291,6 +330,8 @@ const AdminDashboard = () => {
             setSearchTerm={setSearchTerm}
             onSearch={handleSearch}
             onClear={handleClearSearch}
+            purchaseDate={date}
+            setPurchaseDate={setDate}
           />
         </div>
       </div>
@@ -324,6 +365,23 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-center gap-2">
                 Form Submitted
                 {sortBy === 'requestDate' ? (
+                  sortOrder === 'asc' ? (
+                    <BarsArrowUpIcon className="h-4 w-4 text-byuNavy" />
+                  ) : (
+                    <BarsArrowDownIcon className="h-4 w-4 text-byuNavy" />
+                  )
+                ) : (
+                  <BarsArrowDownIcon className="h-4 w-4 text-byuMediumGray" />
+                )}
+              </div>
+            </th>
+            <th
+              className="border px-4 py-2 cursor-pointer"
+              onClick={() => handleSort('purchaseDate')}
+            >
+              <div className="flex items-center justify-center gap-2">
+                Purchase Date
+                {sortBy === 'purchaseDate' ? (
                   sortOrder === 'asc' ? (
                     <BarsArrowUpIcon className="h-4 w-4 text-byuNavy" />
                   ) : (
@@ -387,11 +445,11 @@ const AdminDashboard = () => {
             </th>
             <th
               className="border px-4 py-2 cursor-pointer"
-              onClick={() => handleSort('studentEmail')}
+              onClick={() => handleSort('professor')}
             >
               <div className="flex items-center justify-center gap-2">
-                Student Email
-                {sortBy === 'studentEmail' ? (
+                Professor
+                {sortBy === 'professor' ? (
                   sortOrder === 'asc' ? (
                     <BarsArrowUpIcon className="h-4 w-4 text-byuNavy" />
                   ) : (
@@ -424,6 +482,9 @@ const AdminDashboard = () => {
                     {order.requestDate ? formatDate(order.requestDate) : 'N/A'}
                   </td>
                   <td className="border px-4 py-2 text-center">
+                    {order.purchaseDate ? formatDate(order.purchaseDate) : ''}
+                  </td>
+                  <td className="border px-4 py-2 text-center">
                     {order.vendor}
                   </td>
                   <td className="border px-4 py-2 text-center">
@@ -433,7 +494,8 @@ const AdminDashboard = () => {
                     {order.user.firstName} {order.user.lastName}
                   </td>
                   <td className="border px-4 py-2 text-center">
-                    {order.user.email}
+                    {order.professor.title} {order.professor.firstName}{' '}
+                    {order.professor.lastName}
                   </td>
                   <td className="border px-4 py-2 text-center">
                     <div className="flex justify-center gap-3">

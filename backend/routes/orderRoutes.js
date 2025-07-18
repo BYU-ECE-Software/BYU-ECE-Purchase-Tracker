@@ -5,11 +5,7 @@ import {
   getAllOrders,
   getOrdersByUser,
   updateOrder,
-  searchOrders,
 } from "../controllers/orderController.js";
-
-// GET /orders/search - fetches order requests that match the search query
-router.get("/search", searchOrders);
 
 // GET /orders/user/:userId - fetches orders by user
 router.get("/user/:userId", getOrdersByUser);

@@ -23,6 +23,8 @@ type FetchOrdersOptions = {
   sortBy?: string;
   order?: 'asc' | 'desc';
   status?: string;
+  query?: string;
+  date?: string;
 };
 
 export const fetchOrders = async (
@@ -36,10 +38,12 @@ export const fetchOrders = async (
 }> => {
   const {
     page = 1,
-    pageSize = 50,
+    pageSize = 25,
     sortBy = 'requestDate',
     order = 'desc',
     status,
+    query,
+    date,
   } = options;
 
   const queryParams = new URLSearchParams({
@@ -51,6 +55,12 @@ export const fetchOrders = async (
 
   // Filter by a certain status if one has been selected
   if (status) queryParams.append('status', status);
+
+  // Filter by search query if one has been entered
+  if (query) queryParams.append('query', query);
+
+  // Filter by date (requested or purchased) if one has been selected
+  if (date) queryParams.append('date', date);
 
   const res = await fetch(`${BASE_API_URL}/orders?${queryParams.toString()}`);
   if (!res.ok) throw new Error('Failed to fetch orders');
@@ -85,15 +95,6 @@ export const updateOrder = async (
 
   if (!res.ok) throw new Error('Failed to update order');
 
-  return await res.json();
-};
-
-// Search Orders
-export const searchOrders = async (query: string): Promise<Order[]> => {
-  const res = await fetch(
-    `${BASE_API_URL}/orders/search?query=${encodeURIComponent(query)}`
-  );
-  if (!res.ok) throw new Error('Failed to search orders');
   return await res.json();
 };
 

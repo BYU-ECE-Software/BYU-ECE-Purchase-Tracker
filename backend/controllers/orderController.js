@@ -1,7 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
+//
 // Create a new order with items
+//
 export const createOrder = async (req, res) => {
   try {
     const {
@@ -82,32 +84,40 @@ export const createOrder = async (req, res) => {
       .json({ error: "Failed to create order", details: error.message });
   }
 };
-
-// Fetch all orders with items and users
+//
+// Fetch all orders with items and users including pagination, sorting, status filtering, and searching
+//
 export const getAllOrders = async (req, res) => {
   try {
+    // Extract query parameters
     const {
       page = 1,
-      pageSize = 50,
+      pageSize = 25,
       sortBy = "requestDate",
       order = "desc",
       status,
+      query, // optional search term
+      date,
     } = req.query;
 
-    // Validate safe fields to sort by (prevent injection)
+    // Normalize and interpret search term
+    const searchTerm = query?.toString().toLowerCase();
+    const isNumeric = !isNaN(Number(searchTerm));
+
+    // Validate and set sorting fields
     const validSortFields = [
       "status",
       "requestDate",
+      "purchaseDate",
       "vendor",
       "shippingPreference",
       "studentName",
-      "studentEmail",
+      "professor",
     ];
-
     const sortField = validSortFields.includes(sortBy) ? sortBy : "requestDate";
     const sortOrder = order === "asc" ? "asc" : "desc";
 
-    // Handle special sorting logic
+    // Handle sorting by nested fields. special cases
     let orderBy;
     switch (sortField) {
       case "studentName":
@@ -116,21 +126,110 @@ export const getAllOrders = async (req, res) => {
           { user: { firstName: sortOrder } },
         ];
         break;
-      case "studentEmail":
-        orderBy = { user: { email: sortOrder } };
+      case "professor":
+        orderBy = [
+          { professor: { lastName: sortOrder } },
+          { professor: { firstName: sortOrder } },
+        ];
         break;
       default:
         orderBy = { [sortField]: sortOrder };
     }
 
-    // Pagination math
+    // Construct dynamic filtering
+    let where = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (date) {
+      const parsedDate = new Date(date);
+      if (!isNaN(parsedDate)) {
+        const nextDay = new Date(parsedDate);
+        nextDay.setDate(parsedDate.getDate() + 1);
+
+        where.OR = [
+          ...(where.OR || []), // Preserve any existing OR filters (like searchTerm)
+          {
+            purchaseDate: {
+              gte: parsedDate,
+              lt: nextDay,
+            },
+          },
+          {
+            requestDate: {
+              gte: parsedDate,
+              lt: nextDay,
+            },
+          },
+        ];
+      }
+    }
+
+    // Add search filters if query is present
+    if (searchTerm) {
+      where.OR = [
+        { vendor: { contains: searchTerm, mode: "insensitive" } },
+        { status: { contains: searchTerm, mode: "insensitive" } },
+        isNumeric ? { total: Number(searchTerm) } : undefined,
+        {
+          user: {
+            OR: [
+              { firstName: { contains: searchTerm, mode: "insensitive" } },
+              { lastName: { contains: searchTerm, mode: "insensitive" } },
+              {
+                AND:
+                  searchTerm.split(" ").length >= 2
+                    ? searchTerm.split(" ").map((name) => ({
+                        OR: [
+                          {
+                            firstName: { contains: name, mode: "insensitive" },
+                          },
+                          { lastName: { contains: name, mode: "insensitive" } },
+                        ],
+                      }))
+                    : [],
+              },
+            ],
+          },
+        },
+        {
+          professor: {
+            OR: [
+              { firstName: { contains: searchTerm, mode: "insensitive" } },
+              { lastName: { contains: searchTerm, mode: "insensitive" } },
+              {
+                AND:
+                  searchTerm.split(" ").length >= 2
+                    ? searchTerm.split(" ").map((name) => ({
+                        OR: [
+                          {
+                            firstName: { contains: name, mode: "insensitive" },
+                          },
+                          { lastName: { contains: name, mode: "insensitive" } },
+                        ],
+                      }))
+                    : [],
+              },
+            ],
+          },
+        },
+        {
+          items: {
+            some: {
+              name: { contains: searchTerm, mode: "insensitive" },
+            },
+          },
+        },
+      ].filter(Boolean);
+    }
+
+    // Calculate pagination
     const skip = (Number(page) - 1) * Number(pageSize);
     const take = Number(pageSize);
 
-    // Add status filtering to where clause
-    const where = status ? { status } : {};
-
-    // Prisma query
+    // Fetch filtered + paginated data and total count
     const [orders, totalCount] = await Promise.all([
       prisma.order.findMany({
         skip,
@@ -145,9 +244,10 @@ export const getAllOrders = async (req, res) => {
           spendCategory: true,
         },
       }),
-      prisma.order.count({ where }), // total for pagination
+      prisma.order.count({ where }),
     ]);
 
+    // Return paginated results
     res.status(200).json({
       data: orders,
       page: Number(page),
@@ -156,12 +256,14 @@ export const getAllOrders = async (req, res) => {
       totalPages: Math.ceil(totalCount / pageSize),
     });
   } catch (error) {
-    console.error(error);
+    console.error("getAllOrders failed:", error);
     res.status(500).json({ error: "Failed to fetch orders" });
   }
 };
 
+//
 // Fetch orders for a specific user
+//
 export const getOrdersByUser = async (req, res) => {
   const userId = parseInt(req.params.userId);
 
@@ -191,7 +293,9 @@ export const getOrdersByUser = async (req, res) => {
   }
 };
 
+//
 // Update an existing order and its items
+//
 export const updateOrder = async (req, res) => {
   const orderId = parseInt(req.params.id);
   const { items, id, ...orderFields } = req.body;
@@ -236,68 +340,5 @@ export const updateOrder = async (req, res) => {
       error: "Failed to update order",
       details: error.message,
     });
-  }
-};
-
-// Search for specific orders
-export const searchOrders = async (req, res) => {
-  const searchTerm = req.query.query?.toString().toLowerCase();
-
-  if (!searchTerm) {
-    return res.status(400).json({ error: "Missing search query" });
-  }
-
-  const isNumeric = !isNaN(Number(searchTerm));
-  const isDate = !isNaN(Date.parse(searchTerm));
-
-  // currently set to search by total, purchase date, vendor, status, student name, professor name, and items
-  try {
-    const orders = await prisma.order.findMany({
-      where: {
-        OR: [
-          { vendor: { contains: searchTerm, mode: "insensitive" } },
-          { status: { contains: searchTerm, mode: "insensitive" } },
-          isNumeric ? { total: Number(searchTerm) } : undefined,
-          isDate ? { purchaseDate: new Date(searchTerm) } : undefined,
-          // Match user (student) by first name, last name, or full name
-          {
-            user: {
-              OR: [
-                { firstName: { contains: searchTerm, mode: "insensitive" } },
-                { lastName: { contains: searchTerm, mode: "insensitive" } },
-              ],
-            },
-          },
-
-          // Match professor by first name, last name, or full name
-          {
-            professor: {
-              OR: [
-                { firstName: { contains: searchTerm, mode: "insensitive" } },
-                { lastName: { contains: searchTerm, mode: "insensitive" } },
-              ],
-            },
-          },
-          {
-            items: {
-              some: {
-                name: { contains: searchTerm, mode: "insensitive" },
-              },
-            },
-          },
-        ].filter(Boolean),
-      },
-      include: {
-        user: true,
-        professor: true,
-        items: true,
-        lineMemoOption: true,
-      },
-    });
-
-    res.status(200).json(orders);
-  } catch (error) {
-    console.error("Search failed:", error);
-    res.status(500).json({ error: "Search failed", details: error.message });
   }
 };
