@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Order } from '../types/order';
 import type { Item } from '../types/item';
 import type { Professor } from '../types/professor';
@@ -20,6 +20,8 @@ import { formatDate } from '../utils/formatDate';
 import { BarsArrowDownIcon, BarsArrowUpIcon } from '@heroicons/react/24/solid';
 import StatusFilter from './StatusFilter';
 import Pagination from './Pagination';
+import Toast from './Toast';
+import type { ToastProps } from '../types/toast';
 
 // Admin dashboard component for viewing and editing orders
 
@@ -38,6 +40,7 @@ const AdminDashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editedOrder, setEditedOrder] = useState<Order | null>(null);
   const [editedItems, setEditedItems] = useState<Item[]>([]);
+  const [markComplete, setMarkComplete] = useState(false);
 
   // States for dropdowns
   const [professors, setProfessors] = useState<Professor[]>([]);
@@ -55,6 +58,12 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+
+  // State for Toast
+  const [toast, setToast] = useState<Omit<
+    ToastProps,
+    'onClose' | 'duration'
+  > | null>(null);
 
   // Sort logic for load up of orders
   const sortOrders = (orders: Order[]): Order[] => {
@@ -77,7 +86,7 @@ const AdminDashboard = () => {
   };
 
   // Load up orders for the main dashboard
-  const loadAndSetOrders = async () => {
+  const loadAndSetOrders = useCallback(async () => {
     try {
       const res = await fetchOrders({
         page: currentPage,
@@ -93,7 +102,15 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error('Error loading orders:', err);
     }
-  };
+  }, [
+    currentPage,
+    pageSize,
+    sortBy,
+    sortOrder,
+    selectedStatus,
+    searchTerm,
+    hasUserSorted,
+  ]);
 
   // Handles table sorting logic
   const handleSort = (field: string) => {
@@ -109,7 +126,14 @@ const AdminDashboard = () => {
   // fetch all orders for the dashboard
   useEffect(() => {
     loadAndSetOrders();
-  }, [sortBy, sortOrder, selectedStatus, currentPage, pageSize]);
+  }, [
+    sortBy,
+    sortOrder,
+    selectedStatus,
+    currentPage,
+    pageSize,
+    loadAndSetOrders,
+  ]);
 
   // Load up professors for dropdown
   useEffect(() => {
@@ -164,12 +188,14 @@ const AdminDashboard = () => {
     setEditedOrder(order);
     setEditedItems(order.items.map((item) => ({ ...item })));
     setIsEditModalOpen(true);
+    setMarkComplete(order.status === 'Completed');
   };
 
   // Closes edit modal and resets related state
   const closeEditModal = () => {
     setIsEditModalOpen(false);
     setEditedOrder(null);
+    setMarkComplete(false);
   };
 
   // edit fields on an order
@@ -186,10 +212,15 @@ const AdminDashboard = () => {
     const updatedItems = [...editedItems];
     updatedItems[index].status = newStatus;
     setEditedItems(updatedItems);
+
+    // Check if any item is NOT completed → turn off toggle
+    const allCompleted = updatedItems.every(
+      (item) => item.status === 'Completed'
+    );
   };
 
   // PUT logic to update order and item data
-  const handleSave = async (markComplete: boolean) => {
+  const handleSave = async () => {
     if (!editedOrder) return;
 
     try {
@@ -240,15 +271,23 @@ const AdminDashboard = () => {
       }
 
       closeEditModal();
-      alert('Order updated sucessfully!');
+      setToast({
+        type: 'success',
+        title: 'Order Updated',
+        message: 'The order was updated successfully!',
+      });
     } catch (err) {
       console.error('Failed to update order:', err);
-      alert('Something went wrong updating the order.');
+      setToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Something went wrong while updating the order.',
+      });
     }
   };
 
   // Function for the Search Bar. Fetches filtered orders from the backend
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     try {
       if (!searchTerm.trim() && !date.trim()) return;
 
@@ -267,16 +306,32 @@ const AdminDashboard = () => {
       setTotalPages(res.totalPages);
     } catch (err) {
       console.error('Search error:', err);
-      alert('Failed to search orders');
+      setToast({
+        type: 'error',
+        title: 'Search Failed',
+        message: 'Something went wrong while searching orders.',
+      });
     }
-  };
+  }, [
+    searchTerm,
+    date,
+    currentPage,
+    pageSize,
+    sortBy,
+    sortOrder,
+    selectedStatus,
+    hasUserSorted,
+    setOrders,
+    setTotalPages,
+    setToast,
+  ]);
 
   // Trigger search when a date is selected
   useEffect(() => {
     if (date) {
       handleSearch();
     }
-  }, [date]);
+  }, [date, handleSearch]);
 
   // Clearing the Search Bar when done
   const handleClearSearch = async () => {
@@ -299,9 +354,25 @@ const AdminDashboard = () => {
       setTotalPages(res.totalPages);
     } catch (err) {
       console.error('Failed to clear search:', err);
-      alert('Failed to reload orders without search');
+      setToast({
+        type: 'error',
+        title: 'Failed to clear search',
+        message: 'Something went wrong while reloading the orders.',
+      });
     }
   };
+
+  // Keep "Mark Complete" toggle in sync with item or order status
+  useEffect(() => {
+    if (editedItems.length > 0) {
+      const allCompleted = editedItems.every(
+        (item) => item.status === 'Completed'
+      );
+      setMarkComplete(allCompleted);
+    } else if (editedOrder) {
+      setMarkComplete(editedOrder.status === 'Completed');
+    }
+  }, [editedItems, editedOrder?.status]);
 
   return (
     <div className="p-6">
@@ -473,7 +544,9 @@ const AdminDashboard = () => {
                   <td className="border px-4 py-2 text-center">
                     {/* Displays the color-coded status of the order */}
                     <span
-                      className={`px-3 py-1 rounded font-medium inline-block ${getStatusColor(status)}`}
+                      className={`px-3 py-1 rounded font-medium inline-block ${getStatusColor(
+                        status
+                      )}`}
                     >
                       {status}
                     </span>
@@ -546,10 +619,24 @@ const AdminDashboard = () => {
           professors={professors}
           lineMemoOptions={lineMemoOptions}
           spendCategories={spendCategories}
+          markComplete={markComplete}
+          setMarkComplete={setMarkComplete}
           onItemStatusChange={handleItemStatusChange}
           onOrderFieldChange={handleOrderFieldChange}
           onSave={handleSave}
         />
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-50 animate-fade-in-out">
+          <Toast
+            type={toast.type}
+            title={toast.title}
+            message={toast.message}
+            onClose={() => setToast(null)}
+          />
+        </div>
       )}
     </div>
   );

@@ -25,7 +25,7 @@ const PurchaseRequestForm = () => {
   const [vendor, setVendor] = useState('');
   const [shipping, setShipping] = useState('');
   const [purpose, setPurpose] = useState('');
-  const [operatingUnit, setOperatingUnit] = useState('');
+  const [workTag, setWorkTag] = useState('');
   const [selectedSpendCategoryId, setSelectedSpendCategoryId] = useState('');
   const [cartLink, setCartLink] = useState('');
   const [comment, setComment] = useState('');
@@ -123,12 +123,12 @@ const PurchaseRequestForm = () => {
     }
 
     try {
-      const newOrder = await createOrder({
+      await createOrder({
         vendor,
         shippingPreference: shipping,
         professorId: Number(selectedProfessorId),
         purpose,
-        operatingUnit,
+        workTag,
         spendCategoryId: Number(selectedSpendCategoryId),
         userId: 3, // TEMPORARY: Replace this with real logic later
         status: 'Requested',
@@ -328,8 +328,8 @@ const PurchaseRequestForm = () => {
 
             <h2 className="text- text-byuNavy">
               Format: <br />
-              Operating Unit - Letters (GR, AC, CC, etc), followed by 5 numbers.
-              Ex. ACXXXXX <br />
+              Account Funding Code - Letters (GR, AC, CC, etc), followed by 5
+              numbers. Ex. ACXXXXX <br />
               <br />
               Spend Category - Choose one of the following dropdown options or
               enter a different code manually
@@ -337,11 +337,11 @@ const PurchaseRequestForm = () => {
           </div>
 
           <div>
-            <label className="block font-medium">Operating Unit *</label>
+            <label className="block font-medium">Account Funding Code *</label>
             <input
               type="text"
-              value={operatingUnit}
-              onChange={(e) => setOperatingUnit(e.target.value)}
+              value={workTag}
+              onChange={(e) => setWorkTag(e.target.value)}
               required
               className="w-full border border-gray-300 rounded p-2"
             />
@@ -401,7 +401,7 @@ const PurchaseRequestForm = () => {
           </h2>
 
           <div>
-            <label className="block font-medium">Professor *</label>
+            <label className="block font-medium">Professor/Staff *</label>
             <select
               value={selectedProfessorId}
               onChange={(e) => setSelectedProfessorId(e.target.value)}

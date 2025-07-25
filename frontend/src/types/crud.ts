@@ -34,4 +34,6 @@ export type CrudConfig<T, CreatePayload = Partial<T>> = {
     update: (id: number, data: Partial<T>) => Promise<T>;
     remove: (id: number) => Promise<void>;
   };
+
+  noun: string;
 };

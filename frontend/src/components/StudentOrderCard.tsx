@@ -96,8 +96,8 @@ const StudentOrderCard: React.FC<Props> = ({ order }) => {
             {order.professor.lastName}
           </div>
           <div>
-            <span className="font-medium">Funding Code:</span>{' '}
-            {order.operatingUnit}-{order.spendCategory.code}
+            <span className="font-medium">Funding Code:</span> {order.workTag}-
+            {order.spendCategory.code}
           </div>
           <div>
             <span className="font-medium">Purpose:</span> {order.purpose}

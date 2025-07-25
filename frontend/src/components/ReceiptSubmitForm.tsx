@@ -35,7 +35,7 @@ const ReceiptSubmitForm = () => {
   ]);
 
   // Form fields for order-level info
-  const [operatingUnit, setOperatingUnit] = useState('');
+  const [workTag, setWorkTag] = useState('');
   const [selectedSpendCategoryId, setSelectedSpendCategoryId] = useState('');
   const [selectedProfessorId, setSelectedProfessorId] = useState('');
 
@@ -129,7 +129,7 @@ const ReceiptSubmitForm = () => {
           shippingPreference: undefined,
           professorId: Number(selectedProfessorId),
           purpose: receipt.purpose,
-          operatingUnit,
+          workTag,
           spendCategoryId: Number(selectedSpendCategoryId),
           userId: 3, // TEMPORARY: Replace this with real logic later
           cardType: receipt.cardType,
@@ -185,8 +185,8 @@ const ReceiptSubmitForm = () => {
 
           <h2 className="text-base text-byuNavy">
             Format: <br />
-            Operating Unit - Letters (GR, AC, CC, etc), followed by 5 numbers.
-            Ex. ACXXXXX <br />
+            Account Funding Code - Letters (GR, AC, CC, etc), followed by 5
+            numbers. Ex. ACXXXXX <br />
             <br />
             Spend Category - Choose one of the following dropdown options or
             enter a different code manually
@@ -195,12 +195,12 @@ const ReceiptSubmitForm = () => {
 
         <div>
           <label className="block font-medium text-byuNavy">
-            Operating Unit *
+            Account Funding Code *
           </label>
           <input
             type="text"
-            value={operatingUnit}
-            onChange={(e) => setOperatingUnit(e.target.value)}
+            value={workTag}
+            onChange={(e) => setWorkTag(e.target.value)}
             required
             className="w-full border text-byuNavy border-gray-300 rounded p-2"
           />
@@ -260,7 +260,9 @@ const ReceiptSubmitForm = () => {
         </h2>
 
         <div>
-          <label className="block font-medium text-byuNavy">Professor *</label>
+          <label className="block font-medium text-byuNavy">
+            Professor/Staff *
+          </label>
           <select
             value={selectedProfessorId}
             onChange={(e) => setSelectedProfessorId(e.target.value)}

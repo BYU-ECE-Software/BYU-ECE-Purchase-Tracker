@@ -24,12 +24,14 @@ import type { LineMemoOption } from '../types/lineMemoOption';
 /**
  * Central configuration for generating CRUD panels for different models.
  * Each key represents a tab title and includes:
+ * - Noun for descriptor to display on toast
  * - Field definitions (for form rendering)
  * - API functions (for backend interaction)
  */
 export const crudConfigs = {
   // Professors and Staff
   'Professors & Staff': {
+    noun: 'Professor/Staff',
     fields: {
       firstName: { label: 'First Name', type: 'text', required: true },
       lastName: { label: 'Last Name', type: 'text', required: true },
@@ -46,6 +48,7 @@ export const crudConfigs = {
 
   // Spend Categories
   'Spend Categories': {
+    noun: 'Spend Category',
     fields: {
       code: { label: 'Code', type: 'text', required: true },
       description: { label: 'Description', type: 'text', required: true },
@@ -65,6 +68,7 @@ export const crudConfigs = {
 
   // Line Memo Options
   'Line Memos': {
+    noun: 'Line Memo',
     fields: {
       id: { label: 'Code', type: 'number', required: true },
       description: { label: 'Description', type: 'text', required: true },

@@ -1,11 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Item } from '../types/item';
 import type { Order } from '../types/order';
 import type { Professor } from '../types/professor';
 import type { LineMemoOption } from '../types/lineMemoOption';
 import type { SpendCategory } from '../types/spendCategory';
-import { formatDate } from '../utils/formatDate';
 import AddSpendCategoryModal from './addSpendCategoryModal';
+import Toast from './Toast';
+import type { ToastProps } from '../types/toast';
 
 // Props expected by the EditOrderModal component
 interface EditOrderModalProps {
@@ -18,7 +19,9 @@ interface EditOrderModalProps {
   spendCategories: SpendCategory[];
   onItemStatusChange: (index: number, newStatus: string) => void;
   onOrderFieldChange: (field: string, value: any) => void;
-  onSave: (markComplete: boolean) => void;
+  onSave: () => void;
+  markComplete: boolean;
+  setMarkComplete: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // Dropdown options for item status
@@ -42,13 +45,13 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   onItemStatusChange,
   onOrderFieldChange,
   onSave,
+  markComplete,
+  setMarkComplete,
 }) => {
   // State to track which tab is currently active in the modal ("items" or "orderInfo")
   const [activeTab, setActiveTab] = React.useState<'items' | 'purchase'>(
     'items'
   );
-  // State to track whether the "Mark as Completed" switch is toggled on or off
-  const [markComplete, setMarkComplete] = React.useState(false);
 
   // State for the Add Spend Category Modal open/close
   const [isSCModalOpen, setIsSCModalOpen] = React.useState(false);
@@ -65,9 +68,11 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   // Ref to the Line Memo dropdown <select> element, used for focusing when it's shown.
   const lineMemoRef = useRef<HTMLSelectElement>(null);
 
-  useEffect(() => {
-    setMarkComplete(order.status === 'Completed');
-  }, [order.status]);
+  // Toast State
+  const [toast, setToast] = useState<Omit<
+    ToastProps,
+    'onClose' | 'duration'
+  > | null>(null);
 
   // When the Line Memo dropdown becomes visible, automatically focus it for better UX.
   useEffect(() => {
@@ -314,13 +319,13 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             <div className="flex items-center justify-between pt-0 pb-3 border-b border-gray-200 gap-4">
               <div className="flex flex-col w-1/2">
                 <label className="text-sm font-medium text-byuNavy">
-                  Operating Unit
+                  Work Tag
                 </label>
                 <input
                   type="text"
-                  value={order.operatingUnit ?? ''}
+                  value={order.workTag ?? ''}
                   onChange={(e) =>
-                    onOrderFieldChange('operatingUnit', e.target.value)
+                    onOrderFieldChange('workTag', e.target.value)
                   }
                   className="p-2 border rounded text-sm text-byuNavy w-full"
                 />
@@ -545,7 +550,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             Cancel
           </button>
           <button
-            onClick={() => onSave(markComplete)}
+            onClick={() => onSave()}
             className="px-4 py-2 bg-byuRoyal text-white rounded hover:bg-[#003a9a]"
           >
             Save Changes
@@ -560,9 +565,28 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             setLocalSpendCategories([...localSpendCategories, newCategory]);
             onOrderFieldChange('spendCategoryId', newCategory.id); // select the newly created one
             setIsSCModalOpen(false);
+
+            setToast({
+              type: 'success',
+              title: 'Spend Category Added',
+              message: `“${newCategory.code}” was created successfully.`,
+            });
           }}
+          setToast={setToast}
         />
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-50 animate-fade-in-out">
+          <Toast
+            type={toast.type}
+            title={toast.title}
+            message={toast.message}
+            onClose={() => setToast(null)}
+          />
+        </div>
+      )}
     </div>
   );
 };

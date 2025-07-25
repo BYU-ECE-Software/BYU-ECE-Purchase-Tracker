@@ -12,7 +12,7 @@ export interface Order {
   professorId: number;
   professor: Professor;
   purpose: string;
-  operatingUnit: string;
+  workTag: string;
   spendCategoryId: number;
   spendCategory: SpendCategory;
   tax?: number;

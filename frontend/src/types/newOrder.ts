@@ -5,7 +5,7 @@ export interface NewOrderPayload {
   shippingPreference?: string;
   professorId: number;
   purpose: string;
-  operatingUnit: string;
+  workTag: string;
   spendCategoryId: number;
   userId: number;
   lineMemoOptionId?: number;

@@ -190,7 +190,7 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
                 Funding Code
               </span>
               <span className="text-sm text-gray-700">
-                {order.operatingUnit}-{order.spendCategory.code}
+                {order.workTag}-{order.spendCategory.code}
               </span>
             </div>
 

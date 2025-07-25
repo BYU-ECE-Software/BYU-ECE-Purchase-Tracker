@@ -2,30 +2,52 @@
 
 import { useEffect, useState, useRef } from 'react';
 import type { CrudConfig, FieldConfig } from '../types/crud';
+import type { ToastProps } from '../types/toast';
 
 // Generic props: title to display and a CRUD config for a specific model
 interface Props<T extends { id: number }, CreatePayload> {
   title: string;
   config: CrudConfig<T, CreatePayload>;
+  setToast: (toast: Omit<ToastProps, 'onClose' | 'duration'>) => void;
 }
 
 // Generic reusable CRUD admin panel for any model with an `id`
 export default function AdminCrudPanel<
   T extends { id: number },
   CreatePayload,
->({ title, config }: Props<T, CreatePayload>) {
+>({ title, config, setToast }: Props<T, CreatePayload>) {
   // State to store all records, form data, and editing ID
   const [items, setItems] = useState<T[]>([]);
   const [formData, setFormData] = useState<Partial<CreatePayload>>({});
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Loading state
+  const [loading, setLoading] = useState(true);
 
   // Ref to auto-focus the first input when editing begins
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   // Load all records when the component mounts
   useEffect(() => {
-    config.api.getAll().then(setItems);
-  }, [config]);
+    const loadItems = async () => {
+      try {
+        setLoading(true);
+        const data = await config.api.getAll();
+        setItems(data);
+      } catch (err) {
+        console.error('Error loading items:', err);
+        setToast({
+          type: 'error',
+          title: 'Error',
+          message: `Failed to load ${config.noun}s. Please try again later.`,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadItems();
+  }, [config, setToast]);
 
   // Update form field value when user types/selects input
   const handleInputChange = (
@@ -44,8 +66,18 @@ export default function AdminCrudPanel<
     try {
       if (editingId !== null) {
         await config.api.update(editingId, formData as Partial<T>);
+        setToast({
+          type: 'success',
+          title: 'Success',
+          message: `${config.noun} updated`,
+        });
       } else {
         await config.api.create(formData as CreatePayload);
+        setToast({
+          type: 'success',
+          title: 'Success',
+          message: `${config.noun} created`,
+        });
       }
 
       // Reset form and reload data
@@ -55,6 +87,11 @@ export default function AdminCrudPanel<
       setItems(updated);
     } catch (err) {
       console.error('Error saving:', err);
+      setToast({
+        type: 'error',
+        title: 'Error',
+        message: `Failed to ${editingId ? 'update' : 'create'} ${config.noun}`,
+      });
     }
   };
 
@@ -76,8 +113,22 @@ export default function AdminCrudPanel<
   // Confirm and delete a record
   const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete?')) return;
-    await config.api.remove(id);
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    try {
+      await config.api.remove(id);
+      setItems((prev) => prev.filter((i) => i.id !== id));
+      setToast({
+        type: 'success',
+        title: 'Success',
+        message: `${config.noun} deleted`,
+      });
+    } catch (err) {
+      console.error('Error deleting:', err);
+      setToast({
+        type: 'error',
+        title: 'Error',
+        message: `Failed to delete ${config.noun}`,
+      });
+    }
   };
 
   return (
@@ -186,58 +237,64 @@ export default function AdminCrudPanel<
 
         {/* Table section */}
         <div className="w-full lg:w-[55%] overflow-x-auto">
-          <table className="table-auto max-w-fit text-sm border border-gray-300 mx-auto">
-            <thead className="bg-gray-100">
-              <tr>
-                {/* Render table headers dynamically based on config */}
-                {Object.entries(config.fields).map(
-                  ([fieldName, fieldMetaRaw]) => {
-                    const meta = fieldMetaRaw as FieldConfig<CreatePayload>;
-                    return (
-                      <th
+          {loading ? (
+            <p className="text-center text-gray-500 py-8">Loading...</p>
+          ) : (
+            <table className="table-auto max-w-fit text-sm border border-gray-300 mx-auto">
+              <thead className="bg-gray-100">
+                <tr>
+                  {/* Render table headers dynamically based on config */}
+                  {Object.entries(config.fields).map(
+                    ([fieldName, fieldMetaRaw]) => {
+                      const meta = fieldMetaRaw as FieldConfig<CreatePayload>;
+                      return (
+                        <th
+                          key={fieldName}
+                          className="px-4 py-2 border whitespace-nowrap"
+                        >
+                          {meta.label}
+                        </th>
+                      );
+                    }
+                  )}
+                  <th className="px-4 py-2 border whitespace-nowrap">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.id}>
+                    {/* Render table cells dynamically based on config */}
+                    {Object.keys(config.fields).map((fieldName) => (
+                      <td
                         key={fieldName}
                         className="px-4 py-2 border whitespace-nowrap"
                       >
-                        {meta.label}
-                      </th>
-                    );
-                  }
-                )}
-                <th className="px-4 py-2 border whitespace-nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  {/* Render table cells dynamically based on config */}
-                  {Object.keys(config.fields).map((fieldName) => (
-                    <td
-                      key={fieldName}
-                      className="px-4 py-2 border whitespace-nowrap"
-                    >
-                      {String(item[fieldName as keyof T] ?? '')}
+                        {String(item[fieldName as keyof T] ?? '')}
+                      </td>
+                    ))}
+                    <td className="px-4 py-2 border whitespace-nowrap">
+                      <div className="flex justify-center gap-5">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="bg-byuRoyal text-white px-3 py-1 rounded hover:bg-[#003B9A] transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="bg-byuRedBright text-white px-3 py-1 rounded hover:bg-byuRedDark transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
-                  ))}
-                  <td className="px-4 py-2 border whitespace-nowrap">
-                    <div className="flex justify-center gap-5">
-                      <button
-                        onClick={() => handleEdit(item)}
-                        className="bg-byuRoyal text-white px-3 py-1 rounded hover:bg-[#003B9A] transition"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="bg-byuRedBright text-white px-3 py-1 rounded hover:bg-byuRedDark transition"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

@@ -6,12 +6,18 @@ interface AddSpendCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (newCategory: SpendCategory) => void;
+  setToast: (toast: {
+    type: 'success' | 'error' | 'info' | 'warning';
+    title: string;
+    message: string;
+  }) => void;
 }
 
 const AddSpendCategoryModal: React.FC<AddSpendCategoryModalProps> = ({
   isOpen,
   onClose,
   onCreate,
+  setToast,
 }) => {
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
@@ -32,7 +38,11 @@ const AddSpendCategoryModal: React.FC<AddSpendCategoryModalProps> = ({
       setVisibleToStudents(true);
     } catch (err) {
       console.error(err);
-      alert('Something went wrong creating the category.');
+      setToast({
+        type: 'error',
+        title: 'Creation Failed',
+        message: 'Something went wrong creating the category.',
+      });
     }
   };
 

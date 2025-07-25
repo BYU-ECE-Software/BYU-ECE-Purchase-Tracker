@@ -5,11 +5,13 @@ import Admin from './views/Admin';
 import ReceiptSubmit from './views/ReceiptSubmit';
 import OrderHistory from './views/OrderHistory';
 import OrderDashboard from './views/OrderDashboard';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   return (
     <>
       <Router>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<PurchaseRequest />} />
           <Route path="/purchaseRequest" element={<PurchaseRequest />} />
