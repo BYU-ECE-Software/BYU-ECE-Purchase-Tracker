@@ -17,7 +17,7 @@ export interface NewOrderPayload {
   // Receipt-specific fields only on receipt submission
   cardType?: string;
   purchaseDate?: string;
-  receipt?: string;
+  receipt?: File[];
   tax?: number;
   total?: number;
 }

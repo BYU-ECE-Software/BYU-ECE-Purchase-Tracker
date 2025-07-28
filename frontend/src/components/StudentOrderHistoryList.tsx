@@ -9,7 +9,7 @@ const StudentOrderHistoryList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const userId = 2; // Replace with dynamic value when auth is set up
+  const userId = 3; // Replace with dynamic value when auth is set up
 
   const statusLabels = [
     'Requested',

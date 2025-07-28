@@ -67,14 +67,61 @@ export const fetchOrders = async (
   return await res.json();
 };
 
+// fetch the signed url for a receipt
+export const getSignedReceiptUrl = async (
+  orderId: number,
+  filename: string
+): Promise<string> => {
+  const res = await fetch(
+    `${BASE_API_URL}/receiptUploads/${orderId}/${filename}`
+  );
+
+  if (!res.ok) throw new Error('Failed to fetch signed receipt URL');
+
+  const data = await res.json();
+  return data.url;
+};
+
 // Create a new Order
 export const createOrder = async (
   orderData: NewOrderPayload
 ): Promise<Order> => {
+  const formData = new FormData();
+
+  const safeAppend = (key: string, value: any) => {
+    if (value !== undefined && value !== null) {
+      formData.append(key, value instanceof File ? value : value.toString());
+    }
+  };
+
+  // Append regular fields
+  safeAppend('vendor', orderData.vendor);
+  safeAppend('shippingPreference', orderData.shippingPreference);
+  safeAppend('professorId', orderData.professorId);
+  safeAppend('purpose', orderData.purpose);
+  safeAppend('workTag', orderData.workTag);
+  safeAppend('spendCategoryId', orderData.spendCategoryId);
+  safeAppend('userId', orderData.userId);
+  safeAppend('lineMemoOptionId', orderData.lineMemoOptionId);
+  safeAppend('status', orderData.status);
+  safeAppend('comment', orderData.comment);
+  safeAppend('cartLink', orderData.cartLink);
+  safeAppend('cardType', orderData.cardType);
+  safeAppend('purchaseDate', orderData.purchaseDate);
+  safeAppend('tax', orderData.tax);
+  safeAppend('total', orderData.total);
+
+  // Append items as JSON string
+  formData.append('items', JSON.stringify(orderData.items ?? []));
+
+  // Append receipt files
+  orderData.receipt?.forEach((file) => {
+    formData.append('receipt', file);
+  });
+
   const res = await fetch(`${BASE_API_URL}/orders`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(orderData),
+    body: formData, // ✅ DO NOT SET Content-Type when using FormData
   });
 
   if (!res.ok) throw new Error('Failed to create order');

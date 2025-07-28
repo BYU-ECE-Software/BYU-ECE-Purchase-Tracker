@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import minioClient from "../minioClient";
+import minioClient from "../minioClient.js";
 
 const prisma = new PrismaClient();
 
@@ -27,16 +27,15 @@ export const createOrder = async (req, res) => {
       cartLink,
     } = req.body;
 
-    let receipt = [];
+    const receipt = [];
 
-    // If a receipt file is included, upload to MinIO
+    // If a receipt file is included, upload to MinIO and store the object key
     if (req.file) {
       const { originalname, buffer, mimetype } = req.file;
       const metaData = { "Content-Type": mimetype };
 
       await minioClient.putObject("receipts", originalname, buffer, metaData);
-      const objectKey = originalname;
-      receipt.push(objectKey);
+      receipt.push(originalname);
     }
 
     // Format the order
@@ -44,13 +43,13 @@ export const createOrder = async (req, res) => {
       requestDate: new Date(),
       vendor,
       shippingPreference: shippingPreference || null,
-      professor: { connect: { id: professorId } },
+      professor: { connect: { id: parseInt(professorId) } },
       purpose,
       workTag,
-      spendCategory: { connect: { id: spendCategoryId } },
-      tax: tax || null,
-      total: total || null,
-      user: { connect: { id: userId } },
+      spendCategory: { connect: { id: parseInt(spendCategoryId) } },
+      tax: tax ? parseFloat(tax) : null,
+      total: total ? parseFloat(total) : null,
+      user: { connect: { id: parseInt(userId) } },
       cardType: cardType || null,
       purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
       receipt,
@@ -58,7 +57,7 @@ export const createOrder = async (req, res) => {
       comment: comment || null,
       cartLink: cartLink || null,
       ...(lineMemoOptionId && {
-        lineMemoOption: { connect: { id: lineMemoOptionId } },
+        lineMemoOption: { connect: { id: parseInt(lineMemoOptionId) } },
       }),
     };
 
@@ -97,6 +96,7 @@ export const createOrder = async (req, res) => {
       .json({ error: "Failed to create order", details: error.message });
   }
 };
+
 //
 // Fetch all orders with items and users including pagination, sorting, status filtering, and searching
 //

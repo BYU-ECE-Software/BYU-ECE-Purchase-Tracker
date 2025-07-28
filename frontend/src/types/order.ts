@@ -24,7 +24,7 @@ export interface Order {
   lineMemoOption: LineMemoOption;
   cardType?: string;
   purchaseDate?: string;
-  receipt?: string;
+  receipt?: string[];
   status: string;
   comment?: string;
   cartLink?: string;

@@ -3,7 +3,7 @@ import orderRoutes from "./routes/orderRoutes.js";
 import lineMemoRoutes from "./routes/lineMemoRoutes.js";
 import professorRoutes from "./routes/professorRoutes.js";
 import spendCategoryRoutes from "./routes/spendCategoryRoutes.js";
-// import receiptUploadRoutes from "./routes/receiptUploadRoutes.js";
+import receiptUploadRoutes from "./routes/receiptUploadRoutes.js";
 import cors from "cors";
 
 const app = express();
@@ -24,6 +24,6 @@ app.use("/api/professors", professorRoutes);
 app.use("/api/spendCategories", spendCategoryRoutes);
 
 // Receipt minio route mount point
-// app.use("/api/receiptUploads", receiptUploadRoutes);
+app.use("/api/receiptUploads", receiptUploadRoutes);
 
 export default app;

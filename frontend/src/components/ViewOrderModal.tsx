@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Order } from '../types/order';
 import { formatDate } from '../utils/formatDate';
+import { getSignedReceiptUrl } from '../api/purchaseTrackerApi';
 
 interface ViewOrderModalProps {
   isOpen: boolean;
@@ -251,13 +252,34 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
 
             <div className="flex items-center justify-between py-2 border-b border-gray-200">
               <span className="text-sm font-medium text-byuNavy">Receipt</span>
-              <span className="text-sm text-gray-700">
-                {order.receipt ? (
-                  <span title={order.receipt}>{order.receipt}</span>
-                ) : (
-                  '—'
-                )}
-              </span>
+              <div className="text-sm text-gray-700">
+                {order.receipt && order.receipt.length > 0
+                  ? order.receipt.map((filename, index) => {
+                      const showIndex =
+                        order.receipt!.length > 1 ? ` ${index + 1}` : '';
+                      return (
+                        <button
+                          key={index}
+                          onClick={async () => {
+                            try {
+                              const res = await getSignedReceiptUrl(
+                                order.id,
+                                filename
+                              );
+                              window.open(res, '_blank');
+                            } catch (err) {
+                              alert('Failed to open receipt.');
+                              console.error(err);
+                            }
+                          }}
+                          className="text-byuRoyal hover:underline mr-2"
+                        >
+                          View Receipt{showIndex}
+                        </button>
+                      );
+                    })
+                  : '—'}
+              </div>
             </div>
 
             {order.comment && (

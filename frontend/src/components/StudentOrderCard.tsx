@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Order } from '../types/order';
 import { getStatusColor } from '../utils/getStatusColor';
 import { formatDate } from '../utils/formatDate';
+import { getSignedReceiptUrl } from '../api/purchaseTrackerApi';
 
 type Props = {
   order: Order;
@@ -116,6 +117,32 @@ const StudentOrderCard: React.FC<Props> = ({ order }) => {
               {order.total}
             </div>
           )}
+          {order.receipt && order.receipt.length > 0
+            ? order.receipt.map((filename, index) => {
+                const showIndex =
+                  order.receipt!.length > 1 ? ` ${index + 1}` : '';
+                return (
+                  <button
+                    key={index}
+                    onClick={async () => {
+                      try {
+                        const res = await getSignedReceiptUrl(
+                          order.id,
+                          filename
+                        );
+                        window.open(res, '_blank');
+                      } catch (err) {
+                        alert('Failed to open receipt.');
+                        console.error(err);
+                      }
+                    }}
+                    className="text-byuRoyal hover:underline mr-2"
+                  >
+                    View Receipt{showIndex}
+                  </button>
+                );
+              })
+            : '—'}
           {order.comment && (
             <div>
               <span className="font-medium">Comment:</span> {order.comment}
