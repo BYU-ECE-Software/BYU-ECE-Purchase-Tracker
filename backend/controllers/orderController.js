@@ -1,4 +1,6 @@
 import { PrismaClient } from "@prisma/client";
+import minioClient from "../minioClient";
+
 const prisma = new PrismaClient();
 
 //
@@ -20,11 +22,22 @@ export const createOrder = async (req, res) => {
       lineMemoOptionId,
       cardType,
       purchaseDate,
-      receipt,
       status,
       comment,
       cartLink,
     } = req.body;
+
+    let receipt = [];
+
+    // If a receipt file is included, upload to MinIO
+    if (req.file) {
+      const { originalname, buffer, mimetype } = req.file;
+      const metaData = { "Content-Type": mimetype };
+
+      await minioClient.putObject("receipts", originalname, buffer, metaData);
+      const objectKey = originalname;
+      receipt.push(objectKey);
+    }
 
     // Format the order
     const orderData = {
@@ -40,7 +53,7 @@ export const createOrder = async (req, res) => {
       user: { connect: { id: userId } },
       cardType: cardType || null,
       purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
-      receipt: receipt || null,
+      receipt,
       status,
       comment: comment || null,
       cartLink: cartLink || null,

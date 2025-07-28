@@ -1,11 +1,14 @@
 import express from "express";
-const router = express.Router();
+import multer from "multer";
 import {
   createOrder,
   getAllOrders,
   getOrdersByUser,
   updateOrder,
 } from "../controllers/orderController.js";
+
+const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 // GET /orders/user/:userId - fetches orders by user
 router.get("/user/:userId", getOrdersByUser);
@@ -14,7 +17,7 @@ router.get("/user/:userId", getOrdersByUser);
 router.get("/", getAllOrders);
 
 // POST /orders - handle purchase form submissions
-router.post("/", createOrder);
+router.post("/", upload.single("file"), createOrder);
 
 // PUT /orders - updates an order request
 router.put("/:id", updateOrder);
