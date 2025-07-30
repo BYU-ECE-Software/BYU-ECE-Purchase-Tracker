@@ -252,7 +252,7 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
 
             <div className="flex items-center justify-between py-2 border-b border-gray-200">
               <span className="text-sm font-medium text-byuNavy">Receipt</span>
-              <div className="text-sm text-gray-700">
+              <div className="flex flex-col gap-1 text-sm text-gray-700">
                 {order.receipt && order.receipt.length > 0
                   ? order.receipt.map((filename, index) => {
                       const showIndex =

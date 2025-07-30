@@ -20,6 +20,6 @@ router.get("/", getAllOrders);
 router.post("/", upload.single("receipt"), createOrder);
 
 // PUT /orders - updates an order request
-router.put("/:id", updateOrder);
+router.put("/:id", upload.array("receipt"), updateOrder);
 
 export default router;

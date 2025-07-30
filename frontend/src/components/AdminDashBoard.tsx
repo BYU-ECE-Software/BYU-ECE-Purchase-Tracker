@@ -220,7 +220,7 @@ const AdminDashboard = () => {
   };
 
   // PUT logic to update order and item data
-  const handleSave = async () => {
+  const handleSave = async (newReceipts: File[], deletedReceipts: string[]) => {
     if (!editedOrder) return;
 
     try {
@@ -245,30 +245,31 @@ const AdminDashboard = () => {
         }
       }
 
+      // Auto-delete receipts if status is marked as 'Completed'
+      if (status === 'Completed') {
+        // Add all existing receipt filenames to the deletedReceipts list
+        deletedReceipts = [...deletedReceipts, ...(editedOrder.receipt ?? [])];
+        // Prevent new files from being uploaded by clearing the array
+        newReceipts = [];
+      }
+
+      // Strip unneccesary fields
       const { user, professor, spendCategory, lineMemoOption, ...rest } =
         editedOrder;
 
+      // Prepare payload for your existing updateOrder API
       const payload = {
         ...rest,
         items: editedItems.map(({ id, status }) => ({ id, status })),
         status,
+        receipt: newReceipts, // files to upload
+        deletedReceipts, // files to remove
       };
 
+      // Use your FormData-aware helper
       await updateOrder(editedOrder.id, payload);
 
-      //Refresh orders
       await loadAndSetOrders();
-
-      //  Special case: if no items, and switch was on, override _status manually
-      if (markComplete && editedOrder.items.length === 0) {
-        setOrders((prev) =>
-          prev.map((order) =>
-            order.id === editedOrder.id
-              ? { ...order, _status: 'Completed' }
-              : order
-          )
-        );
-      }
 
       closeEditModal();
       setToast({

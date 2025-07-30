@@ -134,14 +134,39 @@ export const updateOrder = async (
   orderId: number,
   updatedData: OrderUpdatePayload
 ): Promise<Order> => {
+  const formData = new FormData();
+
+  // Convert fields to FormData
+  for (const [key, value] of Object.entries(updatedData)) {
+    if (key === 'items') {
+      formData.append('items', JSON.stringify(value));
+    } else if (key === 'deletedReceipts') {
+      formData.append('deletedReceipts', JSON.stringify(value));
+    } else if (key === 'receipt') {
+      // Accepts multiple files
+      value.forEach((file: File) => formData.append('receipt', file));
+    } else if (value !== null && value !== undefined) {
+      // Ensure number values are passed as numbers
+      const numericFields = [
+        'professorId',
+        'userId',
+        'spendCategoryId',
+        'lineMemoOptionId',
+      ];
+      if (numericFields.includes(key)) {
+        formData.append(key, String(Number(value))); // convert to number, then string for FormData
+      } else {
+        formData.append(key, value as string);
+      }
+    }
+  }
+
   const res = await fetch(`${BASE_API_URL}/orders/${orderId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(updatedData),
+    body: formData,
   });
 
   if (!res.ok) throw new Error('Failed to update order');
-
   return await res.json();
 };
 

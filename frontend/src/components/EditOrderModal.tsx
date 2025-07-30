@@ -19,7 +19,7 @@ interface EditOrderModalProps {
   spendCategories: SpendCategory[];
   onItemStatusChange: (index: number, newStatus: string) => void;
   onOrderFieldChange: (field: string, value: any) => void;
-  onSave: () => void;
+  onSave: (newReceipts: File[], deletedReceipts: string[]) => void;
   markComplete: boolean;
   setMarkComplete: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -52,6 +52,10 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   const [activeTab, setActiveTab] = React.useState<'items' | 'purchase'>(
     'items'
   );
+
+  // State for receipt files
+  const [newReceipts, setNewReceipts] = useState<File[]>([]);
+  const [deletedReceipts, setDeletedReceipts] = useState<string[]>([]);
 
   // State for the Add Spend Category Modal open/close
   const [isSCModalOpen, setIsSCModalOpen] = React.useState(false);
@@ -502,27 +506,134 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               />
             </div>
 
-            {/* Row: Receipt Upload */}
-            <div className="flex items-center justify-between pt-0 pb-3 border-b border-gray-200">
-              <label className="text-sm font-medium text-byuNavy">
-                Receipt
+            {/* Row: Receipts */}
+            <div className="flex items-start justify-between pt-0 pb-3 border-b border-gray-200">
+              {/* Fixed-width label on the left */}
+              <label className="text-sm font-medium text-byuNavy w-1/2 pt-1">
+                Receipts
               </label>
-              <div className="flex items-center gap-2">
-                {order.receipt && (
-                  <span className="text-sm text-gray-600 truncate max-w-[200px]">
-                    {order.receipt}
-                  </span>
+
+              {/* Right side: content area aligned with other form fields */}
+              <div className="w-1/2 space-y-3">
+                {/* Existing Files */}
+                {order.receipt && order.receipt.length > 0 ? (
+                  <ul className="space-y-1">
+                    {order.receipt
+                      .filter((filename) => !deletedReceipts.includes(filename)) // hide deleted ones
+                      .map((filename, index) => (
+                        <li
+                          key={index}
+                          className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 text-sm"
+                        >
+                          <span className="truncate text-gray-800">
+                            {filename}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDeletedReceipts((prev) => [...prev, filename])
+                            }
+                            className="ml-2 text-sm text-byuRedBright hover:text-byuRedDark"
+                            title="Delete receipt"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-5 h-5"
+                            >
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                            </svg>
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500 italic"></p>
                 )}
-                <input
-                  type="file"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      onOrderFieldChange('receipt', file.name);
-                    }
-                  }}
-                  className="p-2 border rounded text-byuNavy"
-                />
+
+                {/* New Files */}
+                {newReceipts.length > 0 && (
+                  <ul className="space-y-1">
+                    {newReceipts.map((file, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 text-sm"
+                      >
+                        <span className="truncate text-gray-800">
+                          {file.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setNewReceipts((prev) =>
+                              prev.filter((_, fileIdx) => fileIdx !== idx)
+                            )
+                          }
+                          className="text-[#E61744] hover:text-[#A3082A] ml-2"
+                          title="Remove file"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="w-5 h-5"
+                          >
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                          </svg>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Upload Button */}
+                {/* Upload Button aligned to right */}
+                <div className="flex justify-end">
+                  <label
+                    htmlFor="receipt-upload"
+                    className="inline-block cursor-pointer border border-byuNavy bg-gray-100 text-sm text-byuNavy px-3 py-1 rounded shadow-sm hover:bg-gray-200 transition"
+                  >
+                    {newReceipts.length === 0
+                      ? 'Add Receipt'
+                      : 'Add Another Receipt'}
+                    <input
+                      id="receipt-upload"
+                      type="file"
+                      multiple
+                      onChange={(e) => {
+                        const fileList = e.target.files;
+                        if (fileList) {
+                          setNewReceipts((prev) => [
+                            ...prev,
+                            ...Array.from(fileList),
+                          ]);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -550,7 +661,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             Cancel
           </button>
           <button
-            onClick={() => onSave()}
+            onClick={() => onSave(newReceipts, deletedReceipts)}
             className="px-4 py-2 bg-byuRoyal text-white rounded hover:bg-[#003a9a]"
           >
             Save Changes

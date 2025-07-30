@@ -311,7 +311,20 @@ export const getOrdersByUser = async (req, res) => {
 //
 export const updateOrder = async (req, res) => {
   const orderId = parseInt(req.params.id);
-  const { items, id, ...orderFields } = req.body;
+  const { items, deletedReceipts = [], id, ...orderFields } = req.body;
+
+  let deletedReceiptsArray = [];
+
+  // if deleted receipts has been stringified, parse it back to an array
+  if (typeof deletedReceipts === "string") {
+    try {
+      deletedReceiptsArray = JSON.parse(deletedReceipts);
+    } catch (err) {
+      console.warn("Failed to parse deletedReceipts:", err);
+    }
+  } else if (Array.isArray(deletedReceipts)) {
+    deletedReceiptsArray = deletedReceipts;
+  }
 
   try {
     // Build dynamic data for the order — remove undefined or null values
@@ -319,10 +332,89 @@ export const updateOrder = async (req, res) => {
       Object.entries(orderFields).filter(([_, v]) => v !== undefined)
     );
 
+    // convert necessary fields to integers
+    [
+      "professorId",
+      "userId",
+      "spendCategoryId",
+      "lineMemoOptionId",
+      "tax",
+      "total",
+    ].forEach((key) => {
+      if (cleanedOrderData[key] !== undefined) {
+        cleanedOrderData[key] = parseInt(cleanedOrderData[key], 10);
+      }
+    });
+
+    // List of relational databases
+    const relationMappings = {
+      professorId: "professor",
+      userId: "user",
+      spendCategoryId: "spendCategory",
+      lineMemoOptionId: "lineMemoOption",
+    };
+
+    // convert all relational values to the correct connect format
+    for (const idKey in relationMappings) {
+      const relationKey = relationMappings[idKey];
+      if (cleanedOrderData[idKey] !== undefined) {
+        cleanedOrderData[relationKey] = {
+          connect: { id: Number(cleanedOrderData[idKey]) },
+        };
+        delete cleanedOrderData[idKey];
+      }
+    }
+
     // Convert purchaseDate to a Date object if it exists
     if (cleanedOrderData.purchaseDate) {
       cleanedOrderData.purchaseDate = new Date(cleanedOrderData.purchaseDate);
     }
+
+    // Load the existing order so we can modify receipt array
+    const existingOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!existingOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    // Handle optional receipt uploads
+    const newReceiptKeys = [];
+
+    if (req.files && Array.isArray(req.files)) {
+      for (const file of req.files) {
+        const { originalname, buffer, mimetype } = file;
+        const metaData = { "Content-Type": mimetype };
+
+        await minioClient.putObject("receipts", originalname, buffer, metaData);
+        newReceiptKeys.push(originalname);
+      }
+    }
+
+    // Handle requested receipt deletions from minio
+    if (
+      Array.isArray(deletedReceiptsArray) &&
+      deletedReceiptsArray.length > 0
+    ) {
+      // Remove files from MinIO
+      for (const filename of deletedReceiptsArray) {
+        try {
+          await minioClient.removeObject("receipts", filename);
+        } catch (err) {
+          console.warn(`Failed to delete ${filename} from MinIO`, err);
+        }
+      }
+    }
+
+    // Compute the new receipt array, removing deleted and adding new
+    const updatedReceiptList = existingOrder.receipt
+      .filter((key) => !deletedReceiptsArray.includes(key))
+      .concat(newReceiptKeys);
+
+    cleanedOrderData.receipt = {
+      set: updatedReceiptList,
+    };
 
     // Update the order with only the provided fields
     const updatedOrder = await prisma.order.update({
