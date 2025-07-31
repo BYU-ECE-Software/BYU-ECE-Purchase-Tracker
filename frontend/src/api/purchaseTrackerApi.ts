@@ -82,6 +82,19 @@ export const getSignedReceiptUrl = async (
   return data.url;
 };
 
+// fetch the signed url for an item file
+export const getSignedItemFileUrl = async (
+  itemId: number,
+  filename: string
+): Promise<string> => {
+  const res = await fetch(`${BASE_API_URL}/fileUploads/${itemId}/${filename}`);
+
+  if (!res.ok) throw new Error('Failed to fetch signed item file URL');
+
+  const data = await res.json();
+  return data.url;
+};
+
 // Create a new Order
 export const createOrder = async (
   orderData: NewOrderPayload
@@ -111,17 +124,25 @@ export const createOrder = async (
   safeAppend('tax', orderData.tax);
   safeAppend('total', orderData.total);
 
-  // Append items as JSON string
-  formData.append('items', JSON.stringify(orderData.items ?? []));
+  // Append item data WITHOUT the file field
+  const itemsToSend = (orderData.items ?? []).map(({ file, ...rest }) => rest);
+  formData.append('items', JSON.stringify(itemsToSend));
+
+  // Append each item file using a key like itemFiles.0, itemFiles.1, ...
+  (orderData.items ?? []).forEach((item, index) => {
+    if (item.file instanceof File) {
+      formData.append(`itemFiles.${index}`, item.file);
+    }
+  });
 
   // Append receipt files
   orderData.receipt?.forEach((file) => {
-    formData.append('receipt', file);
+    formData.append('receipts', file);
   });
 
   const res = await fetch(`${BASE_API_URL}/orders`, {
     method: 'POST',
-    body: formData, // ✅ DO NOT SET Content-Type when using FormData
+    body: formData,
   });
 
   if (!res.ok) throw new Error('Failed to create order');

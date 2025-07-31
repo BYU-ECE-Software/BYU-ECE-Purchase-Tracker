@@ -27,15 +27,25 @@ export const createOrder = async (req, res) => {
       cartLink,
     } = req.body;
 
+    // --- FILE PROCESSING BLOCK ---
     const receipt = [];
+    const itemFilesMap = {}; // index -> filename
 
-    // If a receipt file is included, upload to MinIO and store the object key
-    if (req.file) {
-      const { originalname, buffer, mimetype } = req.file;
+    for (const file of req.files ?? []) {
+      const { fieldname, originalname, buffer, mimetype } = file;
       const metaData = { "Content-Type": mimetype };
 
-      await minioClient.putObject("receipts", originalname, buffer, metaData);
-      receipt.push(originalname);
+      // Store receipts to minio and store the object key in the db
+      if (fieldname === "receipts") {
+        await minioClient.putObject("receipts", originalname, buffer, metaData);
+        receipt.push(originalname);
+
+        // Store item files to minio and store the object key in the db
+      } else if (fieldname.startsWith("itemFiles.")) {
+        const index = parseInt(fieldname.split(".")[1], 10);
+        await minioClient.putObject("files", originalname, buffer, metaData);
+        itemFilesMap[index] = originalname;
+      }
     }
 
     // Format the order
@@ -62,19 +72,21 @@ export const createOrder = async (req, res) => {
     };
 
     // Only create items if they were submitted
-    if (Array.isArray(items)) {
-      const validItems = items.filter(
+    const parsedItems = typeof items === "string" ? JSON.parse(items) : items;
+
+    if (Array.isArray(parsedItems)) {
+      const validItems = parsedItems.filter(
         (item) => item.name && item.name.trim() !== ""
       );
 
       if (validItems.length > 0) {
         orderData.items = {
-          create: validItems.map((item) => ({
+          create: validItems.map((item, index) => ({
             name: item.name,
             quantity: item.quantity,
             status: item.status,
             link: item.link || null,
-            file: item.file || null,
+            file: itemFilesMap[index] || null, // attach uploaded file if present
           })),
         };
       }

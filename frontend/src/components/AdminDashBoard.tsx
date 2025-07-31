@@ -220,7 +220,11 @@ const AdminDashboard = () => {
   };
 
   // PUT logic to update order and item data
-  const handleSave = async (newReceipts: File[], deletedReceipts: string[]) => {
+  const handleSave = async (
+    newReceipts: File[],
+    deletedReceipts: string[],
+    deletedItemFiles: string[]
+  ) => {
     if (!editedOrder) return;
 
     try {
@@ -245,10 +249,19 @@ const AdminDashboard = () => {
         }
       }
 
-      // Auto-delete receipts if status is marked as 'Completed'
+      // Auto-delete receipts and item files if status is marked as 'Completed'
       if (status === 'Completed') {
         // Add all existing receipt filenames to the deletedReceipts list
         deletedReceipts = [...deletedReceipts, ...(editedOrder.receipt ?? [])];
+
+        // Add all item files to be deleted
+        const itemFilesToDelete = editedItems
+          .map((item) => item.file)
+          .filter((file): file is string => !!file);
+        deletedItemFiles = [...deletedItemFiles, ...itemFilesToDelete];
+
+        // include right here maybe an if statement that if the deleted receipts array has items in it, a warning pop up shows saying the receipts are going to be deleted, are you sure you want to go forward with this action
+
         // Prevent new files from being uploaded by clearing the array
         newReceipts = [];
       }
@@ -262,8 +275,9 @@ const AdminDashboard = () => {
         ...rest,
         items: editedItems.map(({ id, status }) => ({ id, status })),
         status,
-        receipt: newReceipts, // files to upload
-        deletedReceipts, // files to remove
+        receipt: newReceipts, // receipt files to upload
+        deletedReceipts, // receipt files to remove
+        deletedItemFiles, // item files to remove
       };
 
       // Use your FormData-aware helper

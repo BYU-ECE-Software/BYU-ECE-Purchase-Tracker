@@ -3,5 +3,5 @@ export interface NewItemPayload {
   quantity: number;
   status: string;
   link?: string;
-  file?: string | null;
+  file?: File | null;
 }

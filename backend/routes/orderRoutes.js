@@ -17,7 +17,7 @@ router.get("/user/:userId", getOrdersByUser);
 router.get("/", getAllOrders);
 
 // POST /orders - handle purchase form submissions
-router.post("/", upload.single("receipt"), createOrder);
+router.post("/", upload.any(), createOrder);
 
 // PUT /orders - updates an order request
 router.put("/:id", upload.array("receipt"), updateOrder);

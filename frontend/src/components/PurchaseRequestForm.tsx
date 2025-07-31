@@ -144,7 +144,7 @@ const PurchaseRequestForm = () => {
             quantity: i.quantity,
             status: 'Requested',
             link: i.link,
-            file: i.file ? i.file.name : null, // Note: still doesn't upload file yet
+            file: i.file,
           })),
       });
 

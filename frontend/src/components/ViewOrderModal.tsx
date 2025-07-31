@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import type { Order } from '../types/order';
 import { formatDate } from '../utils/formatDate';
-import { getSignedReceiptUrl } from '../api/purchaseTrackerApi';
+import {
+  getSignedReceiptUrl,
+  getSignedItemFileUrl,
+} from '../api/purchaseTrackerApi';
 
 interface ViewOrderModalProps {
   isOpen: boolean;
@@ -153,7 +156,24 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
                 {/* Optional file display */}
                 {item.file && (
                   <div className="text-sm text-gray-600 break-all">
-                    Attached File: <span title={item.file}>{item.file}</span>
+                    Attached File:{' '}
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await getSignedItemFileUrl(
+                            item.id,
+                            item.file!
+                          );
+                          window.open(res, '_blank');
+                        } catch (err) {
+                          alert('Failed to open file.');
+                          console.error(err);
+                        }
+                      }}
+                      className="text-byuRoyal hover:underline ml-1"
+                    >
+                      View File
+                    </button>
                   </div>
                 )}
               </div>

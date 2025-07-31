@@ -7,6 +7,7 @@ import type { SpendCategory } from '../types/spendCategory';
 import AddSpendCategoryModal from './addSpendCategoryModal';
 import Toast from './Toast';
 import type { ToastProps } from '../types/toast';
+import { getSignedItemFileUrl } from '../api/purchaseTrackerApi';
 
 // Props expected by the EditOrderModal component
 interface EditOrderModalProps {
@@ -19,7 +20,11 @@ interface EditOrderModalProps {
   spendCategories: SpendCategory[];
   onItemStatusChange: (index: number, newStatus: string) => void;
   onOrderFieldChange: (field: string, value: any) => void;
-  onSave: (newReceipts: File[], deletedReceipts: string[]) => void;
+  onSave: (
+    newReceipts: File[],
+    deletedReceipts: string[],
+    deletedItemFiles: string[]
+  ) => void;
   markComplete: boolean;
   setMarkComplete: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -273,7 +278,24 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 {/* Optional file display */}
                 {item.file && (
                   <div className="text-sm text-gray-600 break-all">
-                    Attached File: <span title={item.file}>{item.file}</span>
+                    Attached File:{' '}
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await getSignedItemFileUrl(
+                            item.id,
+                            item.file!
+                          );
+                          window.open(res, '_blank');
+                        } catch (err) {
+                          alert('Failed to open file.');
+                          console.error(err);
+                        }
+                      }}
+                      className="text-byuRoyal hover:underline ml-1"
+                    >
+                      View File
+                    </button>
                   </div>
                 )}
               </div>
@@ -661,7 +683,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             Cancel
           </button>
           <button
-            onClick={() => onSave(newReceipts, deletedReceipts)}
+            onClick={() => onSave(newReceipts, deletedReceipts, [])}
             className="px-4 py-2 bg-byuRoyal text-white rounded hover:bg-[#003a9a]"
           >
             Save Changes

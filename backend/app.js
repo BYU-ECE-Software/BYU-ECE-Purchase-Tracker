@@ -4,6 +4,7 @@ import lineMemoRoutes from "./routes/lineMemoRoutes.js";
 import professorRoutes from "./routes/professorRoutes.js";
 import spendCategoryRoutes from "./routes/spendCategoryRoutes.js";
 import receiptUploadRoutes from "./routes/receiptUploadRoutes.js";
+import fileUploadRoutes from "./routes/fileUploadRoutes.js";
 import cors from "cors";
 
 const app = express();
@@ -25,5 +26,8 @@ app.use("/api/spendCategories", spendCategoryRoutes);
 
 // Receipt minio route mount point
 app.use("/api/receiptUploads", receiptUploadRoutes);
+
+// File minio route mount point
+app.use("/api/fileUploads", fileUploadRoutes);
 
 export default app;
