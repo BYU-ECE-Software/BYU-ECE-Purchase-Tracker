@@ -8,6 +8,7 @@ import AddSpendCategoryModal from './addSpendCategoryModal';
 import Toast from './Toast';
 import type { ToastProps } from '../types/toast';
 import { getSignedItemFileUrl } from '../api/purchaseTrackerApi';
+import ConfirmDeletionModal from './ConfirmDeletionModal';
 
 // Props expected by the EditOrderModal component
 interface EditOrderModalProps {
@@ -20,11 +21,7 @@ interface EditOrderModalProps {
   spendCategories: SpendCategory[];
   onItemStatusChange: (index: number, newStatus: string) => void;
   onOrderFieldChange: (field: string, value: any) => void;
-  onSave: (
-    newReceipts: File[],
-    deletedReceipts: string[],
-    deletedItemFiles: string[]
-  ) => void;
+  onSave: (newReceipts: File[], deletedReceipts: string[]) => void;
   markComplete: boolean;
   setMarkComplete: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -61,6 +58,9 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   // State for receipt files
   const [newReceipts, setNewReceipts] = useState<File[]>([]);
   const [deletedReceipts, setDeletedReceipts] = useState<string[]>([]);
+
+  // State for confirm deletion modal
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(true);
 
   // State for the Add Spend Category Modal open/close
   const [isSCModalOpen, setIsSCModalOpen] = React.useState(false);
@@ -683,7 +683,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             Cancel
           </button>
           <button
-            onClick={() => onSave(newReceipts, deletedReceipts, [])}
+            onClick={() => onSave(newReceipts, deletedReceipts)}
             className="px-4 py-2 bg-byuRoyal text-white rounded hover:bg-[#003a9a]"
           >
             Save Changes
@@ -720,6 +720,18 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
           />
         </div>
       )}
+
+      <ConfirmDeletionModal
+        isOpen={showDeleteConfirm}
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={() => {
+          setShowDeleteConfirm(false);
+          onSave(newReceipts, deletedReceipts);
+        }}
+        filesToDeleteCount={
+          deletedReceipts.length + items.filter((i) => i.file).length
+        }
+      />
     </div>
   );
 };

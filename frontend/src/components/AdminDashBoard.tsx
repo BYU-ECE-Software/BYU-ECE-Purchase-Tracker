@@ -220,11 +220,7 @@ const AdminDashboard = () => {
   };
 
   // PUT logic to update order and item data
-  const handleSave = async (
-    newReceipts: File[],
-    deletedReceipts: string[],
-    deletedItemFiles: string[]
-  ) => {
+  const handleSave = async (newReceipts: File[], deletedReceipts: string[]) => {
     if (!editedOrder) return;
 
     try {
@@ -249,16 +245,18 @@ const AdminDashboard = () => {
         }
       }
 
+      // Only compute deleted files if Completed, otherwise array stays empty
+      let deletedItemFiles: string[] = [];
+
       // Auto-delete receipts and item files if status is marked as 'Completed'
       if (status === 'Completed') {
         // Add all existing receipt filenames to the deletedReceipts list
         deletedReceipts = [...deletedReceipts, ...(editedOrder.receipt ?? [])];
 
         // Add all item files to be deleted
-        const itemFilesToDelete = editedItems
+        deletedItemFiles = editedItems
           .map((item) => item.file)
           .filter((file): file is string => !!file);
-        deletedItemFiles = [...deletedItemFiles, ...itemFilesToDelete];
 
         // include right here maybe an if statement that if the deleted receipts array has items in it, a warning pop up shows saying the receipts are going to be deleted, are you sure you want to go forward with this action
 

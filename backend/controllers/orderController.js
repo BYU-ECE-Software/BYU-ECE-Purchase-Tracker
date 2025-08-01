@@ -323,11 +323,17 @@ export const getOrdersByUser = async (req, res) => {
 //
 export const updateOrder = async (req, res) => {
   const orderId = parseInt(req.params.id);
-  const { items, deletedReceipts = [], id, ...orderFields } = req.body;
-
-  let deletedReceiptsArray = [];
+  const {
+    items,
+    deletedReceipts = [],
+    deletedItemFiles = [],
+    id,
+    ...orderFields
+  } = req.body;
 
   // if deleted receipts has been stringified, parse it back to an array
+  let deletedReceiptsArray = [];
+
   if (typeof deletedReceipts === "string") {
     try {
       deletedReceiptsArray = JSON.parse(deletedReceipts);
@@ -336,6 +342,19 @@ export const updateOrder = async (req, res) => {
     }
   } else if (Array.isArray(deletedReceipts)) {
     deletedReceiptsArray = deletedReceipts;
+  }
+
+  // if deleted item files has been stringified, parse it back to an array
+  let deletedItemFilesArray = [];
+
+  if (typeof deletedItemFiles === "string") {
+    try {
+      deletedItemFilesArray = JSON.parse(deletedItemFiles);
+    } catch (err) {
+      console.warn("Failed to parse deletedItemFiles:", err);
+    }
+  } else if (Array.isArray(deletedItemFiles)) {
+    deletedItemFilesArray = deletedItemFiles;
   }
 
   try {
@@ -427,6 +446,32 @@ export const updateOrder = async (req, res) => {
     cleanedOrderData.receipt = {
       set: updatedReceiptList,
     };
+
+    // handle deleted item files
+    if (
+      Array.isArray(deletedItemFilesArray) &&
+      deletedItemFilesArray.length > 0
+    ) {
+      for (const filename of deletedItemFilesArray) {
+        try {
+          await minioClient.removeObject("files", filename);
+        } catch (err) {
+          console.warn(`Failed to delete ${filename} from MinIO`, err);
+        }
+      }
+
+      // Clear the file reference from the associated file items in the DB
+      await prisma.item.updateMany({
+        where: {
+          file: {
+            in: deletedItemFilesArray,
+          },
+        },
+        data: {
+          file: null,
+        },
+      });
+    }
 
     // Update the order with only the provided fields
     const updatedOrder = await prisma.order.update({

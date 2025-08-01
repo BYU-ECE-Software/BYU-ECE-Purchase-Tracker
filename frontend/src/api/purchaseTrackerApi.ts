@@ -163,6 +163,8 @@ export const updateOrder = async (
       formData.append('items', JSON.stringify(value));
     } else if (key === 'deletedReceipts') {
       formData.append('deletedReceipts', JSON.stringify(value));
+    } else if (key === 'deletedItemFiles') {
+      formData.append('deletedItemFiles', JSON.stringify(value));
     } else if (key === 'receipt') {
       // Accepts multiple files
       value.forEach((file: File) => formData.append('receipt', file));
