@@ -168,8 +168,10 @@ export const updateOrder = async (
     } else if (key === 'receipt') {
       // Accepts multiple files
       value.forEach((file: File) => formData.append('receipt', file));
-    } else if (value !== null && value !== undefined) {
-      // Ensure number values are passed as numbers
+    } else if (value === null) {
+      // <- send explicit clear
+      formData.append(key, '');
+    } else if (value !== undefined) {
       const numericFields = [
         'professorId',
         'userId',
@@ -177,9 +179,9 @@ export const updateOrder = async (
         'lineMemoOptionId',
       ];
       if (numericFields.includes(key)) {
-        formData.append(key, String(Number(value))); // convert to number, then string for FormData
+        formData.append(key, String(Number(value)));
       } else {
-        formData.append(key, value as string);
+        formData.append(key, String(value));
       }
     }
   }

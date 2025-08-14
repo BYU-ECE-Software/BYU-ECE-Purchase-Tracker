@@ -331,6 +331,18 @@ export const updateOrder = async (req, res) => {
     ...orderFields
   } = req.body;
 
+  // parse items to an array
+  let itemsArray = [];
+  if (typeof items === "string") {
+    try {
+      itemsArray = JSON.parse(items);
+    } catch (err) {
+      console.warn("Failed to parse items:", err);
+    }
+  } else if (Array.isArray(items)) {
+    itemsArray = items;
+  }
+
   // if deleted receipts has been stringified, parse it back to an array
   let deletedReceiptsArray = [];
 
@@ -358,24 +370,47 @@ export const updateOrder = async (req, res) => {
   }
 
   try {
-    // Build dynamic data for the order — remove undefined or null values
+    // Build dynamic data for the order — drop only undefined (keep null so users can clear)
     const cleanedOrderData = Object.fromEntries(
       Object.entries(orderFields).filter(([_, v]) => v !== undefined)
     );
 
-    // convert necessary fields to integers
-    [
+    // Integers (IDs)
+    const intKeys = [
       "professorId",
       "userId",
       "spendCategoryId",
       "lineMemoOptionId",
-      "tax",
-      "total",
-    ].forEach((key) => {
-      if (cleanedOrderData[key] !== undefined) {
-        cleanedOrderData[key] = parseInt(cleanedOrderData[key], 10);
+    ];
+    for (const key of intKeys) {
+      if (key in cleanedOrderData) {
+        const v = cleanedOrderData[key];
+        if (v === "" || v === null) {
+          cleanedOrderData[key] = null;
+        } else {
+          const n = parseInt(String(v), 10);
+          cleanedOrderData[key] = Number.isNaN(n) ? null : n;
+        }
       }
-    });
+    }
+
+    // Floats (money-ish)
+    const floatKeys = ["tax", "total"];
+    for (const key of floatKeys) {
+      if (key in cleanedOrderData) {
+        const v = cleanedOrderData[key];
+        if (v === "" || v === null) {
+          cleanedOrderData[key] = null;
+        } else {
+          const n = parseFloat(String(v));
+          cleanedOrderData[key] = Number.isNaN(n) ? null : n;
+        }
+      }
+    }
+
+    for (const [k, v] of Object.entries(cleanedOrderData)) {
+      if (v === "") cleanedOrderData[k] = null; // generic: clear text/date-ish fields
+    }
 
     // List of relational databases
     const relationMappings = {
@@ -389,10 +424,16 @@ export const updateOrder = async (req, res) => {
     for (const idKey in relationMappings) {
       const relationKey = relationMappings[idKey];
       if (cleanedOrderData[idKey] !== undefined) {
-        cleanedOrderData[relationKey] = {
-          connect: { id: Number(cleanedOrderData[idKey]) },
-        };
+        const val = cleanedOrderData[idKey]; // number | null
         delete cleanedOrderData[idKey];
+
+        if (relationKey === "lineMemoOption" && val === null) {
+          // optional relation -> allow clearing
+          cleanedOrderData[relationKey] = { disconnect: true };
+        } else {
+          // required relations (and lineMemo when not null) -> connect
+          cleanedOrderData[relationKey] = { connect: { id: Number(val) } };
+        }
       }
     }
 
@@ -482,14 +523,12 @@ export const updateOrder = async (req, res) => {
     let updatedItems = [];
 
     // If items array is included, update them
-    if (Array.isArray(items)) {
+    if (Array.isArray(itemsArray) && itemsArray.length > 0) {
       updatedItems = await Promise.all(
-        items.map((item) =>
+        itemsArray.map((item) =>
           prisma.item.update({
-            where: { id: item.id },
-            data: {
-              ...item, // includes only fields that were sent
-            },
+            where: { id: Number(item.id) },
+            data: { status: item.status }, // update precisely what you expect
           })
         )
       );

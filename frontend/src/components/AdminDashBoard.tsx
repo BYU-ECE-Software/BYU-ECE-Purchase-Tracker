@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Order } from '../types/order';
 import type { Item } from '../types/item';
 import type { Professor } from '../types/professor';
@@ -22,6 +22,37 @@ import StatusFilter from './StatusFilter';
 import Pagination from './Pagination';
 import Toast from './Toast';
 import type { ToastProps } from '../types/toast';
+import ConfirmDeletionModal from './ConfirmDeletionModal';
+
+// Function that adds a confirm deletion hook for deleted receipt images and item files. to use in handleSave
+function useConfirmDeletion() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [count, setCount] = useState(0);
+
+  // Allow null and initialize as null
+  const resolverRef = useRef<((ok: boolean) => void) | null>(null);
+
+  const confirm = (n: number) =>
+    new Promise<boolean>((resolve) => {
+      setCount(n);
+      setIsOpen(true);
+      resolverRef.current = resolve;
+    });
+
+  const onCancel = () => {
+    setIsOpen(false);
+    resolverRef.current?.(false);
+    resolverRef.current = null; // tidy up
+  };
+
+  const onConfirm = () => {
+    setIsOpen(false);
+    resolverRef.current?.(true);
+    resolverRef.current = null; // tidy up
+  };
+
+  return { isOpen, count, confirm, onCancel, onConfirm };
+}
 
 // Admin dashboard component for viewing and editing orders
 
@@ -41,6 +72,15 @@ const AdminDashboard = () => {
   const [editedOrder, setEditedOrder] = useState<Order | null>(null);
   const [editedItems, setEditedItems] = useState<Item[]>([]);
   const [markComplete, setMarkComplete] = useState(false);
+
+  // State for Confirm Deletion Modal
+  const {
+    isOpen: showDeleteConfirm,
+    count: pendingDeleteCount,
+    confirm: confirmDeletion,
+    onCancel: handleCancelDeletion,
+    onConfirm: handleConfirmDeletionClick,
+  } = useConfirmDeletion();
 
   // States for dropdowns
   const [professors, setProfessors] = useState<Professor[]>([]);
@@ -200,7 +240,10 @@ const AdminDashboard = () => {
 
   // edit fields on an order
   const handleOrderFieldChange = (field: string, value: any) => {
-    const normalizedValue = value === '' || value === undefined ? null : value;
+    const isNumNaN = typeof value === 'number' && Number.isNaN(value);
+    const normalizedValue =
+      value === '' || value === undefined || isNumNaN ? null : value;
+
     setEditedOrder((prev) => ({
       ...prev!,
       [field]: normalizedValue,
@@ -245,6 +288,32 @@ const AdminDashboard = () => {
         }
       }
 
+      // if status is marked as 'Completed' make sure that user knows that files will be deleted
+      if (status === 'Completed') {
+        // Add all receipts that are going to be deleted
+        const prospectiveDeletedReceipts = [
+          ...deletedReceipts,
+          ...(editedOrder.receipt ?? []),
+        ];
+
+        // Add all item files that are going to be deleted
+        const prospectiveDeletedItemFiles = editedItems
+          .map((item) => item.file)
+          .filter((file): file is string => !!file);
+
+        // Get the count of how many files will be deleted
+        const willDeleteCount =
+          prospectiveDeletedItemFiles.length +
+          prospectiveDeletedReceipts.length;
+
+        // if there are items to be deleted, call the confirmDeletion function which pops up the confirmation modal before continuing
+        if (willDeleteCount > 0) {
+          const ok = await confirmDeletion(willDeleteCount);
+          if (!ok) return; // user cancelled - stop here
+        }
+      }
+
+      // Now move forward with actual deletion because user said to continue
       // Only compute deleted files if Completed, otherwise array stays empty
       let deletedItemFiles: string[] = [];
 
@@ -257,8 +326,6 @@ const AdminDashboard = () => {
         deletedItemFiles = editedItems
           .map((item) => item.file)
           .filter((file): file is string => !!file);
-
-        // include right here maybe an if statement that if the deleted receipts array has items in it, a warning pop up shows saying the receipts are going to be deleted, are you sure you want to go forward with this action
 
         // Prevent new files from being uploaded by clearing the array
         newReceipts = [];
@@ -639,6 +706,14 @@ const AdminDashboard = () => {
           onSave={handleSave}
         />
       )}
+
+      {/* Confirm Delete Modal for Files */}
+      <ConfirmDeletionModal
+        isOpen={showDeleteConfirm}
+        onCancel={handleCancelDeletion}
+        onConfirm={handleConfirmDeletionClick}
+        filesToDeleteCount={pendingDeleteCount}
+      />
 
       {/* Toast */}
       {toast && (

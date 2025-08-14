@@ -1,23 +1,56 @@
+import { useLayoutEffect, useRef, useState } from 'react';
+import { useState as useStateReact } from 'react'; // <-- keep your existing import, or just use the one above
 import BYULogo from '../assets/BYU_monogram_white.svg';
 import { Link } from 'react-router-dom';
 import { FaUserCircle } from 'react-icons/fa';
+import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai';
 import '../css/header.css';
 
-// Header Bar to be used on every page
 const HeaderBar = () => {
-  // Mock user data
-  const user = {
-    name: 'Demo User',
-  };
+  const user = { name: 'Demo User' };
+  const [mobileOpen, setMobileOpen] = useStateReact(false);
+
+  // NEW: refs + measured left padding for desktop white nav
+  const logoRef = useRef<HTMLAnchorElement>(null);
+  const [navPadLeft, setNavPadLeft] = useState<number>(128); // fallback ~ px-32
+
+  useLayoutEffect(() => {
+    const update = () => {
+      const el = logoRef.current;
+      if (!el) return;
+
+      // Tailwind mr-4 = 1rem; compute in case root font-size changes
+      const rem =
+        parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const mr4 = 1 * rem;
+
+      // offsetWidth includes border/padding (good); margin-right is not included (we add mr4)
+      const pad = el.offsetWidth + mr4;
+      setNavPadLeft(pad);
+    };
+
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  const navLinks = [
+    { to: '/purchaseRequest', label: 'Purchase Request Form' },
+    { to: '/receiptSubmit', label: 'Submit Receipts' },
+    { to: '/orderHistory', label: 'Student Order History' },
+    { to: '/orderDashboard', label: 'Order Dashboard' },
+    { to: '/admin', label: 'Site Admin' },
+  ];
 
   return (
     <div className="w-full sticky top-0 z-50">
       {/* Top navy bar */}
-      <header className="w-screen bg-byuNavy text-white py-4 px-6 shadow-md">
-        <div className="flex items-center justify-between">
+      <header className="relative w-full md:w-screen bg-byuNavy text-white py-4 shadow-md">
+        <div className="px-6 flex items-center justify-between">
           {/* Left: BYU Logo + Title */}
           <div className="flex items-center">
             <a
+              ref={logoRef} // <-- measure this block
               href="https://www.byu.edu"
               target="_blank"
               rel="noopener noreferrer"
@@ -28,23 +61,85 @@ const HeaderBar = () => {
             <h1 className="text-2xl">ECE Purchasing</h1>
           </div>
 
-          {/* Right: Mock user info */}
-          <div className="flex items-center space-x-3 pr-6 text-base">
-            <span>{user.name}</span>
-            <FaUserCircle size={25} color="white" />
+          {/* Right: user + mobile hamburger */}
+          <div className="flex items-center gap-3 pr-6 text-base">
+            <span className="hidden sm:inline">{user.name}</span>
+            <span className="hidden sm:inline">
+              <FaUserCircle size={25} color="white" />
+            </span>
             <button
-              onClick={() => console.log('Sign out clicked')} // placeholder
-              className="underline hover:text-gray-200 transition"
+              type="button"
+              onClick={() => {
+                /* no-op for now */
+              }}
+              className="hidden sm:inline
+               text-white/90 underline underline-offset-4 decoration-white/50
+               hover:text-white hover:decoration-white
+               transition-colors duration-150
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70
+               focus-visible:ring-offset-2 focus-visible:ring-offset-byuNavy
+               active:opacity-80"
             >
               Sign out
+            </button>
+            <button
+              className="inline-flex items-center justify-center p-2 rounded md:hidden hover:bg-white/10 focus:outline-none"
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
+              onClick={() => setMobileOpen((v) => !v)}
+            >
+              {mobileOpen ? (
+                <AiOutlineClose size={22} />
+              ) : (
+                <AiOutlineMenu size={22} />
+              )}
             </button>
           </div>
         </div>
       </header>
 
-      {/* White nav bar with links to every page */}
-      <nav className="w-full bg-white text-byuNavy shadow">
-        <div className="flex px-32 text-base font-medium">
+      {/* Mobile dropdown menu */}
+      {mobileOpen && (
+        <div
+          id="mobile-menu"
+          className="md:hidden w-full bg-white text-byuNavy shadow border-t"
+        >
+          {/* Profile row at the top */}
+          <div className="flex items-center gap-3 px-6 py-4 border-b">
+            <span>
+              <FaUserCircle size={24} color="#0b2a5b" />
+            </span>
+            <div className="flex-1">
+              <div className="font-medium">{user.name}</div>
+              {/* <div className="text-sm text-gray-500">user@email.com</div> */}
+            </div>
+            <button className="underline">Sign out</button>
+          </div>
+
+          {/* Nav links */}
+          <nav className="flex flex-col py-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setMobileOpen(false)}
+                className="px-6 py-4 hover:bg-[#FAFAFA]"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
+
+      {/* White nav bar – desktop only */}
+      <nav className="hidden md:block w-full bg-white text-byuNavy shadow">
+        {/* match header px-6, then add measured left pad so first link text lines with "ECE Purchasing" */}
+        <div
+          className="flex text-base font-medium px-6"
+          style={{ paddingLeft: navPadLeft }}
+        >
           <Link
             to="/purchaseRequest"
             className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"

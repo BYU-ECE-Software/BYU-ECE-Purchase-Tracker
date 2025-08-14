@@ -8,7 +8,6 @@ import AddSpendCategoryModal from './addSpendCategoryModal';
 import Toast from './Toast';
 import type { ToastProps } from '../types/toast';
 import { getSignedItemFileUrl } from '../api/purchaseTrackerApi';
-import ConfirmDeletionModal from './ConfirmDeletionModal';
 
 // Props expected by the EditOrderModal component
 interface EditOrderModalProps {
@@ -59,9 +58,6 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   const [newReceipts, setNewReceipts] = useState<File[]>([]);
   const [deletedReceipts, setDeletedReceipts] = useState<string[]>([]);
 
-  // State for confirm deletion modal
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(true);
-
   // State for the Add Spend Category Modal open/close
   const [isSCModalOpen, setIsSCModalOpen] = React.useState(false);
 
@@ -89,6 +85,56 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
       lineMemoRef.current.focus();
     }
   }, [showLineMemo]);
+
+  // Required fields (not allowed to be cleared)
+  const REQUIRED_FIELDS = [
+    { key: 'professorId', label: 'Professor', section: 'purchase' as const },
+    {
+      key: 'spendCategoryId',
+      label: 'Spend Category',
+      section: 'purchase' as const,
+    },
+    { key: 'workTag', label: 'Work Tag', section: 'purchase' as const },
+    { key: 'vendor', label: 'Vendor', section: 'purchase' as const },
+    { key: 'purpose', label: 'Purpose', section: 'purchase' as const },
+  ];
+
+  // Helper + guarded save. To make sure all required fields are filled before actually saving
+  const attemptSave = () => {
+    const missing = REQUIRED_FIELDS.filter(({ key }) => {
+      const v = (order as any)[key];
+      return (
+        v === null ||
+        v === undefined ||
+        (typeof v === 'string' && v.trim() === '')
+      );
+    });
+
+    if (missing.length) {
+      const first = missing[0];
+      // switch to the tab that contains the first missing field
+      if (first.section !== activeTab) setActiveTab(first.section);
+
+      // focus the first missing field
+      setTimeout(() => {
+        const el = document.getElementById(
+          `order-${first.key}`
+        ) as HTMLElement | null;
+        el?.focus();
+      }, 0);
+
+      // your existing toast UI
+      setToast({
+        type: 'error',
+        title: 'Missing required fields',
+        message: `Please fill: ${missing.map((m) => m.label).join(', ')}`,
+      });
+      return;
+    }
+
+    // all good → call your existing save
+    onSave(newReceipts, deletedReceipts);
+  };
 
   // Function to change all item status's to "completed" when toggled and "ordered" when toggled off
   const handleToggleComplete = () => {
@@ -324,6 +370,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 Professor
               </label>
               <select
+                id="order-professorId"
                 value={order.professorId ?? ''}
                 onChange={(e) =>
                   onOrderFieldChange('professorId', parseInt(e.target.value))
@@ -348,6 +395,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                   Work Tag
                 </label>
                 <input
+                  id="order-workTag"
                   type="text"
                   value={order.workTag ?? ''}
                   onChange={(e) =>
@@ -362,6 +410,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                   Spend Category
                 </label>
                 <select
+                  id="order-spendCategoryId"
                   value={order.spendCategoryId ?? ''}
                   onChange={(e) => {
                     if (e.target.value === 'add-new') {
@@ -443,6 +492,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 Purpose
               </label>
               <input
+                id="order-purpose"
                 type="text"
                 value={order.purpose ?? ''}
                 onChange={(e) => onOrderFieldChange('purpose', e.target.value)}
@@ -495,6 +545,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             <div className="flex items-center justify-between pt-0 pb-3 border-b border-gray-200">
               <label className="text-sm font-medium text-byuNavy">Vendor</label>
               <input
+                id="order-vendor"
                 type="text"
                 value={order.vendor ?? ''}
                 onChange={(e) => onOrderFieldChange('vendor', e.target.value)}
@@ -683,7 +734,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             Cancel
           </button>
           <button
-            onClick={() => onSave(newReceipts, deletedReceipts)}
+            onClick={attemptSave}
             className="px-4 py-2 bg-byuRoyal text-white rounded hover:bg-[#003a9a]"
           >
             Save Changes
@@ -720,18 +771,6 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
           />
         </div>
       )}
-
-      <ConfirmDeletionModal
-        isOpen={showDeleteConfirm}
-        onCancel={() => setShowDeleteConfirm(false)}
-        onConfirm={() => {
-          setShowDeleteConfirm(false);
-          onSave(newReceipts, deletedReceipts);
-        }}
-        filesToDeleteCount={
-          deletedReceipts.length + items.filter((i) => i.file).length
-        }
-      />
     </div>
   );
 };
