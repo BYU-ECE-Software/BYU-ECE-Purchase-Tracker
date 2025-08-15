@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
 import type { Order } from '../types/order';
+import { formatDate } from '../utils/formatDate';
+import {
+  getSignedReceiptUrl,
+  getSignedItemFileUrl,
+} from '../api/purchaseTrackerApi';
 
 interface ViewOrderModalProps {
   isOpen: boolean;
@@ -15,11 +20,6 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
   const [activeTab, setActiveTab] = useState<'items' | 'purchase' | 'student'>(
     'items'
   );
-
-  const formatDatePlain = (isoString: string): string => {
-    const [year, month, day] = isoString.split('T')[0].split('-');
-    return `${month}/${day}/${year}`;
-  };
 
   if (!isOpen || !order) return null;
 
@@ -156,7 +156,24 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
                 {/* Optional file display */}
                 {item.file && (
                   <div className="text-sm text-gray-600 break-all">
-                    Attached File: <span title={item.file}>{item.file}</span>
+                    Attached File:{' '}
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await getSignedItemFileUrl(
+                            item.id,
+                            item.file!
+                          );
+                          window.open(res, '_blank');
+                        } catch (err) {
+                          alert('Failed to open file.');
+                          console.error(err);
+                        }
+                      }}
+                      className="text-byuRoyal hover:underline ml-1"
+                    >
+                      View File
+                    </button>
                   </div>
                 )}
               </div>
@@ -194,7 +211,7 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
                 Funding Code
               </span>
               <span className="text-sm text-gray-700">
-                {order.operatingUnit}-{order.spendCategory.code}
+                {order.workTag}-{order.spendCategory.code}
               </span>
             </div>
 
@@ -228,7 +245,7 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
                 Purchase Date
               </span>
               <span className="text-sm text-gray-700">
-                {order.purchaseDate ? formatDatePlain(order.purchaseDate) : '—'}
+                {order.purchaseDate ? formatDate(order.purchaseDate) : '—'}
               </span>
             </div>
 
@@ -255,13 +272,34 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
 
             <div className="flex items-center justify-between py-2 border-b border-gray-200">
               <span className="text-sm font-medium text-byuNavy">Receipt</span>
-              <span className="text-sm text-gray-700">
-                {order.receipt ? (
-                  <span title={order.receipt}>{order.receipt}</span>
-                ) : (
-                  '—'
-                )}
-              </span>
+              <div className="flex flex-col gap-1 text-sm text-gray-700">
+                {order.receipt && order.receipt.length > 0
+                  ? order.receipt.map((filename, index) => {
+                      const showIndex =
+                        order.receipt!.length > 1 ? ` ${index + 1}` : '';
+                      return (
+                        <button
+                          key={index}
+                          onClick={async () => {
+                            try {
+                              const res = await getSignedReceiptUrl(
+                                order.id,
+                                filename
+                              );
+                              window.open(res, '_blank');
+                            } catch (err) {
+                              alert('Failed to open receipt.');
+                              console.error(err);
+                            }
+                          }}
+                          className="text-byuRoyal hover:underline mr-2"
+                        >
+                          View Receipt{showIndex}
+                        </button>
+                      );
+                    })
+                  : '—'}
+              </div>
             </div>
 
             {order.comment && (

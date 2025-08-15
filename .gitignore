@@ -1,4 +1,14 @@
-frontend/node_modules
-backend/node_modules
-backend/.env
-node_modules
+# Prevent accidentally committing MinIO bucket contents or sensitive uploads
+/data/
+
+# MinIO internal config files (can appear depending on usage)
+.minio.sys/
+*.minio
+
+# Prevent secrets from being committed
+.env
+.env.local
+.env.*.local
+
+# Avoid duplicate declaration
+node_modules/

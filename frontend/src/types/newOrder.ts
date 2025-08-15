@@ -5,7 +5,7 @@ export interface NewOrderPayload {
   shippingPreference?: string;
   professorId: number;
   purpose: string;
-  operatingUnit: string;
+  workTag: string;
   spendCategoryId: number;
   userId: number;
   lineMemoOptionId?: number;
@@ -17,7 +17,7 @@ export interface NewOrderPayload {
   // Receipt-specific fields only on receipt submission
   cardType?: string;
   purchaseDate?: string;
-  receipt?: string;
+  receipt?: File[];
   tax?: number;
   total?: number;
 }

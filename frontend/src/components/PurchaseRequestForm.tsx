@@ -25,7 +25,7 @@ const PurchaseRequestForm = () => {
   const [vendor, setVendor] = useState('');
   const [shipping, setShipping] = useState('');
   const [purpose, setPurpose] = useState('');
-  const [operatingUnit, setOperatingUnit] = useState('');
+  const [workTag, setWorkTag] = useState('');
   const [selectedSpendCategoryId, setSelectedSpendCategoryId] = useState('');
   const [cartLink, setCartLink] = useState('');
   const [comment, setComment] = useState('');
@@ -123,14 +123,14 @@ const PurchaseRequestForm = () => {
     }
 
     try {
-      const newOrder = await createOrder({
+      await createOrder({
         vendor,
         shippingPreference: shipping,
         professorId: Number(selectedProfessorId),
         purpose,
-        operatingUnit,
+        workTag,
         spendCategoryId: Number(selectedSpendCategoryId),
-        userId: 2, // TEMPORARY: Replace this with real logic later
+        userId: 3, // TEMPORARY: Replace this with real logic later
         status: 'Requested',
         comment:
           selectedSpendCategoryCode === 'Other'
@@ -144,7 +144,7 @@ const PurchaseRequestForm = () => {
             quantity: i.quantity,
             status: 'Requested',
             link: i.link,
-            file: i.file ? i.file.name : null, // Note: still doesn't upload file yet
+            file: i.file,
           })),
       });
 
@@ -326,19 +326,22 @@ const PurchaseRequestForm = () => {
               Funding Code
             </h2>
 
-            <h2 className="text-base text-byuNavy">
-              Format: Operating Unit (Letters GR, AC, CC, etc, followed by 5
-              numbers) - Spend Category (choose one of the following options or
-              enter a different code manually)
+            <h2 className="text- text-byuNavy">
+              Format: <br />
+              Account Funding Code - Letters (GR, AC, CC, etc), followed by 5
+              numbers. Ex. ACXXXXX <br />
+              <br />
+              Spend Category - Choose one of the following dropdown options or
+              enter a different code manually
             </h2>
           </div>
 
           <div>
-            <label className="block font-medium">Operating Unit *</label>
+            <label className="block font-medium">Account Funding Code *</label>
             <input
               type="text"
-              value={operatingUnit}
-              onChange={(e) => setOperatingUnit(e.target.value)}
+              value={workTag}
+              onChange={(e) => setWorkTag(e.target.value)}
               required
               className="w-full border border-gray-300 rounded p-2"
             />
@@ -398,7 +401,7 @@ const PurchaseRequestForm = () => {
           </h2>
 
           <div>
-            <label className="block font-medium">Professor *</label>
+            <label className="block font-medium">Professor/Staff *</label>
             <select
               value={selectedProfessorId}
               onChange={(e) => setSelectedProfessorId(e.target.value)}
@@ -418,6 +421,10 @@ const PurchaseRequestForm = () => {
 
           <div>
             <label className="block font-medium">Purpose * (be specific)</label>
+            <span className="block text-sm mb-2">
+              Note that Capstone purchases are to be done through the Capstone
+              website, not here.
+            </span>
             <input
               type="text"
               value={purpose}

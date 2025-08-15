@@ -17,20 +17,132 @@ const BASE_API_URL = 'http://localhost:4000/api';
 // ==========================
 
 // Fetch all Orders
-export const fetchOrders = async (): Promise<Order[]> => {
-  const res = await fetch(`${BASE_API_URL}/orders`);
+type FetchOrdersOptions = {
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  order?: 'asc' | 'desc';
+  status?: string;
+  query?: string;
+  date?: string;
+};
+
+export const fetchOrders = async (
+  options: FetchOrdersOptions = {}
+): Promise<{
+  data: Order[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}> => {
+  const {
+    page = 1,
+    pageSize = 25,
+    sortBy = 'requestDate',
+    order = 'desc',
+    status,
+    query,
+    date,
+  } = options;
+
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+    sortBy,
+    order,
+  });
+
+  // Filter by a certain status if one has been selected
+  if (status) queryParams.append('status', status);
+
+  // Filter by search query if one has been entered
+  if (query) queryParams.append('query', query);
+
+  // Filter by date (requested or purchased) if one has been selected
+  if (date) queryParams.append('date', date);
+
+  const res = await fetch(`${BASE_API_URL}/orders?${queryParams.toString()}`);
   if (!res.ok) throw new Error('Failed to fetch orders');
   return await res.json();
+};
+
+// fetch the signed url for a receipt
+export const getSignedReceiptUrl = async (
+  orderId: number,
+  filename: string
+): Promise<string> => {
+  const res = await fetch(
+    `${BASE_API_URL}/receiptUploads/${orderId}/${filename}`
+  );
+
+  if (!res.ok) throw new Error('Failed to fetch signed receipt URL');
+
+  const data = await res.json();
+  return data.url;
+};
+
+// fetch the signed url for an item file
+export const getSignedItemFileUrl = async (
+  itemId: number,
+  filename: string
+): Promise<string> => {
+  const res = await fetch(`${BASE_API_URL}/fileUploads/${itemId}/${filename}`);
+
+  if (!res.ok) throw new Error('Failed to fetch signed item file URL');
+
+  const data = await res.json();
+  return data.url;
 };
 
 // Create a new Order
 export const createOrder = async (
   orderData: NewOrderPayload
 ): Promise<Order> => {
+  const formData = new FormData();
+
+  const safeAppend = (key: string, value: any) => {
+    if (value !== undefined && value !== null) {
+      formData.append(key, value instanceof File ? value : value.toString());
+    }
+  };
+
+  // Append regular fields
+  safeAppend('vendor', orderData.vendor);
+  safeAppend('shippingPreference', orderData.shippingPreference);
+  safeAppend('professorId', orderData.professorId);
+  safeAppend('purpose', orderData.purpose);
+  safeAppend('workTag', orderData.workTag);
+  safeAppend('spendCategoryId', orderData.spendCategoryId);
+  safeAppend('userId', orderData.userId);
+  safeAppend('lineMemoOptionId', orderData.lineMemoOptionId);
+  safeAppend('status', orderData.status);
+  safeAppend('comment', orderData.comment);
+  safeAppend('cartLink', orderData.cartLink);
+  safeAppend('cardType', orderData.cardType);
+  safeAppend('purchaseDate', orderData.purchaseDate);
+  safeAppend('tax', orderData.tax);
+  safeAppend('total', orderData.total);
+
+  // Append item data WITHOUT the file field
+  const itemsToSend = (orderData.items ?? []).map(({ file, ...rest }) => rest);
+  formData.append('items', JSON.stringify(itemsToSend));
+
+  // Append each item file using a key like itemFiles.0, itemFiles.1, ...
+  (orderData.items ?? []).forEach((item, index) => {
+    if (item.file instanceof File) {
+      formData.append(`itemFiles.${index}`, item.file);
+    }
+  });
+
+  // Append receipt files
+  orderData.receipt?.forEach((file) => {
+    formData.append('receipts', file);
+  });
+
   const res = await fetch(`${BASE_API_URL}/orders`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(orderData),
+    body: formData,
   });
 
   if (!res.ok) throw new Error('Failed to create order');
@@ -43,23 +155,50 @@ export const updateOrder = async (
   orderId: number,
   updatedData: OrderUpdatePayload
 ): Promise<Order> => {
+  const formData = new FormData();
+
+  // Convert fields to FormData
+  for (const [key, value] of Object.entries(updatedData)) {
+    if (key === 'items') {
+      formData.append('items', JSON.stringify(value));
+    } else if (key === 'deletedReceipts') {
+      formData.append('deletedReceipts', JSON.stringify(value));
+    } else if (key === 'deletedItemFiles') {
+      formData.append('deletedItemFiles', JSON.stringify(value));
+    } else if (key === 'receipt') {
+      // Accepts multiple files
+      value.forEach((file: File) => formData.append('receipt', file));
+    } else if (value === null) {
+      // <- send explicit clear
+      formData.append(key, '');
+    } else if (value !== undefined) {
+      const numericFields = [
+        'professorId',
+        'userId',
+        'spendCategoryId',
+        'lineMemoOptionId',
+      ];
+      if (numericFields.includes(key)) {
+        formData.append(key, String(Number(value)));
+      } else {
+        formData.append(key, String(value));
+      }
+    }
+  }
+
   const res = await fetch(`${BASE_API_URL}/orders/${orderId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(updatedData),
+    body: formData,
   });
 
   if (!res.ok) throw new Error('Failed to update order');
-
   return await res.json();
 };
 
-// Search Orders
-export const searchOrders = async (query: string): Promise<Order[]> => {
-  const res = await fetch(
-    `${BASE_API_URL}/orders/search?query=${encodeURIComponent(query)}`
-  );
-  if (!res.ok) throw new Error('Failed to search orders');
+// Fetch Orders by student Id
+export const fetchOrdersByUser = async (userId: number): Promise<Order[]> => {
+  const res = await fetch(`${BASE_API_URL}/orders/user/${userId}`);
+  if (!res.ok) throw new Error('Failed to fetch user orders');
   return await res.json();
 };
 
@@ -98,6 +237,30 @@ export const createSpendCategory = async (
   return await res.json();
 };
 
+// Update a spend category
+export const updateSpendCategory = async (
+  id: number,
+  updatedData: Partial<SpendCategory>
+): Promise<SpendCategory> => {
+  const res = await fetch(`${BASE_API_URL}/spendCategories/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updatedData),
+  });
+
+  if (!res.ok) throw new Error('Failed to update spend category');
+  return res.json();
+};
+
+// Delete a spend category
+export const deleteSpendCategory = async (id: number): Promise<void> => {
+  const res = await fetch(`${BASE_API_URL}/spendCategories/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok) throw new Error('Failed to delete spend category');
+};
+
 // ==========================
 //   Line Memo API Calls
 // ==========================
@@ -109,6 +272,44 @@ export const fetchLineMemoOptions = async (): Promise<LineMemoOption[]> => {
   return await res.json();
 };
 
+// Create a new line memo option
+export const createLineMemo = async (
+  newOption: LineMemoOption
+): Promise<LineMemoOption> => {
+  const res = await fetch(`${BASE_API_URL}/lineMemoOptions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newOption),
+  });
+
+  if (!res.ok) throw new Error('Failed to create line memo option');
+  return res.json();
+};
+
+// Update a line memo option
+export const updateLineMemo = async (
+  id: number,
+  updatedData: Partial<LineMemoOption>
+): Promise<LineMemoOption> => {
+  const res = await fetch(`${BASE_API_URL}/lineMemoOptions/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updatedData),
+  });
+
+  if (!res.ok) throw new Error('Failed to update line memo option');
+  return res.json();
+};
+
+// Delete a line memo option
+export const deleteLineMemo = async (id: number): Promise<void> => {
+  const res = await fetch(`${BASE_API_URL}/lineMemoOptions/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok) throw new Error('Failed to delete line memo option');
+};
+
 // ==========================
 //   Professor API Calls
 // ==========================
@@ -118,4 +319,42 @@ export const fetchProfessors = async (): Promise<Professor[]> => {
   const res = await fetch(`${BASE_API_URL}/professors`);
   if (!res.ok) throw new Error('Failed to fetch professors');
   return await res.json();
+};
+
+// Create a new professor
+export const createProfessor = async (
+  newProfessor: Omit<Professor, 'id'>
+): Promise<Professor> => {
+  const res = await fetch(`${BASE_API_URL}/professors`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newProfessor),
+  });
+
+  if (!res.ok) throw new Error('Failed to create professor');
+  return res.json();
+};
+
+// Update a professor
+export const updateProfessor = async (
+  id: number,
+  updatedData: Partial<Professor>
+): Promise<Professor> => {
+  const res = await fetch(`${BASE_API_URL}/professors/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updatedData),
+  });
+
+  if (!res.ok) throw new Error('Failed to update professor');
+  return res.json();
+};
+
+// Delete a professor
+export const deleteProfessor = async (id: number): Promise<void> => {
+  const res = await fetch(`${BASE_API_URL}/professors/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok) throw new Error('Failed to delete professor');
 };

@@ -44,12 +44,12 @@ model Order {
   id                 Int     @id @default(autoincrement())
   requestDate        DateTime
   items              Item[]
-  vendor              String
+  vendor             String
   shippingPreference String?
   professorId        Int
   professor          Professors   @relation(fields: [professorId], references: [id])
   purpose            String
-  operatingUnit      String
+  workTag            String
   spendCategoryId    Int
   spendCategory      SpendCategory @relation(fields: [spendCategoryId], references: [id])
   tax                Float?
@@ -60,7 +60,7 @@ model Order {
   lineMemoOption     LineMemoOption? @relation(fields: [lineMemoOptionId], references: [id])
   cardType           String?
   purchaseDate       DateTime?
-  receipt            String?
+  receipt            String[] @default([])
   status             String
   comment            String?
   cartLink           String?

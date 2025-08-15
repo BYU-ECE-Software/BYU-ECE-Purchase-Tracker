@@ -12,7 +12,7 @@ export interface Order {
   professorId: number;
   professor: Professor;
   purpose: string;
-  operatingUnit: string;
+  workTag: string;
   spendCategoryId: number;
   spendCategory: SpendCategory;
   tax?: number;
@@ -24,7 +24,7 @@ export interface Order {
   lineMemoOption: LineMemoOption;
   cardType?: string;
   purchaseDate?: string;
-  receipt?: string;
+  receipt?: string[];
   status: string;
   comment?: string;
   cartLink?: string;

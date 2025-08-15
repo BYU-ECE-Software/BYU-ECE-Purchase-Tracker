@@ -1,10 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Item } from '../types/item';
 import type { Order } from '../types/order';
 import type { Professor } from '../types/professor';
 import type { LineMemoOption } from '../types/lineMemoOption';
 import type { SpendCategory } from '../types/spendCategory';
 import AddSpendCategoryModal from './addSpendCategoryModal';
+import Toast from './Toast';
+import type { ToastProps } from '../types/toast';
+import { getSignedItemFileUrl } from '../api/purchaseTrackerApi';
 
 // Props expected by the EditOrderModal component
 interface EditOrderModalProps {
@@ -17,7 +20,9 @@ interface EditOrderModalProps {
   spendCategories: SpendCategory[];
   onItemStatusChange: (index: number, newStatus: string) => void;
   onOrderFieldChange: (field: string, value: any) => void;
-  onSave: (markComplete: boolean) => void;
+  onSave: (newReceipts: File[], deletedReceipts: string[]) => void;
+  markComplete: boolean;
+  setMarkComplete: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // Dropdown options for item status
@@ -41,13 +46,17 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   onItemStatusChange,
   onOrderFieldChange,
   onSave,
+  markComplete,
+  setMarkComplete,
 }) => {
   // State to track which tab is currently active in the modal ("items" or "orderInfo")
   const [activeTab, setActiveTab] = React.useState<'items' | 'purchase'>(
     'items'
   );
-  // State to track whether the "Mark as Completed" switch is toggled on or off
-  const [markComplete, setMarkComplete] = React.useState(false);
+
+  // State for receipt files
+  const [newReceipts, setNewReceipts] = useState<File[]>([]);
+  const [deletedReceipts, setDeletedReceipts] = useState<string[]>([]);
 
   // State for the Add Spend Category Modal open/close
   const [isSCModalOpen, setIsSCModalOpen] = React.useState(false);
@@ -64,9 +73,11 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   // Ref to the Line Memo dropdown <select> element, used for focusing when it's shown.
   const lineMemoRef = useRef<HTMLSelectElement>(null);
 
-  useEffect(() => {
-    setMarkComplete(order.status === 'Completed');
-  }, [order.status]);
+  // Toast State
+  const [toast, setToast] = useState<Omit<
+    ToastProps,
+    'onClose' | 'duration'
+  > | null>(null);
 
   // When the Line Memo dropdown becomes visible, automatically focus it for better UX.
   useEffect(() => {
@@ -74,6 +85,56 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
       lineMemoRef.current.focus();
     }
   }, [showLineMemo]);
+
+  // Required fields (not allowed to be cleared)
+  const REQUIRED_FIELDS = [
+    { key: 'professorId', label: 'Professor', section: 'purchase' as const },
+    {
+      key: 'spendCategoryId',
+      label: 'Spend Category',
+      section: 'purchase' as const,
+    },
+    { key: 'workTag', label: 'Work Tag', section: 'purchase' as const },
+    { key: 'vendor', label: 'Vendor', section: 'purchase' as const },
+    { key: 'purpose', label: 'Purpose', section: 'purchase' as const },
+  ];
+
+  // Helper + guarded save. To make sure all required fields are filled before actually saving
+  const attemptSave = () => {
+    const missing = REQUIRED_FIELDS.filter(({ key }) => {
+      const v = (order as any)[key];
+      return (
+        v === null ||
+        v === undefined ||
+        (typeof v === 'string' && v.trim() === '')
+      );
+    });
+
+    if (missing.length) {
+      const first = missing[0];
+      // switch to the tab that contains the first missing field
+      if (first.section !== activeTab) setActiveTab(first.section);
+
+      // focus the first missing field
+      setTimeout(() => {
+        const el = document.getElementById(
+          `order-${first.key}`
+        ) as HTMLElement | null;
+        el?.focus();
+      }, 0);
+
+      // your existing toast UI
+      setToast({
+        type: 'error',
+        title: 'Missing required fields',
+        message: `Please fill: ${missing.map((m) => m.label).join(', ')}`,
+      });
+      return;
+    }
+
+    // all good → call your existing save
+    onSave(newReceipts, deletedReceipts);
+  };
 
   // Function to change all item status's to "completed" when toggled and "ordered" when toggled off
   const handleToggleComplete = () => {
@@ -263,7 +324,24 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 {/* Optional file display */}
                 {item.file && (
                   <div className="text-sm text-gray-600 break-all">
-                    Attached File: <span title={item.file}>{item.file}</span>
+                    Attached File:{' '}
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await getSignedItemFileUrl(
+                            item.id,
+                            item.file!
+                          );
+                          window.open(res, '_blank');
+                        } catch (err) {
+                          alert('Failed to open file.');
+                          console.error(err);
+                        }
+                      }}
+                      className="text-byuRoyal hover:underline ml-1"
+                    >
+                      View File
+                    </button>
                   </div>
                 )}
               </div>
@@ -292,6 +370,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 Professor
               </label>
               <select
+                id="order-professorId"
                 value={order.professorId ?? ''}
                 onChange={(e) =>
                   onOrderFieldChange('professorId', parseInt(e.target.value))
@@ -313,13 +392,14 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             <div className="flex items-center justify-between pt-0 pb-3 border-b border-gray-200 gap-4">
               <div className="flex flex-col w-1/2">
                 <label className="text-sm font-medium text-byuNavy">
-                  Operating Unit
+                  Work Tag
                 </label>
                 <input
+                  id="order-workTag"
                   type="text"
-                  value={order.operatingUnit ?? ''}
+                  value={order.workTag ?? ''}
                   onChange={(e) =>
-                    onOrderFieldChange('operatingUnit', e.target.value)
+                    onOrderFieldChange('workTag', e.target.value)
                   }
                   className="p-2 border rounded text-sm text-byuNavy w-full"
                 />
@@ -330,6 +410,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                   Spend Category
                 </label>
                 <select
+                  id="order-spendCategoryId"
                   value={order.spendCategoryId ?? ''}
                   onChange={(e) => {
                     if (e.target.value === 'add-new') {
@@ -411,6 +492,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 Purpose
               </label>
               <input
+                id="order-purpose"
                 type="text"
                 value={order.purpose ?? ''}
                 onChange={(e) => onOrderFieldChange('purpose', e.target.value)}
@@ -463,6 +545,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             <div className="flex items-center justify-between pt-0 pb-3 border-b border-gray-200">
               <label className="text-sm font-medium text-byuNavy">Vendor</label>
               <input
+                id="order-vendor"
                 type="text"
                 value={order.vendor ?? ''}
                 onChange={(e) => onOrderFieldChange('vendor', e.target.value)}
@@ -496,27 +579,134 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               />
             </div>
 
-            {/* Row: Receipt Upload */}
-            <div className="flex items-center justify-between pt-0 pb-3 border-b border-gray-200">
-              <label className="text-sm font-medium text-byuNavy">
-                Receipt
+            {/* Row: Receipts */}
+            <div className="flex items-start justify-between pt-0 pb-3 border-b border-gray-200">
+              {/* Fixed-width label on the left */}
+              <label className="text-sm font-medium text-byuNavy w-1/2 pt-1">
+                Receipts
               </label>
-              <div className="flex items-center gap-2">
-                {order.receipt && (
-                  <span className="text-sm text-gray-600 truncate max-w-[200px]">
-                    {order.receipt}
-                  </span>
+
+              {/* Right side: content area aligned with other form fields */}
+              <div className="w-1/2 space-y-3">
+                {/* Existing Files */}
+                {order.receipt && order.receipt.length > 0 ? (
+                  <ul className="space-y-1">
+                    {order.receipt
+                      .filter((filename) => !deletedReceipts.includes(filename)) // hide deleted ones
+                      .map((filename, index) => (
+                        <li
+                          key={index}
+                          className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 text-sm"
+                        >
+                          <span className="truncate text-gray-800">
+                            {filename}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDeletedReceipts((prev) => [...prev, filename])
+                            }
+                            className="ml-2 text-sm text-byuRedBright hover:text-byuRedDark"
+                            title="Delete receipt"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-5 h-5"
+                            >
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                            </svg>
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500 italic"></p>
                 )}
-                <input
-                  type="file"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      onOrderFieldChange('receipt', file.name);
-                    }
-                  }}
-                  className="p-2 border rounded text-byuNavy"
-                />
+
+                {/* New Files */}
+                {newReceipts.length > 0 && (
+                  <ul className="space-y-1">
+                    {newReceipts.map((file, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 text-sm"
+                      >
+                        <span className="truncate text-gray-800">
+                          {file.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setNewReceipts((prev) =>
+                              prev.filter((_, fileIdx) => fileIdx !== idx)
+                            )
+                          }
+                          className="text-[#E61744] hover:text-[#A3082A] ml-2"
+                          title="Remove file"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="w-5 h-5"
+                          >
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                          </svg>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Upload Button */}
+                {/* Upload Button aligned to right */}
+                <div className="flex justify-end">
+                  <label
+                    htmlFor="receipt-upload"
+                    className="inline-block cursor-pointer border border-byuNavy bg-gray-100 text-sm text-byuNavy px-3 py-1 rounded shadow-sm hover:bg-gray-200 transition"
+                  >
+                    {newReceipts.length === 0
+                      ? 'Add Receipt'
+                      : 'Add Another Receipt'}
+                    <input
+                      id="receipt-upload"
+                      type="file"
+                      multiple
+                      onChange={(e) => {
+                        const fileList = e.target.files;
+                        if (fileList) {
+                          setNewReceipts((prev) => [
+                            ...prev,
+                            ...Array.from(fileList),
+                          ]);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -544,7 +734,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             Cancel
           </button>
           <button
-            onClick={() => onSave(markComplete)}
+            onClick={attemptSave}
             className="px-4 py-2 bg-byuRoyal text-white rounded hover:bg-[#003a9a]"
           >
             Save Changes
@@ -559,9 +749,28 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             setLocalSpendCategories([...localSpendCategories, newCategory]);
             onOrderFieldChange('spendCategoryId', newCategory.id); // select the newly created one
             setIsSCModalOpen(false);
+
+            setToast({
+              type: 'success',
+              title: 'Spend Category Added',
+              message: `“${newCategory.code}” was created successfully.`,
+            });
           }}
+          setToast={setToast}
         />
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-50 animate-fade-in-out">
+          <Toast
+            type={toast.type}
+            title={toast.title}
+            message={toast.message}
+            onClose={() => setToast(null)}
+          />
+        </div>
+      )}
     </div>
   );
 };
