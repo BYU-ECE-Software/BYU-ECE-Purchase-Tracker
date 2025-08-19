@@ -1,33 +1,21 @@
-// Supported input field types used in the form UI
+// Supported form input types
 export type FieldType = 'text' | 'number' | 'checkbox' | 'radio';
 
-/**
- * Defines metadata for a single form field.
- * @template T - The type of the full object this field belongs to.
- */
-export type FieldConfig<T> = {
-  // Label displayed in the UI for this field
-  label: string;
-
-  // Input type (text, number, checkbox, or radio)
-  type: FieldType;
-
-  // Whether the field is required for form submission
-  required: boolean;
+// Per-field UI metadata
+export type FieldConfig = {
+  label: string; // Text shown next to the input
+  type: FieldType; // Which input to render: "text", "number", "checkbox", or "radio"
+  required: boolean; // Whether the field is required for form submission
 };
 
-/**
- * Configuration object for generating a CRUD interface for a given model.
- * @template T - The full entity type (e.g. Professor, SpendCategory)
- * @template CreatePayload - The shape of the payload used for creation (defaults to Partial<T>)
- */
+// Generic CRUD config for any model
 export type CrudConfig<T, CreatePayload = Partial<T>> = {
   // Defines how each form field should be rendered
   fields: {
-    [K in keyof CreatePayload]: FieldConfig<T>;
+    [K in keyof CreatePayload]: FieldConfig;
   };
 
-  // API handlers for CRUD operations
+  // API operations
   api: {
     getAll: () => Promise<T[]>;
     create: (data: CreatePayload) => Promise<T>;
@@ -35,5 +23,10 @@ export type CrudConfig<T, CreatePayload = Partial<T>> = {
     remove: (id: number) => Promise<void>;
   };
 
+  // Title/Name used in UI and toasts for each table
   noun: string;
+
+  // Optional per-row permissions for the UI
+  canEdit?: (item: T) => boolean; // whether to show the edit button
+  canDelete?: (item: T) => boolean; // whether to show the delete button
 };

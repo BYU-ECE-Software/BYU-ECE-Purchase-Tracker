@@ -506,23 +506,29 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                 Card Type
               </label>
               <div className="flex gap-4">
-                {['Campus Card', 'Off-campus Card'].map((option) => (
-                  <label
-                    key={option}
-                    className="flex items-center gap-2 text-sm text-byuNavy"
-                  >
-                    <input
-                      type="radio"
-                      name="cardType"
-                      value={option}
-                      checked={order.cardType === option}
-                      onChange={(e) =>
-                        onOrderFieldChange('cardType', e.target.value)
-                      }
-                    />
-                    {option}
-                  </label>
-                ))}
+                {/* Campus Card = false */}
+                <label className="flex items-center gap-2 text-sm text-byuNavy">
+                  <input
+                    type="radio"
+                    name="creditCard"
+                    value="false"
+                    checked={order.creditCard === false}
+                    onChange={() => onOrderFieldChange('creditCard', false)}
+                  />
+                  Campus Card
+                </label>
+
+                {/* Credit Card = true */}
+                <label className="flex items-center gap-2 text-sm text-byuNavy">
+                  <input
+                    type="radio"
+                    name="creditCard"
+                    value="true"
+                    checked={order.creditCard === true}
+                    onChange={() => onOrderFieldChange('creditCard', true)}
+                  />
+                  Credit Card
+                </label>
               </div>
             </div>
 

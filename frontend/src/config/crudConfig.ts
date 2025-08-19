@@ -53,7 +53,7 @@ export const crudConfigs = {
       code: { label: 'Code', type: 'text', required: true },
       description: { label: 'Description', type: 'text', required: true },
       visibleToStudents: {
-        label: 'Include in Student Dropdown',
+        label: 'Include as an Option for Students',
         type: 'radio',
         required: true,
       },
@@ -64,6 +64,9 @@ export const crudConfigs = {
       update: updateSpendCategory,
       remove: deleteSpendCategory,
     },
+    // Hide Edit and Delete for the "Other" Spend Category
+    canEdit: (sc) => sc.code?.trim().toLowerCase() !== 'other',
+    canDelete: (sc) => sc.code?.trim().toLowerCase() !== 'other',
   } satisfies CrudConfig<SpendCategory, NewSpendCategoryPayload>,
 
   // Line Memo Options

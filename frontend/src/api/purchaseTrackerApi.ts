@@ -119,7 +119,7 @@ export const createOrder = async (
   safeAppend('status', orderData.status);
   safeAppend('comment', orderData.comment);
   safeAppend('cartLink', orderData.cartLink);
-  safeAppend('cardType', orderData.cardType);
+  safeAppend('creditCard', orderData.creditCard);
   safeAppend('purchaseDate', orderData.purchaseDate);
   safeAppend('tax', orderData.tax);
   safeAppend('total', orderData.total);

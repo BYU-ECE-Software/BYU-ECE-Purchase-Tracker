@@ -236,7 +236,11 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
                 Card Type
               </span>
               <span className="text-sm text-gray-700">
-                {order.cardType || '—'}
+                {order.creditCard === true
+                  ? 'Credit Card'
+                  : order.creditCard === false
+                    ? 'Campus Card'
+                    : '—'}
               </span>
             </div>
 

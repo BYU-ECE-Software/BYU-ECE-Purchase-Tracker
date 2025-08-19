@@ -11,7 +11,7 @@ import type { SpendCategory } from '../types/spendCategory';
 interface Receipt {
   vendor: string;
   purpose: string;
-  cardType: string;
+  creditCard: boolean | null;
   purchaseDate: string;
   tax: number;
   total: number;
@@ -25,7 +25,7 @@ const ReceiptSubmitForm = () => {
     {
       vendor: '',
       purpose: '',
-      cardType: '',
+      creditCard: null,
       purchaseDate: '',
       tax: 0,
       total: 0,
@@ -81,6 +81,12 @@ const ReceiptSubmitForm = () => {
     loadProfessors();
   }, []);
 
+  // Map input string -> number or '' (so clearing the field doesn't produce NaN) for tax and total
+  const parseNumOrEmpty = (s: string) => (s === '' ? ('' as any) : Number(s));
+
+  // Map state value -> input value (never let the input see NaN) for tax and total
+  const showNumOrEmpty = (n: any) => (Number.isFinite(n) ? n : '');
+
   // Handle changes to any receipt field
   const handleReceiptChange = (
     index: number,
@@ -102,7 +108,7 @@ const ReceiptSubmitForm = () => {
       {
         vendor: '',
         purpose: '',
-        cardType: '',
+        creditCard: null,
         purchaseDate: '',
         tax: 0,
         total: 0,
@@ -132,7 +138,7 @@ const ReceiptSubmitForm = () => {
           workTag,
           spendCategoryId: Number(selectedSpendCategoryId),
           userId: 3, // TEMPORARY: Replace this with real logic later
-          cardType: receipt.cardType,
+          creditCard: receipt.creditCard ?? undefined,
           purchaseDate: receipt.purchaseDate,
           receipt: receipt.receipt ? [receipt.receipt] : undefined,
           tax: receipt.tax,
@@ -152,7 +158,7 @@ const ReceiptSubmitForm = () => {
         {
           vendor: '',
           purpose: '',
-          cardType: '',
+          creditCard: null,
           purchaseDate: '',
           tax: 0,
           total: 0,
@@ -326,21 +332,34 @@ const ReceiptSubmitForm = () => {
               <div>
                 <span className="block font-medium mb-1">Type of Card *</span>
                 <div className="space-y-1">
-                  {['Campus Card', 'Off-campus Card'].map((option) => (
-                    <label key={option} className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name={`cardType-${index}`} //makes each radio button group unique for every receipt
-                        value={option}
-                        checked={receipt.cardType === option}
-                        onChange={(e) =>
-                          handleReceiptChange(index, 'cardType', e.target.value)
-                        }
-                        required
-                      />
-                      <span>{option}</span>
-                    </label>
-                  ))}
+                  {/* Campus Card = false */}
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name={`creditCard-${index}`} // unique per receipt
+                      value="false"
+                      checked={receipt.creditCard === false}
+                      onChange={() =>
+                        handleReceiptChange(index, 'creditCard', false)
+                      }
+                      required
+                    />
+                    <span>Campus Card</span>
+                  </label>
+
+                  {/* Credit Card = true */}
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name={`creditCard-${index}`}
+                      value="true"
+                      checked={receipt.creditCard === true}
+                      onChange={() =>
+                        handleReceiptChange(index, 'creditCard', true)
+                      }
+                    />
+                    <span>Credit Card</span>
+                  </label>
                 </div>
               </div>
 
@@ -361,14 +380,15 @@ const ReceiptSubmitForm = () => {
                 <label className="block font-medium">Tax *</label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   min="0"
                   step="0.01"
-                  value={receipt.tax}
+                  value={showNumOrEmpty(receipt.tax)}
                   onChange={(e) =>
                     handleReceiptChange(
                       index,
                       'tax',
-                      parseFloat(e.target.value)
+                      parseNumOrEmpty(e.target.value)
                     )
                   }
                   required
@@ -380,14 +400,15 @@ const ReceiptSubmitForm = () => {
                 <label className="block font-medium">Total *</label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   min="0"
                   step="0.01"
-                  value={receipt.total}
+                  value={showNumOrEmpty(receipt.total)}
                   onChange={(e) =>
                     handleReceiptChange(
                       index,
                       'total',
-                      parseFloat(e.target.value)
+                      parseNumOrEmpty(e.target.value)
                     )
                   }
                   required
@@ -480,7 +501,7 @@ const ReceiptSubmitForm = () => {
             </h2>
             <p className="text-gray-700">
               Your order was successfully submitted. Reach out to the ECE
-              secretaries (@byu.edu) with any questions.
+              secretaries (ecen_secretaries@byu.edu) with any questions.
             </p>
             <button
               onClick={() => setShowConfirmModal(false)}

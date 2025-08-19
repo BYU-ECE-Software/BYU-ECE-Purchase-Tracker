@@ -94,7 +94,7 @@ const AddSpendCategoryModal: React.FC<AddSpendCategoryModalProps> = ({
               onChange={(e) => setVisibleToStudents(e.target.checked)}
             />
             <label className="text-sm text-byuNavy">
-              Include in Student Dropdown
+              Include as an Option for Students
             </label>
           </div>
         </div>
