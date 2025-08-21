@@ -255,11 +255,6 @@ const AdminDashboard = () => {
     const updatedItems = [...editedItems];
     updatedItems[index].status = newStatus;
     setEditedItems(updatedItems);
-
-    // Check if any item is NOT completed → turn off toggle
-    const allCompleted = updatedItems.every(
-      (item) => item.status === 'Completed'
-    );
   };
 
   // PUT logic to update order and item data

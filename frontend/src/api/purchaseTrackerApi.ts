@@ -10,7 +10,7 @@ import type {
 } from '../types/spendCategory';
 
 //base api url used in every call
-const BASE_API_URL = 'http://localhost:4000/api';
+const BASE_API_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 // ==========================
 //   Order API Calls
