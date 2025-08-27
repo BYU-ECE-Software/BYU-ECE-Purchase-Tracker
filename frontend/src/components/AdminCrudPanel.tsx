@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import type { CrudConfig, FieldConfig } from '../types/crud';
 import type { ToastProps } from '../types/toast';
+import ConfirmDeleteAdminPage from './ConfirmDeleteAdminPage';
 
 // Generic props: title to display and a CRUD config for a specific model
 interface Props<T extends { id: number }, CreatePayload> {
@@ -26,6 +27,10 @@ export default function AdminCrudPanel<
 
   // Ref to auto-focus the first input when editing begins
   const firstInputRef = useRef<HTMLInputElement>(null);
+
+  // State for Delete Confirmation
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<T | null>(null);
 
   // Load all records when the component mounts
   useEffect(() => {
@@ -111,11 +116,18 @@ export default function AdminCrudPanel<
   };
 
   // Confirm and delete a record
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete?')) return;
+  // open the dialog for a specific row
+  const openDelete = (item: T) => {
+    setPendingDelete(item);
+    setConfirmOpen(true);
+  };
+
+  // user clicked "Delete" in the dialog
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
     try {
-      await config.api.remove(id);
-      setItems((prev) => prev.filter((i) => i.id !== id));
+      await config.api.remove(pendingDelete.id);
+      setItems((prev) => prev.filter((i) => i.id !== pendingDelete.id));
       setToast({
         type: 'success',
         title: 'Success',
@@ -128,7 +140,16 @@ export default function AdminCrudPanel<
         title: 'Error',
         message: `Failed to delete ${config.noun}`,
       });
+    } finally {
+      setConfirmOpen(false);
+      setPendingDelete(null);
     }
+  };
+
+  // user clicked "Cancel" in the dialog
+  const cancelDelete = () => {
+    setConfirmOpen(false);
+    setPendingDelete(null);
   };
 
   return (
@@ -145,7 +166,7 @@ export default function AdminCrudPanel<
           {Object.entries(config.fields).map(
             ([fieldName, fieldMetaRaw], index) => {
               const field = fieldName as keyof CreatePayload;
-              const meta = fieldMetaRaw as FieldConfig<CreatePayload>;
+              const meta = fieldMetaRaw as FieldConfig;
               const value =
                 formData[field] ?? (meta.type === 'checkbox' ? false : '');
 
@@ -246,7 +267,7 @@ export default function AdminCrudPanel<
                   {/* Render table headers dynamically based on config */}
                   {Object.entries(config.fields).map(
                     ([fieldName, fieldMetaRaw]) => {
-                      const meta = fieldMetaRaw as FieldConfig<CreatePayload>;
+                      const meta = fieldMetaRaw as FieldConfig;
                       return (
                         <th
                           key={fieldName}
@@ -263,40 +284,63 @@ export default function AdminCrudPanel<
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
-                  <tr key={item.id}>
-                    {/* Render table cells dynamically based on config */}
-                    {Object.keys(config.fields).map((fieldName) => (
-                      <td
-                        key={fieldName}
-                        className="px-4 py-2 border whitespace-nowrap"
-                      >
-                        {String(item[fieldName as keyof T] ?? '')}
+                {items.map((item) => {
+                  const allowEdit = config.canEdit?.(item) ?? true;
+                  const allowDelete = config.canDelete?.(item) ?? true;
+
+                  return (
+                    <tr key={item.id}>
+                      {Object.keys(config.fields).map((fieldName) => (
+                        <td
+                          key={fieldName}
+                          className="px-4 py-2 border whitespace-nowrap"
+                        >
+                          {String(item[fieldName as keyof T] ?? '')}
+                        </td>
+                      ))}
+
+                      <td className="px-4 py-2 border whitespace-nowrap">
+                        <div className="flex justify-center gap-5">
+                          {allowEdit && (
+                            <button
+                              onClick={() => handleEdit(item)}
+                              className="bg-byuRoyal text-white px-3 py-1 rounded hover:bg-[#003B9A] transition"
+                            >
+                              Edit
+                            </button>
+                          )}
+                          {allowDelete && (
+                            <button
+                              onClick={() => openDelete(item)}
+                              className="bg-byuRedBright text-white px-3 py-1 rounded hover:bg-byuRedDark transition"
+                            >
+                              Delete
+                            </button>
+                          )}
+                          {!allowEdit && !allowDelete && (
+                            <span className="text-gray-400">
+                              Unable to edit
+                            </span>
+                          )}
+                        </div>
                       </td>
-                    ))}
-                    <td className="px-4 py-2 border whitespace-nowrap">
-                      <div className="flex justify-center gap-5">
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="bg-byuRoyal text-white px-3 py-1 rounded hover:bg-[#003B9A] transition"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="bg-byuRedBright text-white px-3 py-1 rounded hover:bg-byuRedDark transition"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
         </div>
       </div>
+      <ConfirmDeleteAdminPage
+        isOpen={confirmOpen}
+        title={`Delete ${config.noun}?`}
+        message={`This will permanently remove the selected ${config.noun}.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </div>
   );
 }

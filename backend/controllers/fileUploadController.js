@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import minioClient from "../minioClient.js";
+import minioClient, { minioSigner } from "../minioClient.js";
 const prisma = new PrismaClient();
 
 //
@@ -19,13 +19,13 @@ export const getSignedFileUrl = async (req, res) => {
     }
 
     // Generate pre-signed URL
-    const url = await minioClient.presignedGetObject(
+    const url = await minioSigner.presignedGetObject(
       "files",
       filename,
-      60 * 60 // 10 minutes
+      60 * 60 // 1 hour
     );
 
-    res.status(200).json({ url });
+    res.status(200).json({ url: url });
   } catch (error) {
     console.error("Error generating pre-signed URL:", error);
     res.status(500).json({ error: "Failed to generate secure link" });

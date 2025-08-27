@@ -22,7 +22,7 @@ export interface Order {
   items: Item[];
   lineMemoOptionId: number;
   lineMemoOption: LineMemoOption;
-  cardType?: string;
+  creditCard?: boolean;
   purchaseDate?: string;
   receipt?: string[];
   status: string;

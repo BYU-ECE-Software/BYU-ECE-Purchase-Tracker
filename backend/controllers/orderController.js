@@ -20,7 +20,7 @@ export const createOrder = async (req, res) => {
       total,
       userId,
       lineMemoOptionId,
-      cardType,
+      creditCard,
       purchaseDate,
       status,
       comment,
@@ -60,7 +60,17 @@ export const createOrder = async (req, res) => {
       tax: tax ? parseFloat(tax) : null,
       total: total ? parseFloat(total) : null,
       user: { connect: { id: parseInt(userId) } },
-      cardType: cardType || null,
+      creditCard:
+        creditCard === undefined || creditCard === null || creditCard === ""
+          ? null
+          : typeof creditCard === "boolean"
+          ? creditCard
+          : ["true", "1", "on"].includes(String(creditCard).toLowerCase())
+          ? true
+          : ["false", "0", "off"].includes(String(creditCard).toLowerCase())
+          ? false
+          : null,
+
       purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
       receipt,
       status,
@@ -404,6 +414,26 @@ export const updateOrder = async (req, res) => {
         } else {
           const n = parseFloat(String(v));
           cleanedOrderData[key] = Number.isNaN(n) ? null : n;
+        }
+      }
+    }
+
+    // Booleans
+    const boolKeys = ["creditCard"];
+    for (const key of boolKeys) {
+      if (key in cleanedOrderData) {
+        const v = cleanedOrderData[key];
+        if (v === "" || v === null) {
+          cleanedOrderData[key] = null; // allow clearing if your schema permits null
+        } else if (typeof v === "boolean") {
+          // already boolean, keep as is
+        } else if (String(v).toLowerCase() === "true" || String(v) === "1") {
+          cleanedOrderData[key] = true;
+        } else if (String(v).toLowerCase() === "false" || String(v) === "0") {
+          cleanedOrderData[key] = false;
+        } else {
+          // fallback: treat unknown as null or throw—your choice
+          cleanedOrderData[key] = null;
         }
       }
     }

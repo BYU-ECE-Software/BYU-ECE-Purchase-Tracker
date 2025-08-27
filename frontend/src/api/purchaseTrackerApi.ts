@@ -10,7 +10,7 @@ import type {
 } from '../types/spendCategory';
 
 //base api url used in every call
-const BASE_API_URL = 'http://localhost:4000/api';
+const BASE_API_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 // ==========================
 //   Order API Calls
@@ -119,7 +119,7 @@ export const createOrder = async (
   safeAppend('status', orderData.status);
   safeAppend('comment', orderData.comment);
   safeAppend('cartLink', orderData.cartLink);
-  safeAppend('cardType', orderData.cardType);
+  safeAppend('creditCard', orderData.creditCard);
   safeAppend('purchaseDate', orderData.purchaseDate);
   safeAppend('tax', orderData.tax);
   safeAppend('total', orderData.total);

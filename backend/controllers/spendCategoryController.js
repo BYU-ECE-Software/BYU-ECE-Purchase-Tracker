@@ -79,24 +79,51 @@ export const updateSpendCategory = async (req, res) => {
   const { id } = req.params;
   const { code, description, visibleToStudents } = req.body;
 
-  //Basic Validation
+  // Basic validation
   if (!code || !description || typeof visibleToStudents !== "boolean") {
-    return res.status(400).json({ error: "Missing required fields. " });
+    return res.status(400).json({ error: "Missing required fields." });
   }
 
+  const isOther = (s) => String(s).trim().toLowerCase() === "other";
+
   try {
+    const existing = await prisma.spendCategory.findUnique({
+      where: { id: parseInt(id) },
+      select: { code: true },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: "Spend Category not found" });
+    }
+
+    // 1) Don't allow editing the 'Other' record at all
+    if (isOther(existing.code)) {
+      return res.status(403).json({
+        error: "The 'Other' spend category is protected and cannot be edited.",
+      });
+    }
+
+    // 2) Don't allow renaming another record to 'Other'
+    if (isOther(code)) {
+      return res.status(403).json({
+        error: "You cannot change a spend category code to 'Other'.",
+      });
+    }
+
     const updatedSpendCategory = await prisma.spendCategory.update({
       where: { id: parseInt(id) },
-      data: {
-        code,
-        description,
-        visibleToStudents,
-      },
+      data: { code, description, visibleToStudents },
     });
 
     res.status(200).json(updatedSpendCategory);
   } catch (error) {
     console.error("Error updating spend category:", error);
+    // Optional: surface unique constraint nicely
+    if (error.code === "P2002") {
+      return res
+        .status(409)
+        .json({ error: "Spend Category code must be unique." });
+    }
     res.status(500).json({ error: "Failed to update spend category." });
   }
 };
@@ -104,8 +131,25 @@ export const updateSpendCategory = async (req, res) => {
 // Delete a Spend Category
 export const deleteSpendCategory = async (req, res) => {
   const { id } = req.params;
+  const isOther = (s) => String(s).trim().toLowerCase() === "other";
 
   try {
+    const existing = await prisma.spendCategory.findUnique({
+      where: { id: parseInt(id) },
+      select: { code: true },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: "Spend Category not found" });
+    }
+
+    // Block deletion of 'Other'
+    if (isOther(existing.code)) {
+      return res.status(403).json({
+        error: "The 'Other' spend category is protected and cannot be deleted.",
+      });
+    }
+
     const deletedSpendCategory = await prisma.spendCategory.delete({
       where: { id: parseInt(id) },
     });
@@ -116,12 +160,9 @@ export const deleteSpendCategory = async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting spend category:", error);
-
-    // Handle case where spend category doesn't exist
     if (error.code === "P2025") {
       return res.status(404).json({ error: "Spend Category not found" });
     }
-
     res.status(500).json({ error: "Failed to delete spend category" });
   }
 };

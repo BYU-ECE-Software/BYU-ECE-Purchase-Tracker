@@ -73,6 +73,13 @@ const PurchaseRequestForm = () => {
     loadProfessors();
   }, []);
 
+  // Map input string -> number or '' (so clearing the field doesn't produce NaN) for tax and total
+  const parseIntOrEmpty = (s: string) =>
+    s === '' ? ('' as any) : parseInt(s, 10);
+
+  // Map state value -> input value (never let the input see NaN) for tax and total
+  const showNumOrEmpty = (n: any) => (Number.isFinite(n) ? n : '');
+
   // Handle changes to any item field (including file)
   const handleItemChange = <key extends keyof PurchaseItem>(
     index: number,
@@ -248,9 +255,13 @@ const PurchaseRequestForm = () => {
                 <input
                   type="number"
                   min="1"
-                  value={item.quantity}
+                  value={showNumOrEmpty(item.quantity)}
                   onChange={(e) =>
-                    handleItemChange(index, 'quantity', Number(e.target.value))
+                    handleItemChange(
+                      index,
+                      'quantity',
+                      parseIntOrEmpty(e.target.value)
+                    )
                   }
                   className="w-full border border-gray-300 rounded p-2"
                 />
@@ -464,9 +475,9 @@ const PurchaseRequestForm = () => {
             </h2>
             <p className="text-gray-700">
               Your order was successfully submitted. It will be reviewed within
-              1 business day. You can track the order status on your order
-              history page. Reach out to the ECE secretaries (@byu.edu) with any
-              questions.
+              2 business days. You can track the order status on your order
+              history page. Reach out to the ECE secretaries
+              (ecen_secretaries@byu.edu) with any questions.
             </p>
             <button
               onClick={() => setShowConfirmModal(false)}
