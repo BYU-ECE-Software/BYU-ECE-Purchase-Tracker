@@ -15,12 +15,18 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@node-saml/passport-saml": "^5.1.0",
     "@prisma/client": "^6.9.0",
+    "axios": "^1.11.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "install": "^0.13.0",
     "minio": "^8.0.5",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10",
