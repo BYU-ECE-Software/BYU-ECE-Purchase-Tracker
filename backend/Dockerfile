@@ -5,7 +5,7 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npx prisma generate
-EXPOSE 4000
+EXPOSE 3000
 CMD ["/bin/sh", "-c", "\
   npx prisma migrate deploy && \
   npx prisma db seed || true && \

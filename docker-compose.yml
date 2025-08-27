@@ -34,7 +34,7 @@ services:
     restart: always
     environment:
       NODE_ENV: production
-      PORT: 4000
+      PORT: 3000
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/purchase_tracker?schema=public
       MINIO_ENDPOINT: minio
       MINIO_PORT: ${MINIO_PORT}
@@ -46,7 +46,7 @@ services:
       - postgres
       - minio
     ports:
-      - "4000:4000"
+      - "3000:3000"
 
   frontend:
     build:

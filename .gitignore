@@ -1,6 +1,3 @@
-# Prevent accidentally committing MinIO bucket contents or sensitive uploads
-/data/
-
 # MinIO internal config files (can appear depending on usage)
 .minio.sys/
 *.minio
