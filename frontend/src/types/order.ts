@@ -20,8 +20,8 @@ export interface Order {
   userId: number;
   user: User;
   items: Item[];
-  lineMemoOptionId: number;
-  lineMemoOption: LineMemoOption;
+  lineMemoOptionId?: number;
+  lineMemoOption?: LineMemoOption;
   creditCard?: boolean;
   purchaseDate?: string;
   receipt?: string[];

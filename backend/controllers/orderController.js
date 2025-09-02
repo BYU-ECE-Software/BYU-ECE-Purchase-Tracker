@@ -9,6 +9,12 @@ const prisma = new PrismaClient();
 export const createOrder = async (req, res) => {
   try {
     const {
+      // USER INFO - panic mode
+      fullName,
+      byuNetId,
+      email,
+
+      // ORDER FIELDS
       items,
       vendor,
       shippingPreference,
@@ -18,7 +24,6 @@ export const createOrder = async (req, res) => {
       spendCategoryId,
       tax,
       total,
-      userId,
       lineMemoOptionId,
       creditCard,
       purchaseDate,
@@ -26,6 +31,15 @@ export const createOrder = async (req, res) => {
       comment,
       cartLink,
     } = req.body;
+
+    // --- Validate required user fields ---
+    if (!fullName || !byuNetId || !email) {
+      return res.status(400).json({
+        error: "Missing required user fields",
+        details: "fullName, byuNetId, and email are required.",
+      });
+    }
+    const normalizedNetId = String(byuNetId).trim().toLowerCase();
 
     // --- FILE PROCESSING BLOCK ---
     const receipt = [];
@@ -59,7 +73,14 @@ export const createOrder = async (req, res) => {
       spendCategory: { connect: { id: parseInt(spendCategoryId) } },
       tax: tax ? parseFloat(tax) : null,
       total: total ? parseFloat(total) : null,
-      user: { connect: { id: parseInt(userId) } },
+
+      user: {
+        connectOrCreate: {
+          where: { byuNetId: normalizedNetId },
+          create: { fullName, email, byuNetId: normalizedNetId },
+        },
+      },
+
       creditCard:
         creditCard === undefined || creditCard === null || creditCard === ""
           ? null
@@ -107,6 +128,7 @@ export const createOrder = async (req, res) => {
       data: orderData,
       include: {
         items: true,
+        user: true,
       },
     });
 
@@ -157,8 +179,9 @@ export const getAllOrders = async (req, res) => {
     switch (sortField) {
       case "studentName":
         orderBy = [
-          { user: { lastName: sortOrder } },
-          { user: { firstName: sortOrder } },
+          //{ user: { lastName: sortOrder } },
+          //{ user: { firstName: sortOrder } },
+          { user: { fullName: sortOrder } },
         ];
         break;
       case "professor":
@@ -211,9 +234,10 @@ export const getAllOrders = async (req, res) => {
         {
           user: {
             OR: [
-              { firstName: { contains: searchTerm, mode: "insensitive" } },
-              { lastName: { contains: searchTerm, mode: "insensitive" } },
-              {
+              { fullName: { contains: searchTerm, mode: "insensitive" } },
+              { byuNetId: { contains: searchTerm, mode: "insensitive" } },
+              { email: { contains: searchTerm, mode: "insensitive" } },
+              /*{
                 AND:
                   searchTerm.split(" ").length >= 2
                     ? searchTerm.split(" ").map((name) => ({
@@ -225,7 +249,7 @@ export const getAllOrders = async (req, res) => {
                         ],
                       }))
                     : [],
-              },
+              },*/
             ],
           },
         },

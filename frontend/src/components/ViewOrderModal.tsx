@@ -325,25 +325,22 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
             <div className="flex items-center justify-between py-2 border-b border-gray-200">
               <span className="text-sm font-medium text-byuNavy">Name</span>
               <span className="text-sm text-gray-700">
-                {order.user.firstName} {order.user.lastName}
+                {order.user.fullName}
               </span>
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-gray-200">
-              <span className="text-sm font-medium text-byuNavy">
-                BYU Email
-              </span>
+              <span className="text-sm font-medium text-byuNavy">Email</span>
               <span className="text-sm text-gray-700">{order.user.email}</span>
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-gray-200">
-              <span className="text-sm font-medium text-byuNavy">BYU ID</span>
-              <span className="text-sm text-gray-700">{order.user.byuId}</span>
-            </div>
-
-            <div className="flex items-center justify-between py-2 border-b border-gray-200">
-              <span className="text-sm font-medium text-byuNavy">Net ID</span>
-              <span className="text-sm text-gray-700"></span>
+              <span className="text-sm font-medium text-byuNavy">
+                BYU Net ID
+              </span>
+              <span className="text-sm text-gray-700">
+                {order.user.byuNetId}
+              </span>
             </div>
           </div>
         )}

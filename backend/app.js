@@ -1,14 +1,16 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
-dotenv.config();
-import passport from "passport";
-import { Strategy as SamlStrategy } from "@node-saml/passport-saml";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
-import { setupSessions } from "./utils/sessions.js";
-import axios from "axios";
+import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
+//import dotenv from "dotenv";
+//dotenv.config();
+//import passport from "passport";
+//import { Strategy as SamlStrategy } from "@node-saml/passport-saml";
+//import path from "path";
+//import fs from "fs";
+//import { fileURLToPath } from "url";
+//import { setupSessions } from "./utils/sessions.js";
+//import axios from "axios";
 
 // imports for site specific routes
 import orderRoutes from "./routes/orderRoutes.js";
@@ -17,8 +19,9 @@ import professorRoutes from "./routes/professorRoutes.js";
 import spendCategoryRoutes from "./routes/spendCategoryRoutes.js";
 import receiptUploadRoutes from "./routes/receiptUploadRoutes.js";
 import fileUploadRoutes from "./routes/fileUploadRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
-const allowedOrigins = [
+/*const allowedOrigins = [
   "https://ecepurchasing.byu.edu", //idk what the site name is to put here
   "http://localhost:5173",
   "http://localhost:3000",
@@ -28,16 +31,84 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const CERT_DIR = process.env.CERT_DIR || path.join(__dirname, "certs");
 
-console.log("Using certificate directory:", CERT_DIR);
+console.log("Using certificate directory:", CERT_DIR);*/
+
+const ADMIN_SHARED_SECRET = process.env.ADMIN_SHARED_SECRET;
+const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "admin_session";
+const SESSION_TTL_HOURS = Number(process.env.SESSION_TTL_HOURS || 2);
+
+if (!ADMIN_SHARED_SECRET) {
+  console.error("ADMIN_SHARED_SECRET is missing. Set it in .env / compose.");
+  process.exit(1);
+}
 
 const app = express();
-await setupSessions(app);
+//await setupSessions(app);
+app.set("trust proxy", 1); // so secure cookies work behind a proxy/HTTPS
 
-app.use(express.urlencoded({ extended: true }));
+//app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+app.use(cookieParser());
 
-// Initialize Passport
+// --- helper: issue a signed token ---
+function issueToken() {
+  return jwt.sign({ role: "admin" }, ADMIN_SHARED_SECRET, {
+    expiresIn: `${SESSION_TTL_HOURS}h`,
+  });
+}
+
+// --- routes: login / check / logout ---
+app.post("/auth/admin-login", (req, res) => {
+  const { password } = req.body || {};
+  if (!password) return res.status(400).json({ error: "Password required" });
+  if (password !== ADMIN_SHARED_SECRET) {
+    return res.status(401).json({ error: "Bad password" });
+  }
+
+  const token = jwt.sign({ role: "admin" }, ADMIN_SHARED_SECRET, {
+    expiresIn: `${SESSION_TTL_HOURS}h`,
+  });
+
+  // only set Secure on HTTPS
+  const isSecureRequest =
+    req.secure || req.headers["x-forwarded-proto"] === "https";
+
+  res.cookie(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isSecureRequest, // <-- was process.env.NODE_ENV === 'production'
+    maxAge: SESSION_TTL_HOURS * 60 * 60 * 1000,
+    path: "/",
+  });
+
+  return res.json({ ok: true });
+});
+
+app.get("/auth/admin-check", (req, res) => {
+  const token = req.cookies[SESSION_COOKIE_NAME];
+  if (!token) return res.status(200).json({ authed: false });
+  try {
+    jwt.verify(token, ADMIN_SHARED_SECRET);
+    return res.status(200).json({ authed: true });
+  } catch {
+    return res.status(200).json({ authed: false });
+  }
+});
+
+app.post("/auth/admin-logout", (req, res) => {
+  res.clearCookie(SESSION_COOKIE_NAME, { path: "/" });
+  res.json({ ok: true });
+});
+
+//app.use(cors({ origin: allowedOrigins, credentials: true }));
+
+/*// Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -231,7 +302,7 @@ app.post(LOGOUT_CALLBACK_PATH, (req, res) => {
       res.redirect("/login");
     });
   });
-});
+});*/
 
 // Route Mount Points for standard app routes
 app.use("/api/orders", orderRoutes);
@@ -240,5 +311,6 @@ app.use("/api/professors", professorRoutes);
 app.use("/api/spendCategories", spendCategoryRoutes);
 app.use("/api/receiptUploads", receiptUploadRoutes);
 app.use("/api/fileUploads", fileUploadRoutes);
+app.use("/api/users", userRoutes);
 
 export default app;
