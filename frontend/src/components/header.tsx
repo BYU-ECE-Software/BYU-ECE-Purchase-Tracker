@@ -1,16 +1,17 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { useState as useStateReact } from 'react'; // <-- keep your existing import, or just use the one above
 import BYULogo from '../assets/BYU_monogram_white.svg';
-import { Link } from 'react-router-dom';
-import { FaUserCircle } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
+//import { FaUserCircle } from 'react-icons/fa';
 import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai';
+import { adminLogout } from '../api/auth';
 import '../css/header.css';
 
 const HeaderBar = () => {
-  const user = { name: 'Demo User' };
-  const [mobileOpen, setMobileOpen] = useStateReact(false);
+  const navigate = useNavigate();
+  // const user = { name: 'Demo User' };
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // NEW: refs + measured left padding for desktop white nav
+  // refs + measured left padding for desktop white nav
   const logoRef = useRef<HTMLAnchorElement>(null);
   const [navPadLeft, setNavPadLeft] = useState<number>(128); // fallback ~ px-32
 
@@ -37,10 +38,20 @@ const HeaderBar = () => {
   const navLinks = [
     { to: '/purchaseRequest', label: 'Purchase Request Form' },
     { to: '/receiptSubmit', label: 'Submit Receipts' },
-    { to: '/orderHistory', label: 'Student Order History' },
-    { to: '/orderDashboard', label: 'Order Dashboard' },
-    { to: '/admin', label: 'Site Admin' },
+    //{ to: '/orderHistory', label: 'Student Order History' },
+    //{ to: '/orderDashboard', label: 'Order Dashboard' },
+    //{ to: '/admin', label: 'Site Admin' },
   ];
+
+  const handleSignOut = async () => {
+    try {
+      await adminLogout(); // clears httpOnly cookie on backend
+    } finally {
+      navigate('/purchaseRequest'); // go to a public page
+      // optional: force a reload to re-run your route guard immediately
+      // window.location.reload();
+    }
+  };
 
   return (
     <div className="w-full sticky top-0 z-50">
@@ -63,15 +74,13 @@ const HeaderBar = () => {
 
           {/* Right: user + mobile hamburger */}
           <div className="flex items-center gap-3 pr-6 text-base">
-            <span className="hidden sm:inline">{user.name}</span>
-            <span className="hidden sm:inline">
+            {/*<span className="hidden sm:inline">{user.name}</span> */}
+            {/*<span className="hidden sm:inline">
               <FaUserCircle size={25} color="white" />
-            </span>
+            </span> */}
             <button
               type="button"
-              onClick={() => {
-                /* no-op for now */
-              }}
+              onClick={handleSignOut}
               className="hidden sm:inline
                text-white/90 underline underline-offset-4 decoration-white/50
                hover:text-white hover:decoration-white
@@ -107,14 +116,16 @@ const HeaderBar = () => {
         >
           {/* Profile row at the top */}
           <div className="flex items-center gap-3 px-6 py-4 border-b">
-            <span>
+            {/*<span>
               <FaUserCircle size={24} color="#0b2a5b" />
-            </span>
+            </span> */}
             <div className="flex-1">
-              <div className="font-medium">{user.name}</div>
+              {/*<div className="font-medium">{user.name}</div>*/}
               {/* <div className="text-sm text-gray-500">user@email.com</div> */}
             </div>
-            <button className="underline">Sign out</button>
+            <button className="underline" onClick={handleSignOut}>
+              Sign out
+            </button>
           </div>
 
           {/* Nav links */}
@@ -152,7 +163,7 @@ const HeaderBar = () => {
           >
             Submit Receipts
           </Link>
-          <Link
+          {/*<Link
             to="/orderHistory"
             className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
           >
@@ -169,7 +180,7 @@ const HeaderBar = () => {
             className="px-8 py-4 hover:bg-[#FAFAFA] rounded-md block nav-link-hover"
           >
             Site Admin
-          </Link>
+          </Link>*/}
         </div>
       </nav>
     </div>

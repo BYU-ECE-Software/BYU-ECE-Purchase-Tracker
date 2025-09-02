@@ -54,7 +54,7 @@ const StudentOrderHistoryList: React.FC = () => {
         <div className="sticky top-40 bg-[#F6F6F8] border border-gray-200 rounded-xl p-6 text-byuNavy shadow-[0_0_8px_rgba(0,46,93,0.1)]">
           <div className="absolute top-0 bottom-0 left-0 w-1 bg-byuNavy rounded-l-xl"></div>
           <div className="mb-4 text-lg font-bold">
-            {orders[0]?.user.firstName} {orders[0]?.user.lastName}
+            {orders[0]?.user.fullName}
             <span>'s Purchase Overview</span>
           </div>
 

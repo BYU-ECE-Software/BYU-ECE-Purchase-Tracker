@@ -42,6 +42,10 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       PUBLIC_MINIO_URL: http://host.docker.internal:9000
+      ADMIN_SHARED_SECRET: ${ADMIN_SHARED_SECRET}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS}
+
     depends_on:
       - postgres
       - minio

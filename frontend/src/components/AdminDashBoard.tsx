@@ -639,7 +639,7 @@ const AdminDashboard = () => {
                     {order.shippingPreference}
                   </td>
                   <td className="border px-4 py-2 text-center">
-                    {order.user.firstName} {order.user.lastName}
+                    {order.user.fullName}
                   </td>
                   <td className="border px-4 py-2 text-center">
                     {order.professor.title} {order.professor.firstName}{' '}

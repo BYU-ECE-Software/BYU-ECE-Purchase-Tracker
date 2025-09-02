@@ -6,6 +6,27 @@ import ReceiptSubmit from './views/ReceiptSubmit';
 import OrderHistory from './views/OrderHistory';
 import OrderDashboard from './views/OrderDashboard';
 import ScrollToTop from './components/ScrollToTop';
+import PasswordGate from './components/PasswordGate';
+import { adminCheck } from './api/auth';
+import { useEffect, useState, type JSX } from 'react';
+
+// Protected Routes
+function ProtectedRoute({ children }: { children: JSX.Element }) {
+  const [checked, setChecked] = useState(false);
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const ok = await adminCheck();
+      setAuthed(ok);
+      setChecked(true);
+    })();
+  }, []);
+
+  if (!checked) return null; // or a loading spinner
+  if (!authed) return <PasswordGate onSuccess={() => setAuthed(true)} />;
+  return children;
+}
 
 function App() {
   return (
@@ -16,9 +37,30 @@ function App() {
           <Route path="/" element={<PurchaseRequest />} />
           <Route path="/purchaseRequest" element={<PurchaseRequest />} />
           <Route path="/receiptSubmit" element={<ReceiptSubmit />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/orderHistory" element={<OrderHistory />} />
-          <Route path="/orderDashboard" element={<OrderDashboard />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orderHistory"
+            element={
+              <ProtectedRoute>
+                <OrderHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orderDashboard"
+            element={
+              <ProtectedRoute>
+                <OrderDashboard />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Router>
     </>

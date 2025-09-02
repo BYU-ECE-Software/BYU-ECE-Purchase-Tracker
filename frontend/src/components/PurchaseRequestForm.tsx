@@ -22,6 +22,9 @@ const PurchaseRequestForm = () => {
   ]);
 
   // State for order-level info
+  const [fullName, setFullName] = useState('');
+  const [byuNetId, setByuNetId] = useState('');
+  const [email, setEmail] = useState('');
   const [vendor, setVendor] = useState('');
   const [shipping, setShipping] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -131,13 +134,15 @@ const PurchaseRequestForm = () => {
 
     try {
       await createOrder({
+        fullName,
+        byuNetId,
+        email,
         vendor,
         shippingPreference: shipping,
         professorId: Number(selectedProfessorId),
         purpose,
         workTag,
         spendCategoryId: Number(selectedSpendCategoryId),
-        userId: 3, // TEMPORARY: Replace this with real logic later
         status: 'Requested',
         comment:
           selectedSpendCategoryCode === 'Other'
@@ -169,12 +174,52 @@ const PurchaseRequestForm = () => {
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto mt-4 mb-8 p-6 bg-white shadow-md rounded-md space-y-6"
       >
-        <h2 className="text-2xl text-byuNavy font-semibold mb-4">
-          Order Details
-        </h2>
-
-        {/* Order details */}
         <div className="text-byuNavy space-y-8">
+          {/* Student Information */}
+          <h2 className="text-2xl text-byuNavy font-semibold mb-4">
+            Student Information
+          </h2>
+
+          <div>
+            <label className="block font-medium">Full Name *</label>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded p-2"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium">
+              BYU Net ID (not your id number) *
+            </label>
+            <input
+              type="text"
+              value={byuNetId}
+              onChange={(e) => setByuNetId(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded p-2"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium">Email *</label>
+            <input
+              type="text"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded p-2"
+            />
+          </div>
+
+          {/* Order details */}
+          <h2 className="text-2xl text-byuNavy font-semibold mb-4">
+            Order Details
+          </h2>
+
           <div>
             <label className="block font-medium">Vendor *</label>
             <input

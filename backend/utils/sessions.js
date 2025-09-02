@@ -1,5 +1,5 @@
 // sessions.js
-import session from "express-session";
+/*import session from "express-session";
 import { RedisStore } from "connect-redis";
 import { createClient } from "redis";
 
@@ -39,4 +39,4 @@ export async function setupSessions(app) {
   );
 
   return redis; // if you want to reuse the client elsewhere
-}
+}*/

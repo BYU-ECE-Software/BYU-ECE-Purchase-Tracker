@@ -35,6 +35,9 @@ const ReceiptSubmitForm = () => {
   ]);
 
   // Form fields for order-level info
+  const [fullName, setFullName] = useState('');
+  const [byuNetId, setByuNetId] = useState('');
+  const [email, setEmail] = useState('');
   const [workTag, setWorkTag] = useState('');
   const [selectedSpendCategoryId, setSelectedSpendCategoryId] = useState('');
   const [selectedProfessorId, setSelectedProfessorId] = useState('');
@@ -131,13 +134,15 @@ const ReceiptSubmitForm = () => {
     try {
       for (const receipt of receipts) {
         await createOrder({
+          fullName,
+          byuNetId,
+          email,
           vendor: receipt.vendor,
           shippingPreference: undefined,
           professorId: Number(selectedProfessorId),
           purpose: receipt.purpose,
           workTag,
           spendCategoryId: Number(selectedSpendCategoryId),
-          userId: 3, // TEMPORARY: Replace this with real logic later
           creditCard: receipt.creditCard ?? undefined,
           purchaseDate: receipt.purchaseDate,
           receipt: receipt.receipt ? [receipt.receipt] : undefined,
@@ -185,6 +190,46 @@ const ReceiptSubmitForm = () => {
           you are submitting receipts with different funding codes, please
           submit multiple forms.
         </h2>
+
+        {/* Student Information */}
+        <h2 className="text-2xl text-byuNavy font-semibold mb-4">
+          Student Information
+        </h2>
+
+        <div>
+          <label className="block font-medium">Full Name *</label>
+          <input
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium">
+            BYU Net ID (not your id number) *
+          </label>
+          <input
+            type="text"
+            value={byuNetId}
+            onChange={(e) => setByuNetId(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium">Email *</label>
+          <input
+            type="text"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full border border-gray-300 rounded p-2"
+          />
+        </div>
 
         <div className="space-y-2">
           <h2 className="text-2xl text-byuNavy font-semibold">Funding Code</h2>

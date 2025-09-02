@@ -11,6 +11,10 @@ import {
   createLineMemo,
   updateLineMemo,
   deleteLineMemo,
+  fetchUsers,
+  createUser,
+  updateUser,
+  deleteUser,
 } from '../api/purchaseTrackerApi';
 
 import type { CrudConfig } from '../types/crud';
@@ -20,6 +24,7 @@ import type {
   NewSpendCategoryPayload,
 } from '../types/spendCategory';
 import type { LineMemoOption } from '../types/lineMemoOption';
+import type { User } from '../types/user';
 
 /**
  * Central configuration for generating CRUD panels for different models.
@@ -83,4 +88,20 @@ export const crudConfigs = {
       remove: deleteLineMemo,
     },
   } satisfies CrudConfig<LineMemoOption, LineMemoOption>,
+
+  // Students
+  Students: {
+    noun: 'Student',
+    fields: {
+      fullName: { label: 'Full Name', type: 'text', required: true },
+      byuNetId: { label: 'BYU Net ID', type: 'text', required: true },
+      email: { label: 'Email', type: 'text', required: true },
+    },
+    api: {
+      getAll: fetchUsers,
+      create: createUser,
+      update: updateUser,
+      remove: deleteUser,
+    },
+  } satisfies CrudConfig<User, Omit<User, 'id'>>,
 };

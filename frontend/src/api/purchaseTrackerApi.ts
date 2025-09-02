@@ -8,9 +8,18 @@ import type {
   SpendCategory,
   NewSpendCategoryPayload,
 } from '../types/spendCategory';
+import type { User } from '../types/user';
 
 //base api url used in every call
 const BASE_API_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
+
+// For Admin API Calls
+type FetchOpts = Omit<RequestInit, 'credentials'>;
+
+const withCreds = (init: FetchOpts = {}): RequestInit => ({
+  ...init,
+  credentials: 'include' as const,
+});
 
 // ==========================
 //   Order API Calls
@@ -62,7 +71,10 @@ export const fetchOrders = async (
   // Filter by date (requested or purchased) if one has been selected
   if (date) queryParams.append('date', date);
 
-  const res = await fetch(`${BASE_API_URL}/orders?${queryParams.toString()}`);
+  const res = await fetch(
+    `${BASE_API_URL}/orders?${queryParams.toString()}`,
+    withCreds()
+  );
   if (!res.ok) throw new Error('Failed to fetch orders');
   return await res.json();
 };
@@ -73,7 +85,8 @@ export const getSignedReceiptUrl = async (
   filename: string
 ): Promise<string> => {
   const res = await fetch(
-    `${BASE_API_URL}/receiptUploads/${orderId}/${filename}`
+    `${BASE_API_URL}/receiptUploads/${orderId}/${filename}`,
+    withCreds()
   );
 
   if (!res.ok) throw new Error('Failed to fetch signed receipt URL');
@@ -87,7 +100,10 @@ export const getSignedItemFileUrl = async (
   itemId: number,
   filename: string
 ): Promise<string> => {
-  const res = await fetch(`${BASE_API_URL}/fileUploads/${itemId}/${filename}`);
+  const res = await fetch(
+    `${BASE_API_URL}/fileUploads/${itemId}/${filename}`,
+    withCreds()
+  );
 
   if (!res.ok) throw new Error('Failed to fetch signed item file URL');
 
@@ -108,13 +124,16 @@ export const createOrder = async (
   };
 
   // Append regular fields
+  safeAppend('fullName', orderData.fullName);
+  safeAppend('byuNetId', orderData.byuNetId);
+  safeAppend('email', orderData.email);
+
   safeAppend('vendor', orderData.vendor);
   safeAppend('shippingPreference', orderData.shippingPreference);
   safeAppend('professorId', orderData.professorId);
   safeAppend('purpose', orderData.purpose);
   safeAppend('workTag', orderData.workTag);
   safeAppend('spendCategoryId', orderData.spendCategoryId);
-  safeAppend('userId', orderData.userId);
   safeAppend('lineMemoOptionId', orderData.lineMemoOptionId);
   safeAppend('status', orderData.status);
   safeAppend('comment', orderData.comment);
@@ -186,10 +205,13 @@ export const updateOrder = async (
     }
   }
 
-  const res = await fetch(`${BASE_API_URL}/orders/${orderId}`, {
-    method: 'PUT',
-    body: formData,
-  });
+  const res = await fetch(
+    `${BASE_API_URL}/orders/${orderId}`,
+    withCreds({
+      method: 'PUT',
+      body: formData,
+    })
+  );
 
   if (!res.ok) throw new Error('Failed to update order');
   return await res.json();
@@ -197,7 +219,7 @@ export const updateOrder = async (
 
 // Fetch Orders by student Id
 export const fetchOrdersByUser = async (userId: number): Promise<Order[]> => {
-  const res = await fetch(`${BASE_API_URL}/orders/user/${userId}`);
+  const res = await fetch(`${BASE_API_URL}/orders/user/${userId}`, withCreds());
   if (!res.ok) throw new Error('Failed to fetch user orders');
   return await res.json();
 };
@@ -208,7 +230,7 @@ export const fetchOrdersByUser = async (userId: number): Promise<Order[]> => {
 
 // Fetch all Spend Categories
 export const fetchAllSpendCategories = async (): Promise<SpendCategory[]> => {
-  const res = await fetch(`${BASE_API_URL}/spendCategories`);
+  const res = await fetch(`${BASE_API_URL}/spendCategories`, withCreds());
   if (!res.ok) throw new Error('Failed to fetch spend categories');
   return await res.json();
 };
@@ -226,11 +248,14 @@ export const fetchStudentSpendCategories = async (): Promise<
 export const createSpendCategory = async (
   categoryData: NewSpendCategoryPayload
 ): Promise<SpendCategory> => {
-  const res = await fetch(`${BASE_API_URL}/spendCategories`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(categoryData),
-  });
+  const res = await fetch(
+    `${BASE_API_URL}/spendCategories`,
+    withCreds({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(categoryData),
+    })
+  );
 
   if (!res.ok) throw new Error('Failed to create spend category');
 
@@ -242,11 +267,14 @@ export const updateSpendCategory = async (
   id: number,
   updatedData: Partial<SpendCategory>
 ): Promise<SpendCategory> => {
-  const res = await fetch(`${BASE_API_URL}/spendCategories/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(updatedData),
-  });
+  const res = await fetch(
+    `${BASE_API_URL}/spendCategories/${id}`,
+    withCreds({
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedData),
+    })
+  );
 
   if (!res.ok) throw new Error('Failed to update spend category');
   return res.json();
@@ -254,9 +282,12 @@ export const updateSpendCategory = async (
 
 // Delete a spend category
 export const deleteSpendCategory = async (id: number): Promise<void> => {
-  const res = await fetch(`${BASE_API_URL}/spendCategories/${id}`, {
-    method: 'DELETE',
-  });
+  const res = await fetch(
+    `${BASE_API_URL}/spendCategories/${id}`,
+    withCreds({
+      method: 'DELETE',
+    })
+  );
 
   if (!res.ok) throw new Error('Failed to delete spend category');
 };
@@ -267,7 +298,7 @@ export const deleteSpendCategory = async (id: number): Promise<void> => {
 
 // Fetch all Line Memo Options
 export const fetchLineMemoOptions = async (): Promise<LineMemoOption[]> => {
-  const res = await fetch(`${BASE_API_URL}/lineMemoOptions`);
+  const res = await fetch(`${BASE_API_URL}/lineMemoOptions`, withCreds());
   if (!res.ok) throw new Error('Failed to fetch line memo options');
   return await res.json();
 };
@@ -276,11 +307,14 @@ export const fetchLineMemoOptions = async (): Promise<LineMemoOption[]> => {
 export const createLineMemo = async (
   newOption: LineMemoOption
 ): Promise<LineMemoOption> => {
-  const res = await fetch(`${BASE_API_URL}/lineMemoOptions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(newOption),
-  });
+  const res = await fetch(
+    `${BASE_API_URL}/lineMemoOptions`,
+    withCreds({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newOption),
+    })
+  );
 
   if (!res.ok) throw new Error('Failed to create line memo option');
   return res.json();
@@ -291,11 +325,14 @@ export const updateLineMemo = async (
   id: number,
   updatedData: Partial<LineMemoOption>
 ): Promise<LineMemoOption> => {
-  const res = await fetch(`${BASE_API_URL}/lineMemoOptions/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(updatedData),
-  });
+  const res = await fetch(
+    `${BASE_API_URL}/lineMemoOptions/${id}`,
+    withCreds({
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedData),
+    })
+  );
 
   if (!res.ok) throw new Error('Failed to update line memo option');
   return res.json();
@@ -303,9 +340,12 @@ export const updateLineMemo = async (
 
 // Delete a line memo option
 export const deleteLineMemo = async (id: number): Promise<void> => {
-  const res = await fetch(`${BASE_API_URL}/lineMemoOptions/${id}`, {
-    method: 'DELETE',
-  });
+  const res = await fetch(
+    `${BASE_API_URL}/lineMemoOptions/${id}`,
+    withCreds({
+      method: 'DELETE',
+    })
+  );
 
   if (!res.ok) throw new Error('Failed to delete line memo option');
 };
@@ -325,11 +365,14 @@ export const fetchProfessors = async (): Promise<Professor[]> => {
 export const createProfessor = async (
   newProfessor: Omit<Professor, 'id'>
 ): Promise<Professor> => {
-  const res = await fetch(`${BASE_API_URL}/professors`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(newProfessor),
-  });
+  const res = await fetch(
+    `${BASE_API_URL}/professors`,
+    withCreds({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newProfessor),
+    })
+  );
 
   if (!res.ok) throw new Error('Failed to create professor');
   return res.json();
@@ -340,11 +383,14 @@ export const updateProfessor = async (
   id: number,
   updatedData: Partial<Professor>
 ): Promise<Professor> => {
-  const res = await fetch(`${BASE_API_URL}/professors/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(updatedData),
-  });
+  const res = await fetch(
+    `${BASE_API_URL}/professors/${id}`,
+    withCreds({
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedData),
+    })
+  );
 
   if (!res.ok) throw new Error('Failed to update professor');
   return res.json();
@@ -352,9 +398,68 @@ export const updateProfessor = async (
 
 // Delete a professor
 export const deleteProfessor = async (id: number): Promise<void> => {
-  const res = await fetch(`${BASE_API_URL}/professors/${id}`, {
-    method: 'DELETE',
-  });
+  const res = await fetch(
+    `${BASE_API_URL}/professors/${id}`,
+    withCreds({
+      method: 'DELETE',
+    })
+  );
 
   if (!res.ok) throw new Error('Failed to delete professor');
+};
+
+// ==========================
+//   User API Calls
+// ==========================
+
+// Fetch all Users
+export const fetchUsers = async (): Promise<User[]> => {
+  const res = await fetch(`${BASE_API_URL}/users`, withCreds());
+  if (!res.ok) throw new Error('Failed to fetch users');
+  return await res.json();
+};
+
+// Create a new user
+export const createUser = async (newUser: Omit<User, 'id'>): Promise<User> => {
+  const res = await fetch(
+    `${BASE_API_URL}/users`,
+    withCreds({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newUser),
+    })
+  );
+
+  if (!res.ok) throw new Error('Failed to create user');
+  return res.json();
+};
+
+// Update a user
+export const updateUser = async (
+  id: number,
+  updatedData: Partial<User>
+): Promise<User> => {
+  const res = await fetch(
+    `${BASE_API_URL}/users/${id}`,
+    withCreds({
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedData),
+    })
+  );
+
+  if (!res.ok) throw new Error('Failed to update user');
+  return res.json();
+};
+
+// Delete a user
+export const deleteUser = async (id: number): Promise<void> => {
+  const res = await fetch(
+    `${BASE_API_URL}/users/${id}`,
+    withCreds({
+      method: 'DELETE',
+    })
+  );
+
+  if (!res.ok) throw new Error('Failed to delete user');
 };
