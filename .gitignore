@@ -9,3 +9,6 @@
 
 # Avoid duplicate declaration
 node_modules/
+
+# certs
+certs/
