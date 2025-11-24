@@ -7,7 +7,10 @@ import type { SpendCategory } from '../types/spendCategory';
 import AddSpendCategoryModal from './addSpendCategoryModal';
 import Toast from './Toast';
 import type { ToastProps } from '../types/toast';
-import { getSignedItemFileUrl } from '../api/purchaseTrackerApi';
+import {
+  getSignedItemFileUrl,
+  getSignedReceiptUrl,
+} from '../api/purchaseTrackerApi';
 
 // Props expected by the EditOrderModal component
 interface EditOrderModalProps {
@@ -602,18 +605,118 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                       .map((filename, index) => (
                         <li
                           key={index}
-                          className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 text-sm"
+                          className="flex items-center text-sm gap-2 w-full"
                         >
+                          {/* View button on the left, outside the outlined pill */}
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const url = await getSignedReceiptUrl(
+                                  order.id,
+                                  filename
+                                );
+                                window.open(url, '_blank');
+                              } catch (err) {
+                                console.error('Failed to open receipt', err);
+                                alert('Failed to open receipt.');
+                              }
+                            }}
+                            className="text-byuRoyal hover:underline whitespace-nowrap shrink-0"
+                          >
+                            View
+                          </button>
+
+                          {/* Outlined pill with filename + trash icon on the right */}
+                          <div className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 flex-1 min-w-0">
+                            <span className="truncate text-gray-800">
+                              {filename}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDeletedReceipts((prev) => [
+                                  ...prev,
+                                  filename,
+                                ])
+                              }
+                              className="ml-2 text-sm text-byuRedBright hover:text-byuRedDark shrink-0"
+                              title="Delete receipt"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="w-5 h-5"
+                              >
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                              </svg>
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500 italic"></p>
+                )}
+
+                {/* New Files */}
+                {newReceipts.length > 0 && (
+                  <ul className="space-y-1">
+                    {newReceipts.map((file, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-center text-sm gap-2 w-full"
+                      >
+                        {/* View new (unsaved) receipt */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              const url = URL.createObjectURL(file);
+                              window.open(url, '_blank');
+
+                              // Optional: clean up after a bit
+                              setTimeout(() => {
+                                URL.revokeObjectURL(url);
+                              }, 60_000);
+                            } catch (err) {
+                              console.error(
+                                'Failed to preview receipt file',
+                                err
+                              );
+                              alert('Failed to preview receipt.');
+                            }
+                          }}
+                          className="text-byuRoyal hover:underline whitespace-nowrap shrink-0"
+                        >
+                          View
+                        </button>
+
+                        {/* Outlined pill with filename + trash */}
+                        <div className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 flex-1 min-w-0">
                           <span className="truncate text-gray-800">
-                            {filename}
+                            {file.name}
                           </span>
                           <button
                             type="button"
                             onClick={() =>
-                              setDeletedReceipts((prev) => [...prev, filename])
+                              setNewReceipts((prev) =>
+                                prev.filter((_, fileIdx) => fileIdx !== idx)
+                              )
                             }
-                            className="ml-2 text-sm text-byuRedBright hover:text-byuRedDark"
-                            title="Delete receipt"
+                            className="text-[#E61744] hover:text-[#A3082A] ml-2 shrink-0"
+                            title="Remove file"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -634,53 +737,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                               <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                             </svg>
                           </button>
-                        </li>
-                      ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500 italic"></p>
-                )}
-
-                {/* New Files */}
-                {newReceipts.length > 0 && (
-                  <ul className="space-y-1">
-                    {newReceipts.map((file, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 text-sm"
-                      >
-                        <span className="truncate text-gray-800">
-                          {file.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setNewReceipts((prev) =>
-                              prev.filter((_, fileIdx) => fileIdx !== idx)
-                            )
-                          }
-                          className="text-[#E61744] hover:text-[#A3082A] ml-2"
-                          title="Remove file"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="w-5 h-5"
-                          >
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                            <path d="M10 11v6" />
-                            <path d="M14 11v6" />
-                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                          </svg>
-                        </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
