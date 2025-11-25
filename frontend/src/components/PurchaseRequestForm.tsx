@@ -520,8 +520,7 @@ const PurchaseRequestForm = () => {
             </h2>
             <p className="text-gray-700">
               Your order was successfully submitted. It will be reviewed within
-              2 business days. You can track the order status on your order
-              history page. Reach out to the ECE secretaries
+              2 business days. Reach out to the ECE secretaries
               (ecen_secretaries@byu.edu) with any questions.
             </p>
             <button
