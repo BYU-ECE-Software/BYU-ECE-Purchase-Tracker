@@ -158,7 +158,11 @@ export const getAllOrders = async (req, res) => {
     } = req.query;
 
     // Normalize and interpret search term
-    const searchTerm = query?.toString().toLowerCase();
+    const rawQuery = query?.toString() ?? "";
+    const searchTerm = rawQuery.toLowerCase();
+
+    // Try to parse a numeric value for total (e.g., "123.45", "$123.45", "1,234.56")
+    const numericQuery = Number(rawQuery.replace(/[^0-9.]/g, ""));
     const isNumeric = !isNaN(Number(searchTerm));
 
     // Validate and set sorting fields
@@ -170,6 +174,7 @@ export const getAllOrders = async (req, res) => {
       "shippingPreference",
       "studentName",
       "professor",
+      "total",
     ];
     const sortField = validSortFields.includes(sortBy) ? sortBy : "requestDate";
     const sortOrder = order === "asc" ? "asc" : "desc";
@@ -230,7 +235,7 @@ export const getAllOrders = async (req, res) => {
       where.OR = [
         { vendor: { contains: searchTerm, mode: "insensitive" } },
         { status: { contains: searchTerm, mode: "insensitive" } },
-        isNumeric ? { total: Number(searchTerm) } : undefined,
+        isNumeric ? { total: numericQuery } : undefined,
         {
           user: {
             OR: [
