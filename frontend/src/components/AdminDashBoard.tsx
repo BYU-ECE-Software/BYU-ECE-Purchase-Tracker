@@ -574,6 +574,23 @@ const AdminDashboard = () => {
             </th>
             <th
               className="border px-4 py-2 cursor-pointer"
+              onClick={() => handleSort('total')}
+            >
+              <div className="flex items-center justify-center gap-2">
+                Total
+                {sortBy === 'total' ? (
+                  sortOrder === 'asc' ? (
+                    <BarsArrowUpIcon className="h-4 w-4 text-byuNavy" />
+                  ) : (
+                    <BarsArrowDownIcon className="h-4 w-4 text-byuNavy" />
+                  )
+                ) : (
+                  <BarsArrowDownIcon className="h-4 w-4 text-byuMediumGray" />
+                )}
+              </div>
+            </th>
+            <th
+              className="border px-4 py-2 cursor-pointer"
               onClick={() => handleSort('studentName')}
             >
               <div className="flex items-center justify-center gap-2">
@@ -637,6 +654,9 @@ const AdminDashboard = () => {
                   </td>
                   <td className="border px-4 py-2 text-center">
                     {order.shippingPreference}
+                  </td>
+                  <td className="border px-4 py-2 text-center">
+                    {order.total != null ? `$${order.total}` : ''}
                   </td>
                   <td className="border px-4 py-2 text-center">
                     {order.user.fullName}
