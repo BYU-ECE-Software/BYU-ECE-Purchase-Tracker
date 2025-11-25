@@ -320,10 +320,29 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
               </div>
             </section>
             {/* ====================== COMMENTS (IF ANY) ====================== */}
+            {order.adminComment && (
+              <>
+                <section>
+                  <h3 className="text-sm font-medium text-byuNavy">
+                    Secretary Comments
+                  </h3>
+                  <div className="py-2">
+                    <span className="block text-xs text-gray-700 whitespace-pre-wrap">
+                      {order.adminComment}
+                    </span>
+                  </div>
+                </section>
+
+                <hr className="border-gray-200" />
+              </>
+            )}
+
             {order.comment && (
               <>
                 <section>
-                  <h3 className="text-sm font-medium text-byuNavy">Comments</h3>
+                  <h3 className="text-sm font-medium text-byuNavy">
+                    Student Comments
+                  </h3>
                   <div className="py-2">
                     <span className="block text-xs text-gray-700 whitespace-pre-wrap">
                       {order.comment}

@@ -415,7 +415,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             {order.comment && (
               <div className="py-2">
                 <span className="block text-sm font-medium text-byuNavy mb-1">
-                  Comments:
+                  Student Comments:
                 </span>
                 <span className="block text-sm text-gray-700 whitespace-pre-wrap">
                   {order.comment}
@@ -837,11 +837,13 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             {/* Row: Comments */}
             <div className="pt-0 pb-3">
               <label className="text-sm font-medium text-byuNavy">
-                Comments
+                Secretary Comments
               </label>
               <textarea
-                value={order.comment ?? ''}
-                onChange={(e) => onOrderFieldChange('comment', e.target.value)}
+                value={order.adminComment ?? ''}
+                onChange={(e) =>
+                  onOrderFieldChange('adminComment', e.target.value)
+                }
                 placeholder="Any notes to add about the purchase..."
                 className="w-full border border-gray-300 rounded p-2 resize-y min-h-[50px] text-sm text-byuNavy"
               />

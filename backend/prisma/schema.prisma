@@ -65,6 +65,7 @@ model Order {
   status             String
   comment            String?
   cartLink           String?
+  adminComment       String?
 }
 
 // ==========================
