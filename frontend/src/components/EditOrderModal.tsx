@@ -57,6 +57,9 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
     'items'
   );
 
+  // State for "Mark all as Purchased" toggle (local to this modal)
+  const [markAllPurchased, setMarkAllPurchased] = useState(false);
+
   // State for receipt files
   const [newReceipts, setNewReceipts] = useState<File[]>([]);
   const [deletedReceipts, setDeletedReceipts] = useState<string[]>([]);
@@ -153,6 +156,42 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
     }
   };
 
+  // Toggle to mark all items as "Purchased"
+  const handleTogglePurchased = () => {
+    const newValue = !markAllPurchased;
+    setMarkAllPurchased(newValue);
+
+    // If we are marking all as Purchased, clear "Completed" toggle
+    if (newValue && markComplete) {
+      setMarkComplete(false);
+    }
+
+    if (items.length > 0) {
+      const newStatus = newValue ? 'Purchased' : 'Requested';
+
+      items.forEach((_, idx) => {
+        onItemStatusChange(idx, newStatus);
+      });
+    } else {
+      // If there are no items, just set the order status directly (frontend-only)
+      onOrderFieldChange('status', newValue ? 'Purchased' : 'Requested');
+    }
+  };
+
+  // Keep "Mark all as Purchased" toggle in sync with current item/order status
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (items.length > 0) {
+      // Toggle ON if every item is currently Purchased
+      const allPurchased = items.every((item) => item.status === 'Purchased');
+      setMarkAllPurchased(allPurchased);
+    } else {
+      // No items → fall back to overall order status
+      setMarkAllPurchased(order.status === 'Purchased');
+    }
+  }, [isOpen, items, order.status]);
+
   if (!isOpen) return null;
 
   return (
@@ -173,7 +212,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               htmlFor="mark-complete"
               className="text-base text-byuNavy font-medium"
             >
-              Mark as Completed
+              Mark Order as Completed
             </label>
             <button
               onClick={handleToggleComplete}
@@ -225,14 +264,14 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             )}
 
             {/* Vendor */}
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2 text-sm">
               <span className="font-semibold text-byuNavy">Vendor:</span>
               <span className="">{order.vendor ?? ''}</span>
             </div>
 
             {/* Shipping Preference */}
             {order.shippingPreference && (
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2 text-sm">
                 <span className="font-semibold">Shipping Preference:</span>
                 <span>{order.shippingPreference}</span>
               </div>
@@ -240,7 +279,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
 
             {/* Cart Link */}
             {order.cartLink && (
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2 text-sm">
                 <a
                   href={order.cartLink}
                   target="_blank"
@@ -263,6 +302,28 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                     />
                   </svg>
                 </a>
+              </div>
+            )}
+
+            {items.length > 0 && (
+              <div className="flex justify-end pt-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-byuNavy">
+                    Mark all Items as Purchased
+                  </span>
+                  <button
+                    onClick={handleTogglePurchased}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      markAllPurchased ? 'bg-byuRoyal' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        markAllPurchased ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             )}
 
