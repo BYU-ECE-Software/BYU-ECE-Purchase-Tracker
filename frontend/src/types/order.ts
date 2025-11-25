@@ -28,6 +28,7 @@ export interface Order {
   status: string;
   comment?: string;
   cartLink?: string;
+  adminComment?: string;
 }
 
 export interface OrderUpdatePayload {

@@ -30,6 +30,7 @@ export const createOrder = async (req, res) => {
       status,
       comment,
       cartLink,
+      adminComment,
     } = req.body;
 
     // --- Validate required user fields ---
@@ -96,6 +97,7 @@ export const createOrder = async (req, res) => {
       receipt,
       status,
       comment: comment || null,
+      adminComment: adminComment || null,
       cartLink: cartLink || null,
       ...(lineMemoOptionId && {
         lineMemoOption: { connect: { id: parseInt(lineMemoOptionId) } },
