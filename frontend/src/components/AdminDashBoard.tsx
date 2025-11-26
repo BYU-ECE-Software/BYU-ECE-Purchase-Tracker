@@ -2,12 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Order } from '../types/order';
 import type { Item } from '../types/item';
 import type { Professor } from '../types/professor';
+import type { User } from '../types/user';
 import {
   fetchOrders,
   updateOrder,
   fetchLineMemoOptions,
   fetchProfessors,
   fetchAllSpendCategories,
+  fetchSecretaries,
   sendEmail,
 } from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
@@ -87,6 +89,7 @@ const AdminDashboard = () => {
   const [professors, setProfessors] = useState<Professor[]>([]);
   const [spendCategories, setSpendCategories] = useState<SpendCategory[]>([]);
   const [lineMemoOptions, setLineMemoOptions] = useState<LineMemoOption[]>([]);
+  const [secretaries, setSecretaries] = useState<User[]>([]);
 
   // State for sorting/filtering
   const [sortBy, setSortBy] = useState('requestDate');
@@ -189,6 +192,25 @@ const AdminDashboard = () => {
 
     loadProfessors();
   }, []);
+
+  // Load up secretaries for "Purchased by" selector
+  useEffect(() => {
+    const loadSecretaries = async () => {
+      try {
+        const data = await fetchSecretaries();
+        setSecretaries(data);
+      } catch (err) {
+        console.error('Failed to load secretaries:', err);
+        setToast({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to load secretaries. Please try again later.',
+        });
+      }
+    };
+
+    loadSecretaries();
+  }, []); // run once on mount
 
   // Load up line memo options for dropdown
   useEffect(() => {
@@ -734,6 +756,7 @@ const AdminDashboard = () => {
           onItemStatusChange={handleItemStatusChange}
           onOrderFieldChange={handleOrderFieldChange}
           onSave={handleSave}
+          secretaries={secretaries}
         />
       )}
 

@@ -19,6 +19,8 @@ export interface Order {
   total?: number;
   userId: number;
   user: User;
+  purchasedById?: number;
+  purchasedBy?: User;
   items: Item[];
   lineMemoOptionId?: number;
   lineMemoOption?: LineMemoOption;

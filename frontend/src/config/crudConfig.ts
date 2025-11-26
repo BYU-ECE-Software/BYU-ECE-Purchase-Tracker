@@ -96,6 +96,11 @@ export const crudConfigs = {
       fullName: { label: 'Full Name', type: 'text', required: true },
       byuNetId: { label: 'BYU Net ID', type: 'text', required: true },
       email: { label: 'Email', type: 'text', required: true },
+      isSecretary: {
+        label: 'Is an ECE Secretary',
+        type: 'checkbox',
+        required: false,
+      },
     },
     api: {
       getAll: fetchUsers,

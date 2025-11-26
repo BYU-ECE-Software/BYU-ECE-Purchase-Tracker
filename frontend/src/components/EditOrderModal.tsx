@@ -4,6 +4,7 @@ import type { Order } from '../types/order';
 import type { Professor } from '../types/professor';
 import type { LineMemoOption } from '../types/lineMemoOption';
 import type { SpendCategory } from '../types/spendCategory';
+import type { User } from '../types/user';
 import AddSpendCategoryModal from './addSpendCategoryModal';
 import Toast from './Toast';
 import type { ToastProps } from '../types/toast';
@@ -26,6 +27,7 @@ interface EditOrderModalProps {
   onSave: (newReceipts: File[], deletedReceipts: string[]) => void;
   markComplete: boolean;
   setMarkComplete: React.Dispatch<React.SetStateAction<boolean>>;
+  secretaries: User[];
 }
 
 // Dropdown options for item status
@@ -51,6 +53,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   onSave,
   markComplete,
   setMarkComplete,
+  secretaries,
 }) => {
   // State to track which tab is currently active in the modal ("items" or "orderInfo")
   const [activeTab, setActiveTab] = React.useState<'items' | 'purchase'>(
@@ -75,6 +78,16 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   const [showLineMemo, setShowLineMemo] = React.useState(
     !!order.lineMemoOptionId
   );
+
+  // Was this order purchased by an ECE secretary?
+  const [purchasedBySecretary, setPurchasedBySecretary] = useState(
+    Boolean(order.purchasedById)
+  );
+
+  // Keep local state in sync if a different order is opened
+  useEffect(() => {
+    setPurchasedBySecretary(Boolean(order.purchasedById));
+  }, [order.purchasedById]);
 
   // Ref to the Line Memo dropdown <select> element, used for focusing when it's shown.
   const lineMemoRef = useRef<HTMLSelectElement>(null);
@@ -834,6 +847,66 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               </div>
             </div>
 
+            {/* Row: Purchased by ECE Secretary */}
+            <div className="flex items-start justify-between pt-0 pb-3 border-b border-gray-200">
+              {/* Left label */}
+              <label className="text-sm font-medium text-byuNavy w-1/2 pt-1">
+                Purchased by
+              </label>
+
+              {/* Right side: checkbox + secretary list */}
+              <div className="w-1/2 space-y-2">
+                {/* Checkbox */}
+                <label className="inline-flex items-center gap-2 text-sm text-byuNavy">
+                  <input
+                    type="checkbox"
+                    checked={purchasedBySecretary}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setPurchasedBySecretary(checked);
+
+                      if (!checked) {
+                        // Clear the purchaser when unchecked
+                        onOrderFieldChange('purchasedById', null);
+                      }
+                    }}
+                  />
+                  <span>This order was purchased by an ECE Secretary</span>
+                </label>
+
+                {/* Secretary list (radio buttons) */}
+                {purchasedBySecretary && secretaries.length > 0 && (
+                  <div className="ml-5 space-y-1">
+                    {secretaries.map((sec) => (
+                      <label
+                        key={sec.id}
+                        className="flex items-center gap-2 text-sm text-byuNavy"
+                      >
+                        <input
+                          type="radio"
+                          name="purchasedBy"
+                          value={sec.id}
+                          checked={order.purchasedById === sec.id}
+                          onChange={() =>
+                            onOrderFieldChange('purchasedById', sec.id)
+                          }
+                        />
+                        <span>{sec.fullName}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* Fallback if there are no secretaries defined */}
+                {purchasedBySecretary && secretaries.length === 0 && (
+                  <p className="text-xs text-red-600">
+                    No users are currently marked as secretaries. Add them in
+                    the Students admin section first.
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Row: Comments */}
             <div className="pt-0 pb-3">
               <label className="text-sm font-medium text-byuNavy">
@@ -845,7 +918,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                   onOrderFieldChange('adminComment', e.target.value)
                 }
                 placeholder="Any notes to add about the purchase..."
-                className="w-full border border-gray-300 rounded p-2 resize-y min-h-[50px] text-sm text-byuNavy"
+                className="w-full border border-gray-300 rounded p-2 resize-y min-h-[50px] text-sm text-byuNavy mt-2"
               />
             </div>
           </div>

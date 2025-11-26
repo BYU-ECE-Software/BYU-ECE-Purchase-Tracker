@@ -317,6 +317,16 @@ const ViewOrderModal: React.FC<ViewOrderModalProps> = ({
                       : ''}
                   </div>
                 </div>
+                {order.purchasedById && (
+                  <div className="flex items-center justify-between py-2 border-b border-gray-200">
+                    <span className="text-sm font-medium text-byuNavy">
+                      Purchased By Secretary
+                    </span>
+                    <span className="text-sm text-gray-700">
+                      {order.purchasedBy?.fullName}
+                    </span>
+                  </div>
+                )}
               </div>
             </section>
             {/* ====================== COMMENTS (IF ANY) ====================== */}

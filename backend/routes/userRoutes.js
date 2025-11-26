@@ -4,6 +4,7 @@ import {
   deleteUser,
   getAllUsers,
   updateUser,
+  getSecretaries,
 } from "../controllers/userController.js";
 import { requireAdmin } from "../middlewares/requireAdmin.js";
 
@@ -11,6 +12,9 @@ const router = express.Router();
 
 // GET /users - fetch all users from the db
 router.get("/", requireAdmin, getAllUsers);
+
+// GET /users/secretaries - fetch all users from the db
+router.get("/secretaries", requireAdmin, getSecretaries);
 
 // POST /users - creates a new user
 router.post("/", requireAdmin, createUser);

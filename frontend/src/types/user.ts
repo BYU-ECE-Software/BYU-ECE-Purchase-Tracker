@@ -5,5 +5,6 @@ export interface User {
   fullName: string;
   email: string;
   byuNetId: string;
+  isSecretary: boolean;
   //role: string;
 }
