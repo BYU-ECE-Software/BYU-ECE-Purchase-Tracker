@@ -142,6 +142,7 @@ export const createOrder = async (
   safeAppend('purchaseDate', orderData.purchaseDate);
   safeAppend('tax', orderData.tax);
   safeAppend('total', orderData.total);
+  safeAppend('purchasedById', orderData.purchasedById);
 
   // Append item data WITHOUT the file field
   const itemsToSend = (orderData.items ?? []).map(({ file, ...rest }) => rest);
@@ -196,6 +197,7 @@ export const updateOrder = async (
         'userId',
         'spendCategoryId',
         'lineMemoOptionId',
+        'purchasedById',
       ];
       if (numericFields.includes(key)) {
         formData.append(key, String(Number(value)));
@@ -416,6 +418,13 @@ export const deleteProfessor = async (id: number): Promise<void> => {
 export const fetchUsers = async (): Promise<User[]> => {
   const res = await fetch(`${BASE_API_URL}/users`, withCreds());
   if (!res.ok) throw new Error('Failed to fetch users');
+  return await res.json();
+};
+
+// Fetch only users who are secretaries
+export const fetchSecretaries = async (): Promise<User[]> => {
+  const res = await fetch(`${BASE_API_URL}/users/secretaries`, withCreds());
+  if (!res.ok) throw new Error('Failed to fetch secretaries');
   return await res.json();
 };
 

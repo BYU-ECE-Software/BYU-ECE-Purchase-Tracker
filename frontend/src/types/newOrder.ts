@@ -18,6 +18,7 @@ export interface NewOrderPayload {
   cartLink?: string;
   adminComment?: string;
   items: NewItemPayload[];
+  purchasedById?: number;
 
   // Receipt-specific fields only on receipt submission
   creditCard?: boolean;
