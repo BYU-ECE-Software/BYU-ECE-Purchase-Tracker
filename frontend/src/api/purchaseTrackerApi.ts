@@ -463,3 +463,25 @@ export const deleteUser = async (id: number): Promise<void> => {
 
   if (!res.ok) throw new Error('Failed to delete user');
 };
+
+
+// ==========================
+//   Email API Calls
+// ==========================
+
+export const sendEmail = async (
+  to: string,
+  subject: string,
+  name: string,
+  message: string
+): Promise<void> => {
+  const res = await fetch(
+    `${BASE_API_URL}/email/send`,
+    withCreds({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, name, message }),
+    })
+  );
+  if (!res.ok) throw new Error('Failed to send email');
+};

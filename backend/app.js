@@ -22,6 +22,7 @@ import spendCategoryRoutes from "./routes/spendCategoryRoutes.js";
 import receiptUploadRoutes from "./routes/receiptUploadRoutes.js";
 import fileUploadRoutes from "./routes/fileUploadRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import emailRoutes from "./routes/emailRoutes.js";
 
 /*const allowedOrigins = [
   "https://ecepurchasing.byu.edu", //idk what the site name is to put here
@@ -314,5 +315,6 @@ app.use("/api/spendCategories", spendCategoryRoutes);
 app.use("/api/receiptUploads", receiptUploadRoutes);
 app.use("/api/fileUploads", fileUploadRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/email", emailRoutes);
 
 export default app;
