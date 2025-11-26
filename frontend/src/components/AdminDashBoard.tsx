@@ -10,6 +10,7 @@ import {
   fetchProfessors,
   fetchAllSpendCategories,
   fetchSecretaries,
+  sendEmail,
 } from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
 import SearchBar from './SearchBar';
@@ -302,6 +303,20 @@ const AdminDashboard = () => {
           status = 'Requested';
         } else {
           status = 'Purchased';
+        }
+      }
+
+      // If status is changed to 'Purchased', send email notification to user
+      if(status === 'Purchased') {
+        try {
+          await sendEmail(
+            editedOrder.user.email,
+            "ECE Order Purchased!",
+            editedOrder.user.fullName,
+            `Your order with the ECE Department has been purchased! We will notify you when it has arrived.`,
+          );
+        } catch (emailErr) {
+          console.error('Failed to send purchase email:', emailErr);
         }
       }
 
