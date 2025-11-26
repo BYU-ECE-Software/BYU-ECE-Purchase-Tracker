@@ -20,6 +20,9 @@ interface Receipt {
 }
 
 const ReceiptSubmitForm = () => {
+  // key used to force remount form so receipt file inputs reset visually
+  const [resetKey, setResetKey] = useState(0);
+
   // Track the list of receipts the user wants to submit in state
   const [receipts, setReceipts] = useState<Receipt[]>([
     {
@@ -127,6 +130,37 @@ const ReceiptSubmitForm = () => {
     setReceipts(updatedReceipts);
   };
 
+  // Reset receipts back to a single empty receipt row - to be done after a successful form submission
+  const resetForm = () => {
+    setReceipts([
+      {
+        vendor: '',
+        purpose: '',
+        creditCard: null,
+        purchaseDate: '',
+        tax: 0,
+        total: 0,
+        receipt: null,
+        comment: '',
+      },
+    ]);
+
+    // Reset order-level fields
+    setFullName('');
+    setByuNetId('');
+    setEmail('');
+    setWorkTag('');
+    setSelectedSpendCategoryId('');
+    setSelectedProfessorId('');
+
+    // Reset spend category helper state
+    setCustomSpendCategory('');
+    setSelectedSpendCategoryCode('');
+
+    // force form subtree (specifically file inputs) to remount
+    setResetKey((prev) => prev + 1);
+  };
+
   // Submit form to backend
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,19 +192,11 @@ const ReceiptSubmitForm = () => {
         });
       }
 
+      // Clear the form on successful submit
+      resetForm();
+
+      // Show Confirmation Modal
       setShowConfirmModal(true);
-      setReceipts([
-        {
-          vendor: '',
-          purpose: '',
-          creditCard: null,
-          purchaseDate: '',
-          tax: 0,
-          total: 0,
-          receipt: null,
-          comment: '',
-        },
-      ]);
     } catch (error) {
       console.error('Error submitting receipts:', error);
       alert('Error submitting receipts.');
@@ -181,6 +207,7 @@ const ReceiptSubmitForm = () => {
   return (
     <>
       <form
+        key={resetKey}
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto mt-4 mb-8 p-6 text-byuNavy space-y-8 bg-white shadow-md rounded-md"
       >
