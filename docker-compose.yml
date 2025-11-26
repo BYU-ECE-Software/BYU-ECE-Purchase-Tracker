@@ -22,7 +22,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     # ports:
-      # - "5433:5432" #had to change to 5433 for dev local computer
+    # - "5433:5432" #had to change to 5433 for dev local computer
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -45,6 +45,11 @@ services:
       ADMIN_SHARED_SECRET: ${ADMIN_SHARED_SECRET}
       SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME}
       SESSION_TTL_HOURS: ${SESSION_TTL_HOURS}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      FROM_EMAIL: ${FROM_EMAIL}
+      FROM_NAME: ${FROM_NAME}
 
     depends_on:
       - postgres
@@ -62,6 +67,9 @@ services:
       - backend
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/etc/ssl/local:ro
 
 volumes:
   minio_data:

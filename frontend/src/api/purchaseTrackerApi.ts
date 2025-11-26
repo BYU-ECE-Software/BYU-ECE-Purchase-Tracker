@@ -142,6 +142,7 @@ export const createOrder = async (
   safeAppend('purchaseDate', orderData.purchaseDate);
   safeAppend('tax', orderData.tax);
   safeAppend('total', orderData.total);
+  safeAppend('purchasedById', orderData.purchasedById);
 
   // Append item data WITHOUT the file field
   const itemsToSend = (orderData.items ?? []).map(({ file, ...rest }) => rest);
@@ -196,6 +197,7 @@ export const updateOrder = async (
         'userId',
         'spendCategoryId',
         'lineMemoOptionId',
+        'purchasedById',
       ];
       if (numericFields.includes(key)) {
         formData.append(key, String(Number(value)));
@@ -419,6 +421,13 @@ export const fetchUsers = async (): Promise<User[]> => {
   return await res.json();
 };
 
+// Fetch only users who are secretaries
+export const fetchSecretaries = async (): Promise<User[]> => {
+  const res = await fetch(`${BASE_API_URL}/users/secretaries`, withCreds());
+  if (!res.ok) throw new Error('Failed to fetch secretaries');
+  return await res.json();
+};
+
 // Create a new user
 export const createUser = async (newUser: Omit<User, 'id'>): Promise<User> => {
   const res = await fetch(
@@ -462,4 +471,26 @@ export const deleteUser = async (id: number): Promise<void> => {
   );
 
   if (!res.ok) throw new Error('Failed to delete user');
+};
+
+
+// ==========================
+//   Email API Calls
+// ==========================
+
+export const sendEmail = async (
+  to: string,
+  subject: string,
+  name: string,
+  message: string
+): Promise<void> => {
+  const res = await fetch(
+    `${BASE_API_URL}/email/send`,
+    withCreds({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, name, message }),
+    })
+  );
+  if (!res.ok) throw new Error('Failed to send email');
 };

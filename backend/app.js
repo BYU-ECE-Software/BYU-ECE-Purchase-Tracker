@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config({ path: "../.env" });
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -20,6 +22,7 @@ import spendCategoryRoutes from "./routes/spendCategoryRoutes.js";
 import receiptUploadRoutes from "./routes/receiptUploadRoutes.js";
 import fileUploadRoutes from "./routes/fileUploadRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import emailRoutes from "./routes/emailRoutes.js";
 
 /*const allowedOrigins = [
   "https://ecepurchasing.byu.edu", //idk what the site name is to put here
@@ -35,7 +38,7 @@ console.log("Using certificate directory:", CERT_DIR);*/
 
 const ADMIN_SHARED_SECRET = process.env.ADMIN_SHARED_SECRET;
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || "admin_session";
-const SESSION_TTL_HOURS = Number(process.env.SESSION_TTL_HOURS || 2);
+const SESSION_TTL_HOURS = Number(process.env.SESSION_TTL_HOURS || 9);
 
 if (!ADMIN_SHARED_SECRET) {
   console.error("ADMIN_SHARED_SECRET is missing. Set it in .env / compose.");
@@ -312,5 +315,6 @@ app.use("/api/spendCategories", spendCategoryRoutes);
 app.use("/api/receiptUploads", receiptUploadRoutes);
 app.use("/api/fileUploads", fileUploadRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/email", emailRoutes);
 
 export default app;

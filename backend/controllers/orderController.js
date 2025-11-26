@@ -30,6 +30,8 @@ export const createOrder = async (req, res) => {
       status,
       comment,
       cartLink,
+      adminComment,
+      purchasedById,
     } = req.body;
 
     // --- Validate required user fields ---
@@ -74,6 +76,7 @@ export const createOrder = async (req, res) => {
       tax: tax ? parseFloat(tax) : null,
       total: total ? parseFloat(total) : null,
 
+      // Student who requested the order
       user: {
         connectOrCreate: {
           where: { byuNetId: normalizedNetId },
@@ -96,9 +99,13 @@ export const createOrder = async (req, res) => {
       receipt,
       status,
       comment: comment || null,
+      adminComment: adminComment || null,
       cartLink: cartLink || null,
       ...(lineMemoOptionId && {
         lineMemoOption: { connect: { id: parseInt(lineMemoOptionId) } },
+      }),
+      ...(purchasedById && {
+        purchasedBy: { connect: { id: Number(purchasedById) } },
       }),
     };
 
@@ -129,6 +136,7 @@ export const createOrder = async (req, res) => {
       include: {
         items: true,
         user: true,
+        purchasedBy: true,
       },
     });
 
@@ -158,7 +166,11 @@ export const getAllOrders = async (req, res) => {
     } = req.query;
 
     // Normalize and interpret search term
-    const searchTerm = query?.toString().toLowerCase();
+    const rawQuery = query?.toString() ?? "";
+    const searchTerm = rawQuery.toLowerCase();
+
+    // Try to parse a numeric value for total (e.g., "123.45", "$123.45", "1,234.56")
+    const numericQuery = Number(rawQuery.replace(/[^0-9.]/g, ""));
     const isNumeric = !isNaN(Number(searchTerm));
 
     // Validate and set sorting fields
@@ -170,6 +182,7 @@ export const getAllOrders = async (req, res) => {
       "shippingPreference",
       "studentName",
       "professor",
+      "total",
     ];
     const sortField = validSortFields.includes(sortBy) ? sortBy : "requestDate";
     const sortOrder = order === "asc" ? "asc" : "desc";
@@ -230,7 +243,7 @@ export const getAllOrders = async (req, res) => {
       where.OR = [
         { vendor: { contains: searchTerm, mode: "insensitive" } },
         { status: { contains: searchTerm, mode: "insensitive" } },
-        isNumeric ? { total: Number(searchTerm) } : undefined,
+        isNumeric ? { total: numericQuery } : undefined,
         {
           user: {
             OR: [
@@ -301,6 +314,7 @@ export const getAllOrders = async (req, res) => {
           lineMemoOption: true,
           professor: true,
           spendCategory: true,
+          purchasedBy: true,
         },
       }),
       prisma.order.count({ where }),
@@ -339,6 +353,7 @@ export const getOrdersByUser = async (req, res) => {
         lineMemoOption: true,
         professor: true,
         spendCategory: true,
+        purchasedBy: true,
       },
       orderBy: {
         requestDate: "desc",
@@ -415,6 +430,7 @@ export const updateOrder = async (req, res) => {
       "userId",
       "spendCategoryId",
       "lineMemoOptionId",
+      "purchasedById",
     ];
     for (const key of intKeys) {
       if (key in cleanedOrderData) {
@@ -472,6 +488,7 @@ export const updateOrder = async (req, res) => {
       userId: "user",
       spendCategoryId: "spendCategory",
       lineMemoOptionId: "lineMemoOption",
+      purchasedById: "purchasedBy",
     };
 
     // convert all relational values to the correct connect format
@@ -481,11 +498,14 @@ export const updateOrder = async (req, res) => {
         const val = cleanedOrderData[idKey]; // number | null
         delete cleanedOrderData[idKey];
 
-        if (relationKey === "lineMemoOption" && val === null) {
-          // optional relation -> allow clearing
+        // Optional relations: lineMemoOption & purchasedBy
+        if (
+          (relationKey === "lineMemoOption" || relationKey === "purchasedBy") &&
+          val === null
+        ) {
           cleanedOrderData[relationKey] = { disconnect: true };
-        } else {
-          // required relations (and lineMemo when not null) -> connect
+        } else if (val !== null) {
+          // Only connect if we actually have a value
           cleanedOrderData[relationKey] = { connect: { id: Number(val) } };
         }
       }

@@ -19,9 +19,26 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+// Fetch only users who are secretaries
+export const getSecretaries = async (req, res) => {
+  try {
+    const secretaries = await prisma.user.findMany({
+      where: { isSecretary: true },
+      orderBy: {
+        fullName: "asc",
+      },
+    });
+
+    res.status(200).json(secretaries);
+  } catch (error) {
+    console.error("Error fetching secretaries:", error);
+    res.status(500).json({ error: "Failed to fetch secretaries" });
+  }
+};
+
 // Create a new User
 export const createUser = async (req, res) => {
-  const { fullName, byuNetId, email } = req.body;
+  const { fullName, byuNetId, email, isSecretary } = req.body;
 
   // Basic validation
   if (!fullName || !byuNetId || !email) {
@@ -35,6 +52,7 @@ export const createUser = async (req, res) => {
         fullName,
         byuNetId,
         email: email?.toLowerCase().trim(),
+        isSecretary: isSecretary ?? false,
       },
     });
 
@@ -48,7 +66,7 @@ export const createUser = async (req, res) => {
 // Update a User
 export const updateUser = async (req, res) => {
   const { id } = req.params;
-  const { fullName, byuNetId, email } = req.body;
+  const { fullName, byuNetId, email, isSecretary } = req.body;
 
   //Basic Validation
   if (!fullName || !byuNetId || !email) {
@@ -62,6 +80,7 @@ export const updateUser = async (req, res) => {
         fullName,
         byuNetId,
         email,
+        ...(typeof isSecretary === "boolean" ? { isSecretary } : {}),
       },
     });
 

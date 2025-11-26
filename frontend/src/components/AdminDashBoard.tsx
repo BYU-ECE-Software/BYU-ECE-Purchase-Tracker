@@ -2,12 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Order } from '../types/order';
 import type { Item } from '../types/item';
 import type { Professor } from '../types/professor';
+import type { User } from '../types/user';
 import {
   fetchOrders,
   updateOrder,
   fetchLineMemoOptions,
   fetchProfessors,
   fetchAllSpendCategories,
+  fetchSecretaries,
+  sendEmail,
 } from '../api/purchaseTrackerApi';
 import EditOrderModal from './EditOrderModal';
 import SearchBar from './SearchBar';
@@ -86,6 +89,7 @@ const AdminDashboard = () => {
   const [professors, setProfessors] = useState<Professor[]>([]);
   const [spendCategories, setSpendCategories] = useState<SpendCategory[]>([]);
   const [lineMemoOptions, setLineMemoOptions] = useState<LineMemoOption[]>([]);
+  const [secretaries, setSecretaries] = useState<User[]>([]);
 
   // State for sorting/filtering
   const [sortBy, setSortBy] = useState('requestDate');
@@ -189,6 +193,25 @@ const AdminDashboard = () => {
     loadProfessors();
   }, []);
 
+  // Load up secretaries for "Purchased by" selector
+  useEffect(() => {
+    const loadSecretaries = async () => {
+      try {
+        const data = await fetchSecretaries();
+        setSecretaries(data);
+      } catch (err) {
+        console.error('Failed to load secretaries:', err);
+        setToast({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to load secretaries. Please try again later.',
+        });
+      }
+    };
+
+    loadSecretaries();
+  }, []); // run once on mount
+
   // Load up line memo options for dropdown
   useEffect(() => {
     const loadOptions = async () => {
@@ -280,6 +303,20 @@ const AdminDashboard = () => {
           status = 'Requested';
         } else {
           status = 'Purchased';
+        }
+      }
+
+      // If status is changed to 'Purchased', send email notification to user
+      if(status === 'Purchased') {
+        try {
+          await sendEmail(
+            editedOrder.user.email,
+            "ECE Order Purchased!",
+            editedOrder.user.fullName,
+            `Your order with the ECE Department has been purchased! We will notify you when it has arrived.`,
+          );
+        } catch (emailErr) {
+          console.error('Failed to send purchase email:', emailErr);
         }
       }
 
@@ -574,6 +611,23 @@ const AdminDashboard = () => {
             </th>
             <th
               className="border px-4 py-2 cursor-pointer"
+              onClick={() => handleSort('total')}
+            >
+              <div className="flex items-center justify-center gap-2">
+                Total
+                {sortBy === 'total' ? (
+                  sortOrder === 'asc' ? (
+                    <BarsArrowUpIcon className="h-4 w-4 text-byuNavy" />
+                  ) : (
+                    <BarsArrowDownIcon className="h-4 w-4 text-byuNavy" />
+                  )
+                ) : (
+                  <BarsArrowDownIcon className="h-4 w-4 text-byuMediumGray" />
+                )}
+              </div>
+            </th>
+            <th
+              className="border px-4 py-2 cursor-pointer"
               onClick={() => handleSort('studentName')}
             >
               <div className="flex items-center justify-center gap-2">
@@ -639,6 +693,9 @@ const AdminDashboard = () => {
                     {order.shippingPreference}
                   </td>
                   <td className="border px-4 py-2 text-center">
+                    {order.total != null ? `$${order.total}` : ''}
+                  </td>
+                  <td className="border px-4 py-2 text-center">
                     {order.user.fullName}
                   </td>
                   <td className="border px-4 py-2 text-center">
@@ -699,6 +756,7 @@ const AdminDashboard = () => {
           onItemStatusChange={handleItemStatusChange}
           onOrderFieldChange={handleOrderFieldChange}
           onSave={handleSave}
+          secretaries={secretaries}
         />
       )}
 

@@ -4,10 +4,14 @@ import type { Order } from '../types/order';
 import type { Professor } from '../types/professor';
 import type { LineMemoOption } from '../types/lineMemoOption';
 import type { SpendCategory } from '../types/spendCategory';
+import type { User } from '../types/user';
 import AddSpendCategoryModal from './addSpendCategoryModal';
 import Toast from './Toast';
 import type { ToastProps } from '../types/toast';
-import { getSignedItemFileUrl } from '../api/purchaseTrackerApi';
+import {
+  getSignedItemFileUrl,
+  getSignedReceiptUrl,
+} from '../api/purchaseTrackerApi';
 
 // Props expected by the EditOrderModal component
 interface EditOrderModalProps {
@@ -23,6 +27,7 @@ interface EditOrderModalProps {
   onSave: (newReceipts: File[], deletedReceipts: string[]) => void;
   markComplete: boolean;
   setMarkComplete: React.Dispatch<React.SetStateAction<boolean>>;
+  secretaries: User[];
 }
 
 // Dropdown options for item status
@@ -48,11 +53,15 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   onSave,
   markComplete,
   setMarkComplete,
+  secretaries,
 }) => {
   // State to track which tab is currently active in the modal ("items" or "orderInfo")
   const [activeTab, setActiveTab] = React.useState<'items' | 'purchase'>(
     'items'
   );
+
+  // State for "Mark all as Purchased" toggle (local to this modal)
+  const [markAllPurchased, setMarkAllPurchased] = useState(false);
 
   // State for receipt files
   const [newReceipts, setNewReceipts] = useState<File[]>([]);
@@ -69,6 +78,16 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
   const [showLineMemo, setShowLineMemo] = React.useState(
     !!order.lineMemoOptionId
   );
+
+  // Was this order purchased by an ECE secretary?
+  const [purchasedBySecretary, setPurchasedBySecretary] = useState(
+    Boolean(order.purchasedById)
+  );
+
+  // Keep local state in sync if a different order is opened
+  useEffect(() => {
+    setPurchasedBySecretary(Boolean(order.purchasedById));
+  }, [order.purchasedById]);
 
   // Ref to the Line Memo dropdown <select> element, used for focusing when it's shown.
   const lineMemoRef = useRef<HTMLSelectElement>(null);
@@ -150,6 +169,42 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
     }
   };
 
+  // Toggle to mark all items as "Purchased"
+  const handleTogglePurchased = () => {
+    const newValue = !markAllPurchased;
+    setMarkAllPurchased(newValue);
+
+    // If we are marking all as Purchased, clear "Completed" toggle
+    if (newValue && markComplete) {
+      setMarkComplete(false);
+    }
+
+    if (items.length > 0) {
+      const newStatus = newValue ? 'Purchased' : 'Requested';
+
+      items.forEach((_, idx) => {
+        onItemStatusChange(idx, newStatus);
+      });
+    } else {
+      // If there are no items, just set the order status directly (frontend-only)
+      onOrderFieldChange('status', newValue ? 'Purchased' : 'Requested');
+    }
+  };
+
+  // Keep "Mark all as Purchased" toggle in sync with current item/order status
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (items.length > 0) {
+      // Toggle ON if every item is currently Purchased
+      const allPurchased = items.every((item) => item.status === 'Purchased');
+      setMarkAllPurchased(allPurchased);
+    } else {
+      // No items → fall back to overall order status
+      setMarkAllPurchased(order.status === 'Purchased');
+    }
+  }, [isOpen, items, order.status]);
+
   if (!isOpen) return null;
 
   return (
@@ -170,7 +225,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               htmlFor="mark-complete"
               className="text-base text-byuNavy font-medium"
             >
-              Mark as Completed
+              Mark Order as Completed
             </label>
             <button
               onClick={handleToggleComplete}
@@ -222,14 +277,14 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             )}
 
             {/* Vendor */}
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2 text-sm">
               <span className="font-semibold text-byuNavy">Vendor:</span>
               <span className="">{order.vendor ?? ''}</span>
             </div>
 
             {/* Shipping Preference */}
             {order.shippingPreference && (
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2 text-sm">
                 <span className="font-semibold">Shipping Preference:</span>
                 <span>{order.shippingPreference}</span>
               </div>
@@ -237,7 +292,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
 
             {/* Cart Link */}
             {order.cartLink && (
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2 text-sm">
                 <a
                   href={order.cartLink}
                   target="_blank"
@@ -260,6 +315,28 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                     />
                   </svg>
                 </a>
+              </div>
+            )}
+
+            {items.length > 0 && (
+              <div className="flex justify-end pt-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-byuNavy">
+                    Mark all Items as Purchased
+                  </span>
+                  <button
+                    onClick={handleTogglePurchased}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      markAllPurchased ? 'bg-byuRoyal' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        markAllPurchased ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -351,7 +428,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
             {order.comment && (
               <div className="py-2">
                 <span className="block text-sm font-medium text-byuNavy mb-1">
-                  Comments:
+                  Student Comments:
                 </span>
                 <span className="block text-sm text-gray-700 whitespace-pre-wrap">
                   {order.comment}
@@ -602,18 +679,118 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                       .map((filename, index) => (
                         <li
                           key={index}
-                          className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 text-sm"
+                          className="flex items-center text-sm gap-2 w-full"
                         >
+                          {/* View button on the left, outside the outlined pill */}
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const url = await getSignedReceiptUrl(
+                                  order.id,
+                                  filename
+                                );
+                                window.open(url, '_blank');
+                              } catch (err) {
+                                console.error('Failed to open receipt', err);
+                                alert('Failed to open receipt.');
+                              }
+                            }}
+                            className="text-byuRoyal hover:underline whitespace-nowrap shrink-0"
+                          >
+                            View
+                          </button>
+
+                          {/* Outlined pill with filename + trash icon on the right */}
+                          <div className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 flex-1 min-w-0">
+                            <span className="truncate text-gray-800">
+                              {filename}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDeletedReceipts((prev) => [
+                                  ...prev,
+                                  filename,
+                                ])
+                              }
+                              className="ml-2 text-sm text-byuRedBright hover:text-byuRedDark shrink-0"
+                              title="Delete receipt"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="w-5 h-5"
+                              >
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                              </svg>
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-500 italic"></p>
+                )}
+
+                {/* New Files */}
+                {newReceipts.length > 0 && (
+                  <ul className="space-y-1">
+                    {newReceipts.map((file, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-center text-sm gap-2 w-full"
+                      >
+                        {/* View new (unsaved) receipt */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              const url = URL.createObjectURL(file);
+                              window.open(url, '_blank');
+
+                              // Optional: clean up after a bit
+                              setTimeout(() => {
+                                URL.revokeObjectURL(url);
+                              }, 60_000);
+                            } catch (err) {
+                              console.error(
+                                'Failed to preview receipt file',
+                                err
+                              );
+                              alert('Failed to preview receipt.');
+                            }
+                          }}
+                          className="text-byuRoyal hover:underline whitespace-nowrap shrink-0"
+                        >
+                          View
+                        </button>
+
+                        {/* Outlined pill with filename + trash */}
+                        <div className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 flex-1 min-w-0">
                           <span className="truncate text-gray-800">
-                            {filename}
+                            {file.name}
                           </span>
                           <button
                             type="button"
                             onClick={() =>
-                              setDeletedReceipts((prev) => [...prev, filename])
+                              setNewReceipts((prev) =>
+                                prev.filter((_, fileIdx) => fileIdx !== idx)
+                              )
                             }
-                            className="ml-2 text-sm text-byuRedBright hover:text-byuRedDark"
-                            title="Delete receipt"
+                            className="text-[#E61744] hover:text-[#A3082A] ml-2 shrink-0"
+                            title="Remove file"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -634,53 +811,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
                               <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                             </svg>
                           </button>
-                        </li>
-                      ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500 italic"></p>
-                )}
-
-                {/* New Files */}
-                {newReceipts.length > 0 && (
-                  <ul className="space-y-1">
-                    {newReceipts.map((file, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2 text-sm"
-                      >
-                        <span className="truncate text-gray-800">
-                          {file.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setNewReceipts((prev) =>
-                              prev.filter((_, fileIdx) => fileIdx !== idx)
-                            )
-                          }
-                          className="text-[#E61744] hover:text-[#A3082A] ml-2"
-                          title="Remove file"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="w-5 h-5"
-                          >
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                            <path d="M10 11v6" />
-                            <path d="M14 11v6" />
-                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                          </svg>
-                        </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -716,16 +847,78 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
               </div>
             </div>
 
+            {/* Row: Purchased by ECE Secretary */}
+            <div className="flex items-start justify-between pt-0 pb-3 border-b border-gray-200">
+              {/* Left label */}
+              <label className="text-sm font-medium text-byuNavy w-1/2 pt-1">
+                Purchased by
+              </label>
+
+              {/* Right side: checkbox + secretary list */}
+              <div className="w-1/2 space-y-2">
+                {/* Checkbox */}
+                <label className="inline-flex items-center gap-2 text-sm text-byuNavy">
+                  <input
+                    type="checkbox"
+                    checked={purchasedBySecretary}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setPurchasedBySecretary(checked);
+
+                      if (!checked) {
+                        // Clear the purchaser when unchecked
+                        onOrderFieldChange('purchasedById', null);
+                      }
+                    }}
+                  />
+                  <span>This order was purchased by an ECE Secretary</span>
+                </label>
+
+                {/* Secretary list (radio buttons) */}
+                {purchasedBySecretary && secretaries.length > 0 && (
+                  <div className="ml-5 space-y-1">
+                    {secretaries.map((sec) => (
+                      <label
+                        key={sec.id}
+                        className="flex items-center gap-2 text-sm text-byuNavy"
+                      >
+                        <input
+                          type="radio"
+                          name="purchasedBy"
+                          value={sec.id}
+                          checked={order.purchasedById === sec.id}
+                          onChange={() =>
+                            onOrderFieldChange('purchasedById', sec.id)
+                          }
+                        />
+                        <span>{sec.fullName}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* Fallback if there are no secretaries defined */}
+                {purchasedBySecretary && secretaries.length === 0 && (
+                  <p className="text-xs text-red-600">
+                    No users are currently marked as secretaries. Add them in
+                    the Students admin section first.
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Row: Comments */}
             <div className="pt-0 pb-3">
               <label className="text-sm font-medium text-byuNavy">
-                Comments
+                Secretary Comments
               </label>
               <textarea
-                value={order.comment ?? ''}
-                onChange={(e) => onOrderFieldChange('comment', e.target.value)}
+                value={order.adminComment ?? ''}
+                onChange={(e) =>
+                  onOrderFieldChange('adminComment', e.target.value)
+                }
                 placeholder="Any notes to add about the purchase..."
-                className="w-full border border-gray-300 rounded p-2 resize-y min-h-[50px] text-sm text-byuNavy"
+                className="w-full border border-gray-300 rounded p-2 resize-y min-h-[50px] text-sm text-byuNavy mt-2"
               />
             </div>
           </div>

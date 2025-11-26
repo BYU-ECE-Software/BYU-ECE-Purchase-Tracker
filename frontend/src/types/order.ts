@@ -19,6 +19,8 @@ export interface Order {
   total?: number;
   userId: number;
   user: User;
+  purchasedById?: number;
+  purchasedBy?: User;
   items: Item[];
   lineMemoOptionId?: number;
   lineMemoOption?: LineMemoOption;
@@ -28,6 +30,7 @@ export interface Order {
   status: string;
   comment?: string;
   cartLink?: string;
+  adminComment?: string;
 }
 
 export interface OrderUpdatePayload {

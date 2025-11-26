@@ -37,6 +37,9 @@ const PurchaseRequestForm = () => {
   // State for confirmation modal
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
+  // State for resetting the dom
+  const [resetKey, setResetKey] = useState(0);
+
   // State to track 'other' spend category
   const [customSpendCategory, setCustomSpendCategory] = useState('');
   const [selectedSpendCategoryCode, setSelectedSpendCategoryCode] =
@@ -114,6 +117,29 @@ const PurchaseRequestForm = () => {
     setItems(updatedItems);
   };
 
+  // Reset all form fields back to initial "on load" state
+  const resetForm = () => {
+    setItems([{ item: '', quantity: 1, link: '', file: null }]);
+
+    setFullName('');
+    setByuNetId('');
+    setEmail('');
+    setVendor('');
+    setShipping('');
+    setPurpose('');
+    setWorkTag('');
+    setSelectedSpendCategoryId('');
+    setCartLink('');
+    setComment('');
+    setSelectedProfessorId('');
+
+    setCustomSpendCategory('');
+    setSelectedSpendCategoryCode('');
+
+    // force form subtree (specifically file inputs) to remount
+    setResetKey((prev) => prev + 1);
+  };
+
   // Submit form to backend
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,6 +186,10 @@ const PurchaseRequestForm = () => {
           })),
       });
 
+      // Clear the form on successful submit
+      resetForm();
+
+      // Show Confirmation Modal
       setShowConfirmModal(true);
     } catch (error) {
       console.error('Error submitting request:', error);
@@ -171,6 +201,7 @@ const PurchaseRequestForm = () => {
   return (
     <>
       <form
+        key={resetKey}
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto mt-4 mb-8 p-6 bg-white shadow-md rounded-md space-y-6"
       >
@@ -520,8 +551,7 @@ const PurchaseRequestForm = () => {
             </h2>
             <p className="text-gray-700">
               Your order was successfully submitted. It will be reviewed within
-              2 business days. You can track the order status on your order
-              history page. Reach out to the ECE secretaries
+              2 business days. Reach out to the ECE secretaries
               (ecen_secretaries@byu.edu) with any questions.
             </p>
             <button
